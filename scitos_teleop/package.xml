@@ -1,8 +1,8 @@
 <?xml version="1.0"?>
 <package>
-  <name>rumblepad_control</name>
+  <name>scitos_teleop</name>
   <version>0.0.0</version>
-  <description>The rumblepad_control package</description>
+  <description>The scitos teleoperation package</description>
 
   <maintainer email="cdondrup@lincoln.ac.uk">Christian Dondrup</maintainer>
 
