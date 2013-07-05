@@ -21,3 +21,12 @@ The scitos_teleop package is designed to work with a Logitech Wireless Gamepad F
  * Reset/Re-enable motors: "Start" button on the pad. (Use after emergency stop or bumper crash)
  * Move the head: use right joystick
  * Move eye lids: use lower right shoulder button
+ 
+### Troubleshooting
+* If you get a message like: ```[ERROR] [1372933726.815471480]: Couldn't open joystick /dev/input/js1. Will retry every second.``` 
+you have to edit the scitos_teleop/launch/teleop_joystick.launch file and replace the line: 
+``<param name="dev" value="/dev/input/js1" type="string"/>`` with 
+``<param name="dev" value="/dev/input/js0" type="string"/>`` This is because the launch file is currently otimized 
+for the use with the real robot. The real robot does have a touchscreen which will be /dev/input/js0 and therefore the 
+rumblepad will be /dev/input/js1. Since your PC will most likely not have a touch screen, the rumblepad on your PC will 
+be on /dev/input/js0.
