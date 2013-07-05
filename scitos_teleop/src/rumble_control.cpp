@@ -84,16 +84,16 @@ int main(int argc, char **argv)
    * You must call one of the versions of ros::init() before using any other
    * part of the ROS system.
    */
-  ros::init(argc, argv, "rumble_control");
+  ros::init(argc, argv, "teleop_joystick");
 
   /**
    * NodeHandle is the main access point to communications with the ROS system.
    * The first NodeHandle constructed will fully initialize this node, and the last
    * NodeHandle destructed will close down the node.
    */
-  ros::NodeHandle n("rumble_control");
-  n.param("scale_angular", a_scale_, 1.1);
-  n.param("scale_linear", l_scale_, 1.1);
+  ros::NodeHandle n("teleop_joystick");
+  n.param("scale_angular", a_scale_, 0.8);
+  n.param("scale_linear", l_scale_, 0.8);
   interrupt_broadcasting = false;
 
   /**
