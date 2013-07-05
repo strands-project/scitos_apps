@@ -22,13 +22,24 @@ double l_scale_, a_scale_;
 
 geometry_msgs::Twist t;
 
-bool interrupt_broadcasting;
+bool interrupt_broadcasting, sent_error;
 
 /**
  * This tutorial demonstrates simple receipt of messages over the ROS system.
  */
 void controlCallback(const sensor_msgs::Joy::ConstPtr& msg)
 {
+  //Check for X mode
+  if(msg->axes.size() != 8) {
+    if(!sent_error) {
+      ROS_ERROR("Rumblepad is running in D mode. Please switch to X mode.");
+      ROS_ERROR("Pad will not work as long as it runs in the wrong mode.");
+      sent_error = true;
+    }
+    return;
+  }
+  sent_error = false;
+
   //Publish action buttons
   scitos_teleop::action_buttons button_msg;
   button_msg.A = msg->buttons[0];
@@ -105,6 +116,7 @@ int main(int argc, char **argv)
   n.param("scale_angular", a_scale_, 0.8);
   n.param("scale_linear", l_scale_, 0.8);
   interrupt_broadcasting = false;
+  sent_error = false;
 
   /**
    * The subscribe() call is how you tell ROS that you want to receive messages
