@@ -3,6 +3,8 @@
 #include <geometry_msgs/Twist.h>
 #include <ros/console.h>
 
+#include "scitos_teleop/action_buttons.h"
+
 #if WITH_SCITOS
 	#include <scitos_msgs/EnableMotors.h>
 	#include <scitos_msgs/ResetMotorStop.h>
@@ -14,7 +16,7 @@
 	scitos_msgs::EmergencyStop emergency_srv;
 #endif
 
-ros::Publisher pub;
+ros::Publisher pub_cmd_vel, pub_buttons;
 double l_scale_, a_scale_;
   
 
@@ -27,18 +29,26 @@ bool interrupt_broadcasting;
  */
 void controlCallback(const sensor_msgs::Joy::ConstPtr& msg)
 {
+  //Publish action buttons
+  scitos_teleop::action_buttons button_msg;
+  button_msg.A = msg->buttons[0];
+  button_msg.B = msg->buttons[1];
+  button_msg.X = msg->buttons[2];
+  button_msg.Y = msg->buttons[3];
+  pub_buttons.publish(button_msg);
+
   //steer robot while holding dead man switch
   if(msg->buttons[4]) {
     t.linear.x = 0.9*t.linear.x + 0.1*l_scale_ * msg->axes[1];
     t.angular.z = 0.5*t.angular.z + 0.5*a_scale_ * msg->axes[0];
     interrupt_broadcasting = false;
-    pub.publish(t);
+    pub_cmd_vel.publish(t);
   } else {
     t.linear.x = 0.0;
     t.angular.z = 0.0;
     if(interrupt_broadcasting == false){
        interrupt_broadcasting = true;
-       pub.publish(t);
+       pub_cmd_vel.publish(t);
     }
   }
   #if WITH_SCITOS
@@ -112,7 +122,8 @@ int main(int argc, char **argv)
    * away the oldest ones.
    */
   ros::Subscriber sub = n.subscribe("/joy", 1000, controlCallback);
-  pub = n.advertise<geometry_msgs::Twist>("/cmd_vel", 1000);
+  pub_cmd_vel = n.advertise<geometry_msgs::Twist>("/cmd_vel", 1000);
+  pub_buttons = n.advertise<scitos_teleop::action_buttons>("action_buttons", 1000);
   #if WITH_SCITOS
 	  enable_client = n.serviceClient<scitos_msgs::EnableMotors>("/enable_motors");
 	  reset_client = n.serviceClient<scitos_msgs::ResetMotorStop>("/reset_motorstop");
