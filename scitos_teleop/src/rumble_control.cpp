@@ -3,6 +3,8 @@
 #include <geometry_msgs/Twist.h>
 #include <ros/console.h>
 
+#include "scitos_teleop/action_buttons.h"
+
 #if WITH_SCITOS
 	#include <scitos_msgs/EnableMotors.h>
 	#include <scitos_msgs/ResetMotorStop.h>
@@ -14,31 +16,50 @@
 	scitos_msgs::EmergencyStop emergency_srv;
 #endif
 
-ros::Publisher pub;
+ros::Publisher pub_cmd_vel, pub_buttons;
 double l_scale_, a_scale_;
   
 
 geometry_msgs::Twist t;
 
-bool interrupt_broadcasting;
+bool interrupt_broadcasting, sent_error;
 
 /**
  * This tutorial demonstrates simple receipt of messages over the ROS system.
  */
 void controlCallback(const sensor_msgs::Joy::ConstPtr& msg)
 {
+  //Check for X mode
+  if(msg->axes.size() != 8) {
+    if(!sent_error) {
+      ROS_ERROR("Rumblepad is running in D mode. Please switch to X mode.");
+      ROS_ERROR("Pad will not work as long as it runs in the wrong mode.");
+      sent_error = true;
+    }
+    return;
+  }
+  sent_error = false;
+
+  //Publish action buttons
+  scitos_teleop::action_buttons button_msg;
+  button_msg.A = msg->buttons[0];
+  button_msg.B = msg->buttons[1];
+  button_msg.X = msg->buttons[2];
+  button_msg.Y = msg->buttons[3];
+  pub_buttons.publish(button_msg);
+
   //steer robot while holding dead man switch
   if(msg->buttons[4]) {
     t.linear.x = 0.9*t.linear.x + 0.1*l_scale_ * msg->axes[1];
     t.angular.z = 0.5*t.angular.z + 0.5*a_scale_ * msg->axes[0];
     interrupt_broadcasting = false;
-    pub.publish(t);
+    pub_cmd_vel.publish(t);
   } else {
     t.linear.x = 0.0;
     t.angular.z = 0.0;
     if(interrupt_broadcasting == false){
        interrupt_broadcasting = true;
-       pub.publish(t);
+       pub_cmd_vel.publish(t);
     }
   }
   #if WITH_SCITOS
@@ -84,17 +105,18 @@ int main(int argc, char **argv)
    * You must call one of the versions of ros::init() before using any other
    * part of the ROS system.
    */
-  ros::init(argc, argv, "rumble_control");
+  ros::init(argc, argv, "teleop_joystick");
 
   /**
    * NodeHandle is the main access point to communications with the ROS system.
    * The first NodeHandle constructed will fully initialize this node, and the last
    * NodeHandle destructed will close down the node.
    */
-  ros::NodeHandle n("rumble_control");
-  n.param("scale_angular", a_scale_, 1.1);
-  n.param("scale_linear", l_scale_, 1.1);
+  ros::NodeHandle n("teleop_joystick");
+  n.param("scale_angular", a_scale_, 0.8);
+  n.param("scale_linear", l_scale_, 0.8);
   interrupt_broadcasting = false;
+  sent_error = false;
 
   /**
    * The subscribe() call is how you tell ROS that you want to receive messages
@@ -112,7 +134,8 @@ int main(int argc, char **argv)
    * away the oldest ones.
    */
   ros::Subscriber sub = n.subscribe("/joy", 1000, controlCallback);
-  pub = n.advertise<geometry_msgs::Twist>("/cmd_vel", 1000);
+  pub_cmd_vel = n.advertise<geometry_msgs::Twist>("/cmd_vel", 1000);
+  pub_buttons = n.advertise<scitos_teleop::action_buttons>("action_buttons", 1000);
   #if WITH_SCITOS
 	  enable_client = n.serviceClient<scitos_msgs::EnableMotors>("/enable_motors");
 	  reset_client = n.serviceClient<scitos_msgs::ResetMotorStop>("/reset_motorstop");
