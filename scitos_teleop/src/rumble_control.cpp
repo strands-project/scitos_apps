@@ -3,7 +3,7 @@
 #include <geometry_msgs/Twist.h>
 #include <ros/console.h>
 
-#include "scitos_teleop/action_buttons.h"
+#include "scitos_apps_msgs/action_buttons.h"
 
 #if WITH_SCITOS
 	#include <scitos_msgs/EnableMotors.h>
@@ -41,7 +41,7 @@ void controlCallback(const sensor_msgs::Joy::ConstPtr& msg)
   sent_error = false;
 
   //Publish action buttons
-  scitos_teleop::action_buttons button_msg;
+  scitos_apps_msgs::action_buttons button_msg;
   button_msg.A = msg->buttons[0];
   button_msg.B = msg->buttons[1];
   button_msg.X = msg->buttons[2];
@@ -135,7 +135,7 @@ int main(int argc, char **argv)
    */
   ros::Subscriber sub = n.subscribe("/joy", 1000, controlCallback);
   pub_cmd_vel = n.advertise<geometry_msgs::Twist>("/cmd_vel", 1000);
-  pub_buttons = n.advertise<scitos_teleop::action_buttons>("action_buttons", 1000);
+  pub_buttons = n.advertise<scitos_apps_msgs::action_buttons>("action_buttons", 1000);
   #if WITH_SCITOS
 	  enable_client = n.serviceClient<scitos_msgs::EnableMotors>("/enable_motors");
 	  reset_client = n.serviceClient<scitos_msgs::ResetMotorStop>("/reset_motorstop");

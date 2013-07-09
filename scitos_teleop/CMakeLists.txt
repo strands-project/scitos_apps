@@ -4,7 +4,7 @@ project(scitos_teleop)
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
-find_package(catkin REQUIRED COMPONENTS roscpp rospy std_msgs message_generation)
+find_package(catkin REQUIRED COMPONENTS roscpp rospy std_msgs scitos_apps_msgs)
 find_package(scitos_msgs COMPONENTS scitos_msgs)
 
 if(scitos_msgs_FOUND)
@@ -28,10 +28,6 @@ endif(scitos_msgs_FOUND)
 #######################################
 
 ## Generate messages in the 'msg' folder
-add_message_files(
-  FILES
-  action_buttons.msg
-)
 
 ## Generate services in the 'srv' folder
 # add_service_files(
@@ -41,10 +37,7 @@ add_message_files(
 # )
 
 ## Generate added messages and services with any dependencies listed here
-generate_messages(
-  DEPENDENCIES
-  std_msgs
-)
+
 
 ###################################
 ## catkin specific configuration ##
@@ -55,9 +48,9 @@ generate_messages(
 ## CATKIN_DEPENDS: catkin_packages dependent projects also need
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
-   INCLUDE_DIRS include
+#  INCLUDE_DIRS include
 #  LIBRARIES rumblepad_control
-   CATKIN_DEPENDS roscpp rospy std_msgs message_runtime
+#  CATKIN_DEPENDS roscpp rospy std_msgs message_runtime
 #  DEPENDS system_lib
 )
 
