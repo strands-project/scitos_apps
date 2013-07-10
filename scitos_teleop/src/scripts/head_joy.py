@@ -26,19 +26,23 @@ class HeadJoy():
 		self.command.position=[self.currentPan, self.currentTilt] 
 
 	def callback(self, joy): 
+		if(joy.buttons[5]):
+			self.currentPan=0
+			self.currentTilt=0
+		
 		rospy.logdebug(rospy.get_name() + ": I heard %s" % joy) 
 		print joy.axes[3:5] 
 
 		# update value from axes
 		self.currentPan += joy.axes[3] * self.PAN_INCREMENT
 		self.currentTilt += joy.axes[4] * self.TILT_INCREMENT
-	
+
 		# threshold value
 		self.currentPan = self.currentPan if self.currentPan < self.MAX_PAN else self.MAX_PAN
 		self.currentPan = self.currentPan if self.currentPan > self.MIN_PAN else self.MIN_PAN
 		self.currentTilt = self.currentTilt if self.currentTilt < self.MAX_TILT else self.MAX_TILT
 		self.currentTilt = self.currentTilt if self.currentTilt > self.MIN_TILT else self.MIN_TILT
-		
+	
 		#update command
 		self.command.position=[self.currentPan, self.currentTilt] 
 

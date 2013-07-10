@@ -14,10 +14,18 @@ class EyeJoy():
 		rospy.Subscriber("/joy", Joy, self.callback) 
 		rospy.logdebug(rospy.get_name() + " setting up")
 		self.command = JointState() 
-		self.command.name=["EyeLidLeft", "EyeLidRight"] 
+		self.command.name=["EyeLidLeft", "EyeLidRight"]
+		self.eye_command = JointState()
+		self.eye_command.name=["EyesTilt", "EyesPan"] 
 
 	def callback(self, joy): 
-		rospy.logdebug(rospy.get_name() + ": I heard %s" % joy) 
+		rospy.logdebug(rospy.get_name() + ": I heard %s" % joy)		
+		#update command
+		self.eye_command.position=[joy.axes[4]*100, joy.axes[3]*100] 
+
+		# publish
+		self.pub.publish(self.eye_command)		
+			
 		print joy.axes[5] 
 
 		#update command
