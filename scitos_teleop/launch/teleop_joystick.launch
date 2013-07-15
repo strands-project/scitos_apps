@@ -1,6 +1,6 @@
 <launch>
         <node pkg="joy" type="joy_node" name="joystick">
-		<param name="dev" value="/dev/input/js1" type="string"/>
+		<param name="dev" value="/dev/input/rumblepad" type="string"/>
 		<param name="autorepeat_rate" value="10.0" type="double"/>
 	</node>
         <node pkg="scitos_teleop" type="rumble_control" name="teleop_joystick" output="screen">
