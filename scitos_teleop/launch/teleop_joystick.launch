@@ -1,11 +1,11 @@
 <launch>
-  <!-- Joystic device path.
+  <!-- Joystick device path.
   Default is /dev/js1. If an environment variable JOYSTICK_DEVICE
   is set then this replaces the default. If the launch file is started with
   the argument js:=blah then blah overides both the default and the environment. -->
   <arg name="js" default="$(optenv JOYSTICK_DEVICE /dev/js1)" />
 
-  <!-- Joystic driver node -->
+  <!-- Joystick driver node -->
   <node pkg="joy" type="joy_node" name="joystick">
 	<param name="dev" value="$(arg js)" type="string"/>
 	<param name="autorepeat_rate" value="10.0" type="double"/>
