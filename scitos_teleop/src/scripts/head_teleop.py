@@ -42,6 +42,8 @@ class HeadTeleop():
 		if(joy.buttons[5]):
 			self.currentPan=0
 			self.currentTilt=0
+			if(invers):
+				self.currentPan=-180
 		
 		rospy.logdebug(rospy.get_name() + ": I heard %s" % joy) 
 		# print joy.axes[3:5] 
