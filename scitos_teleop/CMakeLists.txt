@@ -8,10 +8,10 @@ find_package(catkin REQUIRED COMPONENTS roscpp rospy std_msgs scitos_apps_msgs)
 find_package(scitos_msgs COMPONENTS scitos_msgs)
 
 if(scitos_msgs_FOUND)
-	message(STATUS "scitos_msgs found: Compiling rumblepad_control for use with robot")
+	message(STATUS "scitos_msgs found: Compiling scitos_teleop for use with robot")
 	add_definitions(-DWITH_SCITOS)
 else(scitos_msgs_FOUND)
-	message(STATUS "scitos_msgs NOT found: Compiling rumblepad_control for use with simulator")
+	message(STATUS "scitos_msgs NOT found: Compiling scitos_teleop for use with simulator")
 endif(scitos_msgs_FOUND)
 
 ## System dependencies are found with CMake's conventions
@@ -72,6 +72,7 @@ include_directories(include
 
 ## Declare a cpp executable
 add_executable(rumble_control src/rumble_control.cpp)
+add_executable(teleop_base src/base_teleop.cpp)
 
 ## Add cmake target dependencies of the executable/library
 ## as an example, message headers may need to be generated before nodes
@@ -79,6 +80,7 @@ add_executable(rumble_control src/rumble_control.cpp)
 
 ## Specify libraries to link a library or executable target against
 target_link_libraries(rumble_control ${catkin_LIBRARIES} ${scitos_msgs_LIBRARIES})
+target_link_libraries(teleop_base ${catkin_LIBRARIES})
 
 #############
 ## Install ##
