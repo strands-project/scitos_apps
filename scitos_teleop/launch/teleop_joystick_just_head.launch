@@ -3,5 +3,5 @@
   <include file="$(find scitos_teleop)/launch/teleop_joystick_core.launch"/>
 
   <!-- Head teleop -->
-  <node pkg="scitos_teleop" type="head_teleop.py" name="teleop_head" />
+  <node pkg="scitos_teleop" type="head_teleop.py" name="teleop_head" output="screen"/>
 </launch> 

@@ -18,6 +18,7 @@
 ros::Publisher pub_joy, pub_buttons;
   
 bool interrupt_broadcasting, sent_error;
+bool last_buttons[4] = {0,0,0,0};
 
 //Main callback handling the incomming joy_node messages
 void controlCallback(const sensor_msgs::Joy::ConstPtr& msg)
@@ -35,11 +36,17 @@ void controlCallback(const sensor_msgs::Joy::ConstPtr& msg)
 
   //Publish action buttons
   scitos_apps_msgs::action_buttons button_msg;
-  button_msg.A = msg->buttons[0];
-  button_msg.B = msg->buttons[1];
-  button_msg.X = msg->buttons[2];
-  button_msg.Y = msg->buttons[3];
-  pub_buttons.publish(button_msg);
+  if(msg->buttons[0] != last_buttons[0] || msg->buttons[1] != last_buttons[1] || msg->buttons[2] != last_buttons[2] || msg->buttons[3] != last_buttons[3]) {
+    button_msg.A = msg->buttons[0];
+    button_msg.B = msg->buttons[1];
+    button_msg.X = msg->buttons[2];
+    button_msg.Y = msg->buttons[3];
+    pub_buttons.publish(button_msg);
+  }
+  last_buttons[0] = msg->buttons[0];
+  last_buttons[1] = msg->buttons[1];
+  last_buttons[2] = msg->buttons[2];
+  last_buttons[3] = msg->buttons[3];
 
   //publish to /teleop_joystick/joy if deadman switch is held
   if(msg->buttons[4]) {
