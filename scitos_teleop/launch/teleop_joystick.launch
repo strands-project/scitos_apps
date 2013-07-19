@@ -7,17 +7,19 @@
 
   <!-- Joystick driver node -->
   <node pkg="joy" type="joy_node" name="joystick">
-	<param name="dev" value="$(arg js)" type="string"/>
-	<param name="autorepeat_rate" value="10.0" type="double"/>
+		<param name="dev" value="$(arg js)" type="string"/>
+		<param name="autorepeat_rate" value="10.0" type="double"/>
   </node>
 
-  <!-- Base teleop -->
-  <node pkg="scitos_teleop" type="rumble_control" name="teleop_joystick" output="screen">
-	<param name="scale_angular" value=".7" type="double"/>
-	<param name="scale_linear" value=".7" type="double"/>
+  <!-- Rumblepad control -->
+  <node pkg="scitos_teleop" type="rumble_control" name="teleop_joystick" output="screen" />
+
+  <!-- Base teleop --> 
+  <node pkg="scitos_teleop" type="teleop_base" name="teleop_base" output="screen">
+		<param name="scale_angular" value=".7" type="double"/>
+		<param name="scale_linear" value=".7" type="double"/>
   </node>
 
   <!-- Head teleop -->
-  <node pkg="scitos_teleop" type="head_joy.py" name="teleop_joystick_head_control" />
-  <node pkg="scitos_teleop" type="eye_joy.py" name="teleop_joystick_eye_control" />
-</launch>
+  <node pkg="scitos_teleop" type="head_teleop.py" name="teleop_head" />
+</launch> 
