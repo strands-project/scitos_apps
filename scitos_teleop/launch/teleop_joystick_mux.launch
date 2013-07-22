@@ -1,8 +1,5 @@
 <launch>
 
-  <!-- Include cmd_vel_mux to allow arbitration -->
-  <include file="$(find scitos_cmd_vel_mux)/launch/mux.launch"/>
-  
   <!-- Core rumblepad control -->
   <include file="$(find scitos_teleop)/launch/teleop_joystick_core.launch"/>
 
