@@ -75,7 +75,7 @@ add_executable(rumble_control src/rumble_control.cpp)
 
 ## Add cmake target dependencies of the executable/library
 ## as an example, message headers may need to be generated before nodes
-# add_dependencies(rumblepad_control_node rumblepad_control_generate_messages_cpp)
+add_dependencies(rumble_control scitos_msgs_gencpp)
 
 ## Specify libraries to link a library or executable target against
 target_link_libraries(rumble_control ${catkin_LIBRARIES} ${scitos_msgs_LIBRARIES})
