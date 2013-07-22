@@ -8,6 +8,4 @@
 		<param name="scale_linear" value=".7" type="double"/>
   </node>
 
-  <!-- Head teleop -->
-  <node pkg="scitos_teleop" type="head_teleop.py" name="teleop_head" />
 </launch> 

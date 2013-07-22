@@ -1,6 +1,5 @@
 #include <ros/ros.h>
 #include <sensor_msgs/Joy.h>
-#include <geometry_msgs/Twist.h>
 #include <ros/console.h>
 
 #include "scitos_apps_msgs/action_buttons.h"
@@ -16,17 +15,12 @@
 	scitos_msgs::EmergencyStop emergency_srv;
 #endif
 
-ros::Publisher pub_cmd_vel, pub_buttons;
-double l_scale_, a_scale_;
+ros::Publisher pub_joy, pub_buttons;
   
-
-geometry_msgs::Twist t;
-
 bool interrupt_broadcasting, sent_error;
+bool last_buttons[4] = {0,0,0,0};
 
-/**
- * This tutorial demonstrates simple receipt of messages over the ROS system.
- */
+//Main callback handling the incomming joy_node messages
 void controlCallback(const sensor_msgs::Joy::ConstPtr& msg)
 {
   //Check for X mode
@@ -42,27 +36,32 @@ void controlCallback(const sensor_msgs::Joy::ConstPtr& msg)
 
   //Publish action buttons
   scitos_apps_msgs::action_buttons button_msg;
-  button_msg.A = msg->buttons[0];
-  button_msg.B = msg->buttons[1];
-  button_msg.X = msg->buttons[2];
-  button_msg.Y = msg->buttons[3];
-  pub_buttons.publish(button_msg);
-
-  //steer robot while holding dead man switch
-  if(msg->buttons[4]) {
-    t.linear.x = 0.9*t.linear.x + 0.1*l_scale_ * msg->axes[1];
-    t.angular.z = 0.5*t.angular.z + 0.5*a_scale_ * msg->axes[0];
-    interrupt_broadcasting = false;
-    pub_cmd_vel.publish(t);
-  } else {
-    t.linear.x = 0.0;
-    t.angular.z = 0.0;
-    if(interrupt_broadcasting == false){
-       interrupt_broadcasting = true;
-       pub_cmd_vel.publish(t);
-    }
+  if(msg->buttons[0] != last_buttons[0] || msg->buttons[1] != last_buttons[1] || msg->buttons[2] != last_buttons[2] || msg->buttons[3] != last_buttons[3]) {
+    button_msg.A = msg->buttons[0];
+    button_msg.B = msg->buttons[1];
+    button_msg.X = msg->buttons[2];
+    button_msg.Y = msg->buttons[3];
+    pub_buttons.publish(button_msg);
   }
-  #if WITH_SCITOS
+  last_buttons[0] = msg->buttons[0];
+  last_buttons[1] = msg->buttons[1];
+  last_buttons[2] = msg->buttons[2];
+  last_buttons[3] = msg->buttons[3];
+
+  //publish to /teleop_joystick/joy if deadman switch is held
+  if(msg->buttons[4]) {
+		interrupt_broadcasting = false;
+		pub_joy.publish(msg);
+  } else { //publish a msg containing zeros for scalar and angular velocity once if the deadman switch is released
+    if(interrupt_broadcasting == false){
+			sensor_msgs::Joy::Ptr& tmp((sensor_msgs::Joy::Ptr&)msg); 
+			tmp->header.frame_id = "stop";
+			interrupt_broadcasting = true;
+			pub_joy.publish(tmp);
+		}
+	}
+
+#if WITH_SCITOS
 	  //enable motors after bump and/or freerun
 	  if(msg->buttons[7]) {
 	    enable_srv.request.enable = true;
@@ -91,62 +90,26 @@ void controlCallback(const sensor_msgs::Joy::ConstPtr& msg)
 	    }
 	  }
   #endif
+  
 }
 
 int main(int argc, char **argv)
 {
-  /**
-   * The ros::init() function needs to see argc and argv so that it can perform
-   * any ROS arguments and name remapping that were provided at the command line. For programmatic
-   * remappings you can use a different version of init() which takes remappings
-   * directly, but for most command-line programs, passing argc and argv is the easiest
-   * way to do it.  The third argument to init() is the name of the node.
-   *
-   * You must call one of the versions of ros::init() before using any other
-   * part of the ROS system.
-   */
   ros::init(argc, argv, "teleop_joystick");
 
-  /**
-   * NodeHandle is the main access point to communications with the ROS system.
-   * The first NodeHandle constructed will fully initialize this node, and the last
-   * NodeHandle destructed will close down the node.
-   */
   ros::NodeHandle n("teleop_joystick");
-  n.param("scale_angular", a_scale_, 0.8);
-  n.param("scale_linear", l_scale_, 0.8);
   interrupt_broadcasting = false;
   sent_error = false;
 
-  /**
-   * The subscribe() call is how you tell ROS that you want to receive messages
-   * on a given topic.  This invokes a call to the ROS
-   * master node, which keeps a registry of who is publishing and who
-   * is subscribing.  Messages are passed to a callback function, here
-   * called chatterCallback.  subscribe() returns a Subscriber object that you
-   * must hold on to until you want to unsubscribe.  When all copies of the Subscriber
-   * object go out of scope, this callback will automatically be unsubscribed from
-   * this topic.
-   *
-   * The second parameter to the subscribe() function is the size of the message
-   * queue.  If messages are arriving faster than they are being processed, this
-   * is the number of messages that will be buffered up before beginning to throw
-   * away the oldest ones.
-   */
   ros::Subscriber sub = n.subscribe("/joy", 1000, controlCallback);
-  pub_cmd_vel = n.advertise<geometry_msgs::Twist>("/cmd_vel", 1000);
+  pub_joy = n.advertise<sensor_msgs::Joy>("joy", 1000);
   pub_buttons = n.advertise<scitos_apps_msgs::action_buttons>("action_buttons", 1000);
   #if WITH_SCITOS
 	  enable_client = n.serviceClient<scitos_msgs::EnableMotors>("/enable_motors");
 	  reset_client = n.serviceClient<scitos_msgs::ResetMotorStop>("/reset_motorstop");
 	  emergency_client = n.serviceClient<scitos_msgs::EmergencyStop>("/emergency_stop");
-  #endif	
+  #endif
 
-  /**
-   * ros::spin() will enter a loop, pumping callbacks.  With this version, all
-   * callbacks will be called from within this thread (the main one).  ros::spin()
-   * will exit when Ctrl-C is pressed, or the node is shutdown by the master.
-   */
   ros::spin();
 
   return 0;

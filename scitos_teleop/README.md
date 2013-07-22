@@ -15,12 +15,15 @@ The scitos_teleop package is designed to work with a Logitech Wireless Gamepad F
 * Launch the rumblepad control: `roslaunch scitos_teleop teleop_joystick.launch`
  * If the simulator or scitos_mira drivers are running, you should now be able to control the robot using the joypad.
 * Controlling the robot (if you do not press any buttons, the rumbelpad control will not interfere with any autonomous behaviour but can be used to emergency stop the robot or reset the bumper after a crash): You can find a cheat sheet in the doc directory of scitos_teleop.
- * Moving the robot: press and hold the dead man switch -> top left shoulder button, move the robot with the left joystick or D-Pad (toggel between those with the "Mode" button).
+ * Dead-Man-Switch: top left shoulder button, keep pressed to move robot or head.
+ * Moving the robot: move the robot with the left joystick or D-Pad (toggel between those with the "Mode" button).
  * Emergency stop: lower left sholder button. Has to be pressed down completely. Be aware that the gamepad is turning itself off after a certain time and that this button does not turn it on automatically. You have to press one of the other buttons in order to turn it back on.
  * Freerun: "Back" button on the pad. (Move robot around manually)
  * Reset/Re-enable motors: "Start" button on the pad. (Use after emergency stop or bumper crash)
- * Move the head: use right joystick
- * Move eye lids: use lower right shoulder button
+ * Move the head including eyes: use right joystick.
+ * Move head to zero position: top right shoulder button.
+ * Turn head 180 degrees: Y button.
+ * Move eye lids: use lower right shoulder button.
  
 ### Troubleshooting
 * If you get a message like: ```[ERROR] [1372933726.815471480]: Couldn't open joystick /dev/input/js1. Will retry every second.``` 
