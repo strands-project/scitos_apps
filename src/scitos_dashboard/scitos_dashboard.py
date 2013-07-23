@@ -69,7 +69,7 @@ class ScitosDashboard(Dashboard):
         self._freerun_state = not self._freerun_state
         freerun_srv = rospy.ServiceProxy("/enable_motors", EnableMotors)
         try:
-            freerun_srv(self._freerun_state)
+            freerun_srv(not self._freerun_state)
         except rospy.ServiceException, e:
             QMessageBox.critical(self._drive, "Error", "Failed to enter freerun: service call failed with error: %s" % (e))
 
