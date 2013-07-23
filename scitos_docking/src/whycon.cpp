@@ -13,7 +13,7 @@
 #include <geometry_msgs/Twist.h>
 #include <nav_msgs/Odometry.h>
 #include <scitos_msgs/ChargerStatus.h>
-#include <charging/Charging.h>
+#include <scitos_apps_msgs/Charging.h>
 #include <tf/tf.h>
 
 #define MAX_PATTERNS 10 
@@ -401,7 +401,7 @@ int initComponents(){
 	dockPos.x = dockPos.y = dockPos.z = 0;
 }
 
-bool receiveCommands(charging::Charging::Request  &req, charging::Charging::Response &res)
+bool receiveCommands(scitos_apps_msgs::Charging::Request  &req, scitos_apps_msgs::Charging::Response &res)
 {
 //	std::cout << "Request " << req.chargeCommand << " Timeout " << (int)req.chargeTimeout << std::endl;
 	initComponents();

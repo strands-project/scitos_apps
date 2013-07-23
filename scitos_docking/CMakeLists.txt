@@ -4,7 +4,7 @@ project(scitos_docking)
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
-find_package(catkin REQUIRED COMPONENTS image_transport roscpp rospy std_msgs message_generation scitos_msgs)
+find_package(catkin REQUIRED COMPONENTS image_transport roscpp rospy std_msgs scitos_msgs scitos_apps_msgs message_generation)
 
 ## System dependencies are found with CMake's conventions
 # find_package(Boost REQUIRED COMPONENTS system)
@@ -27,16 +27,16 @@ find_package(catkin REQUIRED COMPONENTS image_transport roscpp rospy std_msgs me
 # )
 
 # Generate services in the 'srv' folder
- add_service_files(
-   FILES
-   Charging.srv
- )
+# add_service_files(
+ #  FILES
+  # Charging.srv
+ #)
 
 ## Generate added messages and services with any dependencies listed here
- generate_messages(
-		 DEPENDENCIES
-		 std_msgs 
-		 )
+ #generate_messages(
+	#	 DEPENDENCIES
+		# std_msgs 
+		 #)
 
 ###################################
 ## catkin specific configuration ##
@@ -133,7 +133,7 @@ add_library(CTimer src/CTimer.cpp)
 add_library(CRawImage src/CRawImage.cpp)
 add_library(CTransformation src/CTransformation.cpp)
 add_executable(visual_charging_test_node src/whycon.cpp)
-add_dependencies(visual_charging_test_node scitos_msgs_messages_cpp)
+add_dependencies(visual_charging_test_node scitos_msgs_gencpp scitos_apps_msgs_genccp)
 
 target_link_libraries (visual_charging_test_node  CDump)
 target_link_libraries (visual_charging_test_node  CTimer)
