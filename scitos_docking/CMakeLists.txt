@@ -1,10 +1,10 @@
 cmake_minimum_required(VERSION 2.8.3)
-project(charging)
+project(scitos_docking)
 
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
-find_package(catkin REQUIRED COMPONENTS image_transport roscpp rospy std_msgs message_generation)
+find_package(catkin REQUIRED COMPONENTS image_transport roscpp rospy std_msgs message_generation scitos_msgs)
 
 ## System dependencies are found with CMake's conventions
 # find_package(Boost REQUIRED COMPONENTS system)
@@ -35,7 +35,7 @@ find_package(catkin REQUIRED COMPONENTS image_transport roscpp rospy std_msgs me
 ## Generate added messages and services with any dependencies listed here
  generate_messages(
 		 DEPENDENCIES
-		 std_msgs
+		 std_msgs 
 		 )
 
 ###################################
@@ -73,7 +73,6 @@ include_directories(include
 
 ## Add cmake target dependencies of the executable/library
 ## as an example, message headers may need to be generated before nodes
-# add_dependencies(charging_node charging_generate_messages_cpp)
 
 ## Specify libraries to link a library or executable target against
 # target_link_libraries(charging_node
@@ -134,6 +133,7 @@ add_library(CTimer src/CTimer.cpp)
 add_library(CRawImage src/CRawImage.cpp)
 add_library(CTransformation src/CTransformation.cpp)
 add_executable(visual_charging_test_node src/whycon.cpp)
+add_dependencies(visual_charging_test_node scitos_msgs_messages_cpp)
 
 target_link_libraries (visual_charging_test_node  CDump)
 target_link_libraries (visual_charging_test_node  CTimer)
