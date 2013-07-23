@@ -1,0 +1,4 @@
+int64 chargeTimeout
+string chargeCommand
+----
+string chargeResult

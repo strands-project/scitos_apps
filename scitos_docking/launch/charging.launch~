@@ -1,0 +1,6 @@
+<launch>
+
+  <node pkg="charging" type="charging" name="visual_charging" output="screen">
+		<remap from="/cmd_vel" to="/cmd_vel_mux/input/navigation"/>
+  </node>
+</launch> 
