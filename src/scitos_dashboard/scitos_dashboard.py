@@ -15,6 +15,8 @@ from python_qt_binding.QtGui import QMessageBox
 from scitos_drive import ScitosDrive
 from scitos_battery import ScitosBattery
 
+from threading import Timer
+
 class ScitosDashboard(Dashboard):
     def setup(self, context):
         self.name = 'Scitos Dashboard'
@@ -37,11 +39,16 @@ class ScitosDashboard(Dashboard):
         
         self._motor_state_sub = rospy.Subscriber('/motor_status', MotorStatus, self.motor_status_callback)
         self._battery_state_sub = rospy.Subscriber('/battery_state', BatteryState, self.battery_callback)
+        self._motor_stale_timer = Timer(0, self._drive.set_stale)
+        self._battery_stale_timer = Timer(0, self._batteries.set_stale)
+        
 
     def get_widgets(self):
         return [[self._monitor, self._console], [self._drive],[self._batteries]]
 
     def motor_status_callback(self, msg):
+        self._motor_stale_timer.cancel()
+        self._motor_stale_timer = Timer(1, self._drive.set_stale)
         self._motorstatus_message = msg
         self._last_motorstatus_message_time = rospy.get_time()
 
@@ -56,6 +63,8 @@ class ScitosDashboard(Dashboard):
             self._drive.set_stopped()
 
     def battery_callback(self,msg):
+        self._battery_stale_timer.cancel()
+        self._battery_stale_timer = Timer(30, self._batteries.set_stale)
         self._batteries.set_power_state(msg)
 
     def reset_motorstop_cb(self):

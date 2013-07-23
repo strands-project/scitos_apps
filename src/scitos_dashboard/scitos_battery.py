@@ -31,23 +31,22 @@ class ScitosBattery(BatteryDashWidget):
         """
         last_pct = self._pct
         last_plugged_in = self._plugged_in
-        last_time_remaining = self._time_remaining
 
-        self._power_consumption = msg.current * 12 # in watts maybe
-        self._time_remaining = rospy.rostime.Duration(msg.lifeTime)
-        self._pct = msg.lifePercent/100
+        self._pct = msg.lifePercent
         self._plugged_in = msg.powerSupplyPresent
-        if (last_pct != self._pct or last_plugged_in != self._plugged_in or last_time_remaining != self._time_remaining):
-            drain_str = "remaining"
+
+        if (last_pct != self._pct or last_plugged_in != self._plugged_in):
+            drain_str = "not charging"
             if (self._plugged_in):
-                drain_str = "to full charge"
-                self.setToolTip("Battery: %.2f%% \nTime %s: %d Minutes" % (self._pct * 100.0, drain_str, self._time_remaining.to_sec() / 60.0))
-                self.charging = True
+                drain_str = "charging"
+            self.setToolTip("Battery: %.2f%% (%s)" % (self._pct, drain_str))
+
+            self.set_charging( self._plugged_in )
+
             self.update_perc(msg.lifePercent)
 
     def set_stale(self):
-        self._plugged_in = 0
+        self._plugged_in = False
         self._pct = 0
-        self._time_remaining = rospy.rostime.Duration(0)
-        self._power_consumption = 0
+
         self.setToolTip("Battery: Stale")
