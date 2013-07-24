@@ -13,7 +13,7 @@ class HeadTeleop():
 	MIN_TILT=-10
 	
 	def __init__(self):
-		rospy.init_node('ptu_mirror')
+		rospy.init_node('ptu_mirror_head')
 		self.pub = rospy.Publisher('/ptu/cmd', JointState)
 		rospy.Subscriber("/head/actual_state", JointState, self.callback) 
 		#rospy.Subscriber("/teleop_joystick/action_buttons", action_buttons, self.button_callback) 
