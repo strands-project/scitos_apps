@@ -28,7 +28,7 @@ class HeadTeleop():
 			if item == "HeadPan":
 				self.ptu_command.position.append(head_state.position[index]*(math.pi/180))
 			if item == "HeadTilt":
-				self.ptu_command.position.append(head_state.position[index]*(math.pi/180))
+				self.ptu_command.position.append(-head_state.position[index]*(math.pi/180))
 		self.pub.publish(self.ptu_command)
 
 if __name__ == '__main__':
