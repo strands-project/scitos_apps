@@ -20,8 +20,10 @@ class HeadTeleop():
 		self.ptu_command.position=[0,0]
 		self.ptu_command.velocity=[1.0]
 		rospy.loginfo("Start")
+	
 	def callback(self, head_state):
 		for index, item in enumerate(head_state.name):
+			print head_state.name
 			if item == "HeadPan":
 				self.ptu_command.position.append(head_state.position[index]*(math.pi/180))
 			if item == "HeadTilt":
