@@ -22,6 +22,7 @@ class HeadTeleop():
 		rospy.loginfo("Start")
 	
 	def callback(self, head_state):
+		self.ptu_command.position = [0, 0]
 		for index, item in enumerate(head_state.name):
 			print index
 			if item == "HeadPan":
