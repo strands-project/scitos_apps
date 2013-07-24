@@ -23,7 +23,7 @@ class HeadTeleop():
 	
 	def callback(self, head_state):
 		for index, item in enumerate(head_state.name):
-			print head_state.name
+			print index
 			if item == "HeadPan":
 				self.ptu_command.position.append(head_state.position[index]*(math.pi/180))
 			if item == "HeadTilt":
