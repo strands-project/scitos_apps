@@ -29,12 +29,12 @@ class HeadTeleop():
 		self.ptu_command.position = []
 		for index, item in enumerate(head_state.name):
 			if item == "HeadPan":
-				pan = head_state.position[index] if head_state.position[index] < MAX_PAN else MAX_PAN
-				pan = head_state.position[index] if head_state.position[index] > MIN_PAN else MIN_PAN
+				pan = head_state.position[index] if head_state.position[index] < self.MAX_PAN else self.MAX_PAN
+				pan = head_state.position[index] if head_state.position[index] > self.MIN_PAN else self.MIN_PAN
 				self.ptu_command.position.append(pan*(math.pi/180))
 			if item == "HeadTilt":
-				tilt = head_state.position[index] if head_state.position[index] < MAX_TILT else MAX_TILT
-				tilt = head_state.position[index] if head_state.position[index] > MIN_TILT else MIN_TILT
+				tilt = head_state.position[index] if head_state.position[index] < self.MAX_TILT else self.MAX_TILT
+				tilt = head_state.position[index] if head_state.position[index] > self.MIN_TILT else self.MIN_TILT
 				self.ptu_command.position.append(-tilt*(math.pi/180))
 		self.pub.publish(self.ptu_command)
 
