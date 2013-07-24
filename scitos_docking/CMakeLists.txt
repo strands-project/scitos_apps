@@ -9,6 +9,13 @@ find_package(catkin REQUIRED COMPONENTS image_transport roscpp rospy std_msgs sc
 ## System dependencies are found with CMake's conventions
 # find_package(Boost REQUIRED COMPONENTS system)
 
+include($ENV{ROS_ROOT}/core/rosbuild/FindPkgConfig.cmake)
+pkg_check_modules(GSL REQUIRED gsl)
+include_directories(${GSL_INCLUDE_DIRS})
+link_directories(${GSL_LIBRARY_DIRS})
+
+
+
 
 ## Uncomment this if the package has a setup.py. This macro ensures
 ## modules and global scripts declared therein get installed
@@ -132,6 +139,8 @@ add_library(CDump src/CDump.cpp)
 add_library(CTimer src/CTimer.cpp)
 add_library(CRawImage src/CRawImage.cpp)
 add_library(CTransformation src/CTransformation.cpp)
+target_link_libraries(CTransformation ${GSL_LIBRARIES})
+
 add_executable(visual_charging_test_node src/whycon.cpp)
 add_dependencies(visual_charging_test_node scitos_msgs_gencpp scitos_apps_msgs_genccp)
 
