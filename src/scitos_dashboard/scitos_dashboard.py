@@ -4,6 +4,7 @@ import rospy
 
 from scitos_msgs.msg import MotorStatus, BatteryState
 from scitos_msgs.srv import EmergencyStop, ResetMotorStop, EnableMotors
+from std_msgs.msg import Float32
 
 from rqt_robot_dashboard.dashboard import Dashboard
 from rqt_robot_dashboard.monitor_dash_widget import MonitorDashWidget
@@ -14,6 +15,7 @@ from python_qt_binding.QtGui import QMessageBox
 
 from scitos_drive import ScitosDrive
 from scitos_battery import ScitosBattery
+from scitos_mileage import ScitosMileage
 
 from threading import Timer
 
@@ -31,6 +33,7 @@ class ScitosDashboard(Dashboard):
 
         self._console = ConsoleDashWidget(self.context, minimal=False)
         self._monitor = MonitorDashWidget(self.context)
+        self._mileage = ScitosMileage()
 
         self._drive = ScitosDrive(self.reset_motorstop_cb, self.freerun_cb, self.enable_motorstop_cb)
 
@@ -39,16 +42,22 @@ class ScitosDashboard(Dashboard):
         
         self._motor_state_sub = rospy.Subscriber('/motor_status', MotorStatus, self.motor_status_callback)
         self._battery_state_sub = rospy.Subscriber('/battery_state', BatteryState, self.battery_callback)
+        self._mileage_sub = rospy.Subscriber('/mileage', Float32, self.mileage_callback)
         self._motor_stale_timer = Timer(0, self._drive.set_stale)
+        self._motor_stale_timer.start()
         self._battery_stale_timer = Timer(0, self._batteries.set_stale)
+        self._battery_stale_timer.start()
+        self._mileage_stale_timer = Timer(0, self._mileage.set_stale)
+        self._mileage_stale_timer.start()
         
 
     def get_widgets(self):
-        return [[self._monitor, self._console], [self._drive],[self._batteries]]
+        return [[self._monitor, self._console], [self._drive],[self._batteries], [self._mileage]]
 
     def motor_status_callback(self, msg):
         self._motor_stale_timer.cancel()
         self._motor_stale_timer = Timer(1, self._drive.set_stale)
+        self._motor_stale_timer.start()
         self._motorstatus_message = msg
         self._last_motorstatus_message_time = rospy.get_time()
 
@@ -65,8 +74,17 @@ class ScitosDashboard(Dashboard):
     def battery_callback(self,msg):
         self._battery_stale_timer.cancel()
         self._battery_stale_timer = Timer(30, self._batteries.set_stale)
+        self._battery_stale_timer.start()
         self._batteries.set_power_state(msg)
 
+        
+    def mileage_callback(self, msg):
+        self._mileage_stale_timer.cancel()
+        self._mileage_stale_timer = Timer(1, self._drive.set_stale)
+        self._mileage_stale_timer.start()
+
+        self._mileage.set_mileage_from_msg(msg)
+        
     def reset_motorstop_cb(self):
         reset_srv = rospy.ServiceProxy("/reset_motorstop", ResetMotorStop)
         try:
