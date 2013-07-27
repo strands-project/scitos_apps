@@ -19,20 +19,24 @@ class RosThread
 {
 public:		
 		RosThread(std::string handle) {
+				//Init nodehandle, services and subscriber				
 				ros::NodeHandle n(handle);		
 				reset_client = n.serviceClient<scitos_msgs::ResetMotorStop>(RESET_MOTORS);
 	  		emergency_client = n.serviceClient<scitos_msgs::EmergencyStop>(EMERGENCY_STOP);
 				sub = n.subscribe(BUMPER, 1000, &RosThread::bumperCallback, this);
 		}
 
-		void start() {  
+		//Lets the spin() function run in a different thread
+		void start() {
 	    	m_Thread = boost::thread(&RosThread::spin, this);  
 		}
 
+		//Calls shutdown to end ros::spin() gracefully when Qt dies.
 		void stop() {
 				ros::shutdown();
 		}
 
+		//Calls the given service. Either stop or reset of motors.
 		bool callService(std::string service) {
 				boost::lock_guard<boost::mutex> lock(service_mut);
 				if(strcmp(service.c_str(), EMERGENCY_STOP) == 0) {		
@@ -55,11 +59,13 @@ public:
 				return false;
 		}
 
+		//Callback subscribed to the /bumper topic to determin current motor state.
 		void bumperCallback(const std_msgs::Bool::ConstPtr& msg) {
 				boost::lock_guard<boost::mutex> lock(bumper_mut);
 				motors_on = !msg->data;
 		}
 
+		//Read last received motor state
 		bool isMotorsOn() {
 				boost::lock_guard<boost::mutex> lock(bumper_mut);
 				return motors_on;
@@ -70,6 +76,8 @@ private:
 		boost::mutex service_mut, bumper_mut;
 		bool motors_on;
 
+		//This runs in its own thread, see above.
+		//Has to be because both ros and Qt have to run in a loop.
 		void spin() {
 				ros::spin();
 		}
