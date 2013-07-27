@@ -66,19 +66,19 @@ catkin_package(
 ## Your package locations should be listed before other locations
 include_directories(include
   ${catkin_INCLUDE_DIRS}
-  ${CMAKE_CURRENT_BINARY_DIR}
+  ${CMAKE_CURRENT_BINARY_DIR} #Qt specific to find generated headers
 )
 
 ## Qt specific 
-file(GLOB QT_FORMS RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} ui/*.ui)
-file(GLOB QT_RESOURCES RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} resources/*.qrc)
-file(GLOB_RECURSE QT_MOC RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} FOLLOW_SYMLINKS *.h)
+set(QT_FORMS ui/emergencystop.ui)
+#set(QT_RESOURCES resources/my_resource.qrc)
+set(QT_MOC include/emergencystop.h)
 
 QT4_ADD_RESOURCES(QT_RESOURCES_CPP ${QT_RESOURCES})
 QT4_WRAP_CPP(QT_MOC_HPP ${QT_MOC})
 QT4_WRAP_UI(QT_FORMS_HPP ${QT_FORMS})
 
-file(GLOB_RECURSE QT_SOURCES RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} FOLLOW_SYMLINKS *.cpp)
+set(QT_SOURCES src/emergencystop.cpp src/main.cpp)
 
 ## Declare a cpp library
 # add_library(scitos_touch
