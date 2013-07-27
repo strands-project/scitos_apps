@@ -2,6 +2,7 @@
 #define EMERGENCYSTOP_H
 
 #include <stdio.h>
+#include <signal.h>
 
 #include <QWidget>
 #include <QTimer>
@@ -23,8 +24,10 @@ public:
     
 private slots:
     void on_stopButton_clicked();
+		void stopRos();
 
 private:
+		static void cleanupAtEndOfProgram(int catched_signal);
     Ui::EmergencyStop *ui;
 		RosThread *rt;
 		bool motors_on;

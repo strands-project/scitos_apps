@@ -8,6 +8,7 @@ EmergencyStop::EmergencyStop(QWidget *parent, RosThread *rt) :
     ui->setupUi(this);
 		motors_on = true;
 		ui->stopButton->setStyleSheet("background-color: red");
+		signal(SIGINT, cleanupAtEndOfProgram);
 }
 
 EmergencyStop::~EmergencyStop() {
@@ -28,4 +29,18 @@ void EmergencyStop::on_stopButton_clicked() {
 						ui->stopButton->setText("STOP");
 				}
 		}
+}
+
+void EmergencyStop::stopRos() {
+		rt->stop();
+}
+
+void EmergencyStop::cleanupAtEndOfProgram(int catched_signal)
+{
+		if (catched_signal == SIGINT) {
+				QCoreApplication::quit();
+    }
+		if (catched_signal == SIGTERM) {
+				QCoreApplication::quit();
+    }
 }

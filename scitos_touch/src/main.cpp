@@ -11,5 +11,7 @@ int main(int argc, char *argv[])
     EmergencyStop gui(0, &rt);
     gui.show();
 
+		QObject::connect(&app, SIGNAL(aboutToQuit()), &gui, SLOT(stopRos()));
+
 		return app.exec();
 }

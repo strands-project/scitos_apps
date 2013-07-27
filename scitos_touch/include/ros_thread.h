@@ -24,7 +24,11 @@ public:
 
 		void start() {  
 	    	m_Thread = boost::thread(&RosThread::spin, this);  
-		} 
+		}
+
+		void stop() {
+				ros::shutdown();
+		}
 
 		bool callService(std::string service) {
 				boost::lock_guard<boost::mutex> lock(mutex);
