@@ -18,5 +18,5 @@ void EmergencyStop::on_stopButton_clicked() {
 		if(motors_on)	
 				motors_on = !rt->callService(EMERGENCY_STOP);
 		else
-				motors_on = !rt->callService(RESET_MOTORS);
+				motors_on = rt->callService(RESET_MOTORS);
 }
