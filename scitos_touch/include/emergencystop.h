@@ -30,7 +30,6 @@ private:
 		static void cleanupAtEndOfProgram(int catched_signal);
     Ui::EmergencyStop *ui;
 		RosThread *rt;
-		bool motors_on;
 };
 
 #endif // EMERGENCYSTOP_H

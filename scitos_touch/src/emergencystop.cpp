@@ -6,8 +6,10 @@ EmergencyStop::EmergencyStop(QWidget *parent, RosThread *rt) :
     ui(new Ui::EmergencyStop),
 		rt(rt) {
     ui->setupUi(this);
-		motors_on = true;
-		ui->stopButton->setStyleSheet("background-color: red");
+		if(rt->isMotorsOn())
+				ui->stopButton->setStyleSheet("background-color: red");
+		else
+				ui->stopButton->setStyleSheet("background-color: green");
 		signal(SIGINT, cleanupAtEndOfProgram);
 }
 
@@ -16,15 +18,15 @@ EmergencyStop::~EmergencyStop() {
 }
 
 void EmergencyStop::on_stopButton_clicked() {	
-		if(motors_on)	{
-				motors_on = !rt->callService(EMERGENCY_STOP);
-				if(!motors_on) {			
+		if(rt->isMotorsOn())	{
+				rt->callService(EMERGENCY_STOP);
+				if(!rt->isMotorsOn()) {			
 						ui->stopButton->setStyleSheet("background-color: green");
 						ui->stopButton->setText("GO");
 				}
 		} else {
-				motors_on = rt->callService(RESET_MOTORS);
-				if(motors_on) {
+				rt->callService(RESET_MOTORS);
+				if(rt->isMotorsOn()) {
 						ui->stopButton->setStyleSheet("background-color: red");
 						ui->stopButton->setText("STOP");
 				}
