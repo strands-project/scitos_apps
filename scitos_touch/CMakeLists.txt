@@ -90,7 +90,7 @@ add_executable(scitos_touch_stop ${QT_SOURCES} ${QT_RESOURCES_CPP} ${QT_FORMS_HP
 
 ## Add cmake target dependencies of the executable/library
 ## as an example, message headers may need to be generated before nodes
-# add_dependencies(scitos_touch_node scitos_touch_generate_messages_cpp)
+add_dependencies(scitos_touch_stop scitos_msgs_gencpp)
 
 ## Specify libraries to link a library or executable target against
 target_link_libraries(scitos_touch_stop
