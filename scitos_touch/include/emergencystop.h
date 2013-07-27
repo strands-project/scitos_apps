@@ -1,12 +1,13 @@
 #ifndef EMERGENCYSTOP_H
 #define EMERGENCYSTOP_H
 
-#include <QWidget>
+#include <stdio.h>
 
-#include <ros/ros.h>
-#include <ros/console.h>
-#include <scitos_msgs/ResetMotorStop.h>
-#include <scitos_msgs/EmergencyStop.h>
+#include <QWidget>
+#include <QTimer>
+
+#include "ros_thread.h"
+
 
 namespace Ui {
 class EmergencyStop;
@@ -17,7 +18,7 @@ class EmergencyStop : public QWidget
     Q_OBJECT
     
 public:
-    explicit EmergencyStop(QWidget *parent = 0);
+    explicit EmergencyStop(QWidget *parent = 0, RosThread *rt = 0);
     ~EmergencyStop();
     
 private slots:
@@ -25,9 +26,7 @@ private slots:
 
 private:
     Ui::EmergencyStop *ui;
-    ros::ServiceClient reset_client, emergency_client;
-    scitos_msgs::ResetMotorStop reset_srv;
-    scitos_msgs::EmergencyStop emergency_srv;
+		RosThread *rt;
 };
 
 #endif // EMERGENCYSTOP_H

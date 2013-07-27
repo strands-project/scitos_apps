@@ -3,9 +3,13 @@
 
 int main(int argc, char *argv[])
 {
-    QApplication a(argc, argv);
-    EmergencyStop w;
-    w.show();
-    
-    return a.exec();
+		ros::init(argc, argv, "touch_stop");
+		RosThread rt("touch_stop");
+		rt.start();
+
+		QApplication app(argc, argv);
+    EmergencyStop gui(0, &rt);
+    gui.show();
+
+		return app.exec();
 }

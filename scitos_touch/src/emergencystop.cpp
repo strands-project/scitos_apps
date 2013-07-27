@@ -1,19 +1,18 @@
 #include "emergencystop.h"
 #include "ui_emergencystop.h"
 
-EmergencyStop::EmergencyStop(QWidget *parent) :
+EmergencyStop::EmergencyStop(QWidget *parent, RosThread *rt) :
     QWidget(parent),
-    ui(new Ui::EmergencyStop)
-{
+    ui(new Ui::EmergencyStop),
+		rt(rt) {
     ui->setupUi(this);
 }
 
-EmergencyStop::~EmergencyStop()
-{
+EmergencyStop::~EmergencyStop() {
     delete ui;
 }
 
-void EmergencyStop::on_stopButton_clicked()
-{
-
+void EmergencyStop::on_stopButton_clicked() {	
+		printf("Button\n");		
+		rt->callService(EMERGENCY_STOP);
 }
