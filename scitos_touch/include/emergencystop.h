@@ -27,6 +27,7 @@ private slots:
 private:
     Ui::EmergencyStop *ui;
 		RosThread *rt;
+		bool motors_on;
 };
 
 #endif // EMERGENCYSTOP_H
