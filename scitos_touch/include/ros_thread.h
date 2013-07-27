@@ -27,11 +27,9 @@ public:
 		} 
 
 		bool callService(std::string service) {
-				//boost::lock_guard<boost::mutex> lock(mutex);
-				printf("Service %s\n", service.c_str());
+				boost::lock_guard<boost::mutex> lock(mutex);
 				if(strcmp(service.c_str(), EMERGENCY_STOP) == 0) {		
 						if (!emergency_client.call(emergency_srv)) {
-								printf("Stop\n");
 								ROS_ERROR("Failed to call service /emergency_stop");
 								return false;
 						} else {
