@@ -19,14 +19,12 @@ EmergencyStop::~EmergencyStop() {
 
 void EmergencyStop::on_stopButton_clicked() {	
 		if(rt->isMotorsOn())	{
-				rt->callService(EMERGENCY_STOP);
-				if(!rt->isMotorsOn()) {			
+				if(rt->callService(EMERGENCY_STOP)) {			
 						ui->stopButton->setStyleSheet("background-color: green");
 						ui->stopButton->setText("GO");
 				}
 		} else {
-				rt->callService(RESET_MOTORS);
-				if(rt->isMotorsOn()) {
+				if(rt->callService(RESET_MOTORS)) {
 						ui->stopButton->setStyleSheet("background-color: red");
 						ui->stopButton->setText("STOP");
 				}
