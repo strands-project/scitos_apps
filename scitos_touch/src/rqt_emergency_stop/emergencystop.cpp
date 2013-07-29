@@ -26,6 +26,8 @@ void EmergencyStop::initPlugin(qt_gui_cpp::PluginContext& context) {
     
     connect(ui.stopButton, SIGNAL(clicked()), this, SLOT(on_stopButton_clicked()));
     connect(this, SIGNAL(motorStatusChanged(bool)), this, SLOT(changeColour(bool)));
+    
+    start();
 }
 
 void EmergencyStop::start() {
@@ -73,8 +75,10 @@ void EmergencyStop::on_stopButton_clicked() {
 
 void EmergencyStop::bumperCallback(const std_msgs::Bool::ConstPtr& msg) {
     boost::lock_guard<boost::mutex> lock(bumper_mut);
-    motors_on = !msg->data;
-    emit motorStatusChanged(motors_on);
+    if(msg->data == motors_on) {
+        motors_on = !msg->data;
+        emit motorStatusChanged(motors_on);
+    }
 }
 
 bool EmergencyStop::isMotorsOn() {
@@ -83,7 +87,7 @@ bool EmergencyStop::isMotorsOn() {
 }
 
 void EmergencyStop::changeColour(bool motors) {
-    if(motors) { //If service call successful, change colour and text of button	
+    if(!motors) { //If service call successful, change colour and text of button	
         ui.stopButton->setStyleSheet("background-color: green");
         ui.stopButton->setText("GO");
     } else {
