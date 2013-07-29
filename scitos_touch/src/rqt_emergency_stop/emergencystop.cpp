@@ -19,14 +19,17 @@ void EmergencyStop::initPlugin(qt_gui_cpp::PluginContext& context) {
     // add widget to the user interface
     context.addWidget(widget);
     
+    //Setup service clients and subscribers
     ros::NodeHandle n("EmergencyStop");		
     reset_client = n.serviceClient<scitos_msgs::ResetMotorStop>(RESET_MOTORS);
     emergency_client = n.serviceClient<scitos_msgs::EmergencyStop>(EMERGENCY_STOP);
 	sub = n.subscribe(BUMPER, 1000, &EmergencyStop::bumperCallback, this);
     
+    //connect Qt signals and slots
     connect(ui.stopButton, SIGNAL(clicked()), this, SLOT(on_stopButton_clicked()));
     connect(this, SIGNAL(motorStatusChanged(bool)), this, SLOT(changeColour(bool)));
     
+    //start ros::spin thread
     start();
 }
 
@@ -40,24 +43,24 @@ void EmergencyStop::spin() {
 
 void EmergencyStop::shutdownPlugin()
 {
+    //Shutdown subsriber and ros::spin
     sub.shutdown();
     ros::shutdown();
 }
 
 void EmergencyStop::saveSettings(qt_gui_cpp::Settings& plugin_settings, qt_gui_cpp::Settings& instance_settings) const
 {
-  // TODO save intrinsic configuration, usually using:
-  // instance_settings.setValue(k, v)
+  // No settings to save
 }
 
 void EmergencyStop::restoreSettings(const qt_gui_cpp::Settings& plugin_settings, const qt_gui_cpp::Settings& instance_settings)
 {
-  // TODO restore intrinsic configuration, usually using:
-  // v = instance_settings.value(k)
+  // No setting to restore
 }
 
 //Button callback
 void EmergencyStop::on_stopButton_clicked() {	
+    //Choose right service depending on current motor state
     if(isMotorsOn()) {		
         if (!emergency_client.call(emergency_srv)) {
             ROS_ERROR("Failed to call service /emergency_stop");
@@ -75,9 +78,12 @@ void EmergencyStop::on_stopButton_clicked() {
 
 void EmergencyStop::bumperCallback(const std_msgs::Bool::ConstPtr& msg) {
     boost::lock_guard<boost::mutex> lock(bumper_mut);
+    //update motor state only if there is a change
     if(msg->data == motors_on) {
         motors_on = !msg->data;
-        emit motorStatusChanged(motors_on);
+        //emit signal to tell Qt that it has to update the button colour.
+        //Have to use Qt signals because this is the only way to communicate between the ros thread and the Qt thread (according to ros tutorial)
+        emit motorStatusChanged(motors_on); 
     }
 }
 
@@ -87,7 +93,7 @@ bool EmergencyStop::isMotorsOn() {
 }
 
 void EmergencyStop::changeColour(bool motors) {
-    if(!motors) { //If service call successful, change colour and text of button	
+    if(!motors) {	
         ui.stopButton->setStyleSheet("background-color: green");
         ui.stopButton->setText("GO");
     } else {
