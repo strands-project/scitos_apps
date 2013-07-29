@@ -26,7 +26,7 @@ public:
     virtual void saveSettings(qt_gui_cpp::Settings& plugin_settings, qt_gui_cpp::Settings& instance_settings) const;
     virtual void restoreSettings(const qt_gui_cpp::Settings& plugin_settings, const qt_gui_cpp::Settings& instance_settings);
     
-private slots:
+protected slots:
         void on_stopButton_clicked();
 		void stopRos();
 

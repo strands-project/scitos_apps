@@ -19,6 +19,10 @@ void EmergencyStop::initPlugin(qt_gui_cpp::PluginContext& context) {
     // add widget to the user interface
     context.addWidget(widget);
     
+    ROS_INFO("Init");
+    
+    connect(ui.stopButton, SIGNAL(clicked()), this, SLOT(on_stopButton_clicked()));
+    
     rc = new RosComm("EmergencyStop");
 }
 
@@ -41,6 +45,7 @@ void EmergencyStop::restoreSettings(const qt_gui_cpp::Settings& plugin_settings,
 
 //Button callback
 void EmergencyStop::on_stopButton_clicked() {	
+        ROS_INFO("Button");
 		if(rc->isMotorsOn())	{ //Check state the motor is in and choose functionality according to it.
 				if(rc->callService(EMERGENCY_STOP)) { //If service call successful, change colour and text of button	
 						ui.stopButton->setStyleSheet("background-color: green");
