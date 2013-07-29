@@ -1,5 +1,5 @@
-#ifndef ROS_THREAD_H
-#define ROS_THREAD_H
+#ifndef ROS_COMM_H
+#define ROS_COMM_H
 
 #include <string>
 
@@ -15,20 +15,20 @@
 #define RESET_MOTORS "/reset_motorstop"
 #define BUMPER "/bumper"
 
-class RosThread
+class RosComm
 {
 public:		
-		RosThread(std::string handle) {
+		RosComm(std::string handle) {
 				//Init nodehandle, services and subscriber				
 				ros::NodeHandle n(handle);		
 				reset_client = n.serviceClient<scitos_msgs::ResetMotorStop>(RESET_MOTORS);
-	  		emergency_client = n.serviceClient<scitos_msgs::EmergencyStop>(EMERGENCY_STOP);
-				sub = n.subscribe(BUMPER, 1000, &RosThread::bumperCallback, this);
+	  		    emergency_client = n.serviceClient<scitos_msgs::EmergencyStop>(EMERGENCY_STOP);
+				sub = n.subscribe(BUMPER, 1000, &RosComm::bumperCallback, this);
 		}
 
 		//Lets the spin() function run in a different thread
 		void start() {
-	    	m_Thread = boost::thread(&RosThread::spin, this);  
+	    	m_Thread = boost::thread(&RosComm::spin, this);  
 		}
 
 		//Calls shutdown to end ros::spin() gracefully when Qt dies.
@@ -83,11 +83,11 @@ private:
 		}
 	
 		ros::ServiceClient reset_client, emergency_client;
-    scitos_msgs::ResetMotorStop reset_srv;
-    scitos_msgs::EmergencyStop emergency_srv;
+        scitos_msgs::ResetMotorStop reset_srv;
+        scitos_msgs::EmergencyStop emergency_srv;
 		ros::Subscriber sub;
 
 };
 
 
-#endif // ROS_THREAD_H
+#endif // ROS_COMM_H

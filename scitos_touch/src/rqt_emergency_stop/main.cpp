@@ -1,10 +1,10 @@
 #include <QtGui/QApplication>
-#include "emergencystop.h"
+#include "rqt_emergency_stop/emergencystop.h"
 
 int main(int argc, char *argv[])
 {
 		//Init ros and start thread
-		ros::init(argc, argv, "touch_stop");
+		/*ros::init(argc, argv, "touch_stop");
 		RosThread rt("touch_stop");
 		rt.start();
 
@@ -18,5 +18,5 @@ int main(int argc, char *argv[])
 		QObject::connect(&app, SIGNAL(aboutToQuit()), &gui, SLOT(stopRos()));
 
 		//Start Qt loop. Because of this we have to run ros::spin() in another thread.
-		return app.exec();
+		return app.exec();*/
 }
