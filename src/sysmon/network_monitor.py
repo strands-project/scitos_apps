@@ -46,7 +46,7 @@ class WirelessMonitor(StatusMonitor):
         else:
             self._connected=True
             self._network = m.group(1)
-            self._signal_strength = int(m.group(3))/float(m.group(4))
+            self._signal_strength = int(m.group(3))/float(m.group(4))*100
             self._bit_rate=int(m.group(2))
 
         
