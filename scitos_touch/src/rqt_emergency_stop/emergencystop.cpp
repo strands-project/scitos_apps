@@ -28,6 +28,8 @@ void EmergencyStop::initPlugin(qt_gui_cpp::PluginContext& context) {
     //connect Qt signals and slots
     connect(ui.stopButton, SIGNAL(clicked()), this, SLOT(on_stopButton_clicked()));
     connect(this, SIGNAL(motorStatusChanged(bool)), this, SLOT(changeColour(bool)));
+    motors_on = false;
+    emit motorStatusChanged(motors_on);
     
     //start ros::spin thread
     start();
