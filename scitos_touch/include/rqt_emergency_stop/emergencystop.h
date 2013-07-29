@@ -3,14 +3,27 @@
 
 #include <stdio.h>
 #include <signal.h>
+#include <string>
 
 #include <QWidget>
 #include <QTimer>
+#include <QStringList>
 
+#include <boost/thread.hpp>
+
+#include <ros/ros.h>
+#include <ros/console.h>
+#include <std_msgs/Bool.h>
+#include <scitos_msgs/ResetMotorStop.h>
+#include <scitos_msgs/EmergencyStop.h>
 #include <rqt_gui_cpp/plugin.h>
+#include <pluginlib/class_list_macros.h>
 
 #include "ui_emergencystop.h"
-#include "rqt_emergency_stop/ros_comm.h"
+
+#define EMERGENCY_STOP "/emergency_stop"
+#define RESET_MOTORS "/reset_motorstop"
+#define BUMPER "/bumper"
 
 
 namespace rqt_emergency_stop {
@@ -27,14 +40,27 @@ public:
     virtual void restoreSettings(const qt_gui_cpp::Settings& plugin_settings, const qt_gui_cpp::Settings& instance_settings);
     
 protected slots:
-        void on_stopButton_clicked();
-		void stopRos();
+    void on_stopButton_clicked();
+    void changeColour(bool);
+		
+signals:
+    void motorStatusChanged(bool);
 
 private:
-		static void cleanupAtEndOfProgram(int catched_signal);
-        Ui::EmergencyStop ui;
-		QWidget* widget;
-		RosComm* rc;
+	void start();
+	void spin();
+	void bumperCallback(const std_msgs::Bool::ConstPtr& msg);
+	bool isMotorsOn();
+	
+    Ui::EmergencyStop ui;
+	QWidget* widget;
+	boost::thread m_Thread;
+	boost::mutex service_mut, bumper_mut;
+	bool motors_on;
+	ros::ServiceClient reset_client, emergency_client;
+    scitos_msgs::ResetMotorStop reset_srv;
+    scitos_msgs::EmergencyStop emergency_srv;
+	ros::Subscriber sub;
 };
 }
 

@@ -1,6 +1,4 @@
 #include "rqt_emergency_stop/emergencystop.h"
-#include <pluginlib/class_list_macros.h>
-#include <QStringList>
 
 namespace rqt_emergency_stop {
 
@@ -10,6 +8,8 @@ EmergencyStop::EmergencyStop() : rqt_gui_cpp::Plugin()
 }
 
 void EmergencyStop::initPlugin(qt_gui_cpp::PluginContext& context) {
+    ROS_INFO("Init");
+    
     // access standalone command line arguments
     QStringList argv = context.argv();
     // create QWidget
@@ -19,16 +19,27 @@ void EmergencyStop::initPlugin(qt_gui_cpp::PluginContext& context) {
     // add widget to the user interface
     context.addWidget(widget);
     
-    ROS_INFO("Init");
+    ros::NodeHandle n("EmergencyStop");		
+    reset_client = n.serviceClient<scitos_msgs::ResetMotorStop>(RESET_MOTORS);
+    emergency_client = n.serviceClient<scitos_msgs::EmergencyStop>(EMERGENCY_STOP);
+	sub = n.subscribe(BUMPER, 1000, &EmergencyStop::bumperCallback, this);
     
     connect(ui.stopButton, SIGNAL(clicked()), this, SLOT(on_stopButton_clicked()));
-    
-    rc = new RosComm("EmergencyStop");
+    connect(this, SIGNAL(motorStatusChanged(bool)), this, SLOT(changeColour(bool)));
+}
+
+void EmergencyStop::start() {
+    m_Thread = boost::thread(&EmergencyStop::spin, this);  
+}
+
+void EmergencyStop::spin() {
+    ros::spin();
 }
 
 void EmergencyStop::shutdownPlugin()
 {
-  // TODO unregister all publishers here
+    sub.shutdown();
+    ros::shutdown();
 }
 
 void EmergencyStop::saveSettings(qt_gui_cpp::Settings& plugin_settings, qt_gui_cpp::Settings& instance_settings) const
@@ -45,36 +56,41 @@ void EmergencyStop::restoreSettings(const qt_gui_cpp::Settings& plugin_settings,
 
 //Button callback
 void EmergencyStop::on_stopButton_clicked() {	
-        ROS_INFO("Button");
-		if(rc->isMotorsOn())	{ //Check state the motor is in and choose functionality according to it.
-				if(rc->callService(EMERGENCY_STOP)) { //If service call successful, change colour and text of button	
-						ui.stopButton->setStyleSheet("background-color: green");
-						ui.stopButton->setText("GO");
-				}
-		} else {
-				if(rc->callService(RESET_MOTORS)) { //If service call successful, change colour and text of button
-						ui.stopButton->setStyleSheet("background-color: red");
-						ui.stopButton->setText("STOP");
-				}
-		}
-}
-
-//Call stop function of RosThread. 
-//Neccessary because ros will end up in a segfault if parent Qt component is killed and ros is not stopped.
-void EmergencyStop::stopRos() {
-		//rt->stop();
-}
-
-//Catch sigint and sigterm signal and call Qt quit function
-void EmergencyStop::cleanupAtEndOfProgram(int catched_signal)
-{
-		if (catched_signal == SIGINT) {
-				QCoreApplication::quit();
-    }
-		if (catched_signal == SIGTERM) {
-				QCoreApplication::quit();
+    if(isMotorsOn()) {		
+        if (!emergency_client.call(emergency_srv)) {
+            ROS_ERROR("Failed to call service /emergency_stop");
+        } else {
+            ROS_INFO("Motors stopped");
+        } 
+    } else {
+        if (!reset_client.call(reset_srv)) {
+            ROS_ERROR("Failed to call service /reset_motorstop");
+        } else {
+	        ROS_INFO("Motors started");
+        } 
     }
 }
 
+void EmergencyStop::bumperCallback(const std_msgs::Bool::ConstPtr& msg) {
+    boost::lock_guard<boost::mutex> lock(bumper_mut);
+    motors_on = !msg->data;
+    emit motorStatusChanged(motors_on);
 }
-PLUGINLIB_DECLARE_CLASS(rqt_emergency_stop, EmergencyStop, rqt_emergency_stop::EmergencyStop, rqt_gui_cpp::Plugin)
+
+bool EmergencyStop::isMotorsOn() {
+    boost::lock_guard<boost::mutex> lock(bumper_mut);
+    return motors_on;
+}
+
+void EmergencyStop::changeColour(bool motors) {
+    if(motors) { //If service call successful, change colour and text of button	
+        ui.stopButton->setStyleSheet("background-color: green");
+        ui.stopButton->setText("GO");
+    } else {
+        ui.stopButton->setStyleSheet("background-color: red");
+	    ui.stopButton->setText("STOP");
+    }
+}
+
+}
+PLUGINLIB_EXPORT_CLASS(rqt_emergency_stop::EmergencyStop, rqt_gui_cpp::Plugin)

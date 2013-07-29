@@ -11,7 +11,6 @@ find_package(Qt4 REQUIRED COMPONENTS QtCore QtGui)
 include(${QT_USE_FILE})
 
 set(emerency_stop_SRCS
-  src/rqt_emergency_stop/main.cpp
   src/rqt_emergency_stop/emergencystop.cpp
 )
 
