@@ -18,6 +18,7 @@
 
 #define MAX_PATTERNS 10 
 
+float testSpeed = 0;
 CTimer timer;
 int timeOut = 120;
 int  imageWidth= 640;
@@ -38,7 +39,7 @@ ros::Publisher cmd_ptu;
 image_transport::Publisher imdebug;
 
 int failedToSpotStationCount=0;
-int maxFailures=30;
+int maxFailures=60;
 int numBots = 3;
 int posCount = -30;
 STrackedObject myPos,dockPos;
@@ -76,6 +77,7 @@ const char* stateStr[] ={
 	"rotating to face the station",
 	"leaving station",
 	"preparing for autonomous run",
+	"performing a test movement",
 	"checking if not on the charger already",
 	"in an unknown state"
 };
@@ -97,6 +99,7 @@ typedef enum{
 	STATE_ROTATE_BACK,
 	STATE_UNDOCK_MOVE,
 	STATE_UNDOCK_ROTATE,
+	STATE_TEST_MOVE,
 	STATE_INIT,
 	STATE_NUMBER
 }EState;
@@ -118,16 +121,11 @@ void chargerCallBack(const scitos_msgs::ChargerStatus &msg)
 		head.position[0] = 0;
 		head.name[1] ="EyeLidRight";
 		head.position[1] = 0;
-		cmd_head.publish(head);
+		head.name[2] ="HeadPan";
+		head.position[2] = 180;
+		if (state != STATE_IDLE) cmd_head.publish(head);
 	}
-	if (chargerDetected==false && state == STATE_INIT){
-		state = STATE_SEARCH;
-		head.name[0] ="EyeLidLeft";
-		head.position[0] = 100;
-		head.name[1] ="EyeLidRight";
-		head.position[1] = 100;
-		cmd_head.publish(head);
-	}
+	if (state == STATE_INIT) head.position[0] = head.position[1] = 100;
 }
 
 void ptuCallback(const nav_msgs::Odometry &msg){
@@ -140,27 +138,27 @@ void odomCallback(const nav_msgs::Odometry &msg)
 	current = msg;
 	currentAngle = tf::getYaw(current.pose.pose.orientation);
 	if (state == STATE_SEARCH){
-			   base_cmd.linear.x = 0; 
-			   base_cmd.angular.z = 0.2;
-			   cmd_vel.publish(base_cmd);
+		base_cmd.linear.x = 0; 
+		base_cmd.angular.z = 0.2;
+		cmd_vel.publish(base_cmd);
 	}	
 	if (state == STATE_ROTATE){
 		base_cmd.linear.x = 0; 
 		base_cmd.angular.z = normalizeAngle(desiredAngle-currentAngle);
 		cmd_vel.publish(base_cmd);
-	   if (fabs(normalizeAngle(desiredAngle-currentAngle)) < 0.05){
-		   state = STATE_MOVE_TO;
-		   lastOdo = current;
-	   }
+		if (fabs(normalizeAngle(desiredAngle-currentAngle)) < 0.05){
+			state = STATE_MOVE_TO;
+			lastOdo = current;
+		}
 	}
 	if (state == STATE_ROTATE_BACK){
 		base_cmd.linear.x = 0; 
 		base_cmd.angular.z = normalizeAngle(desiredAngle-currentAngle);
 		cmd_vel.publish(base_cmd);
-	   if (fabs(normalizeAngle(desiredAngle-currentAngle)) < 0.05){
-		   state = STATE_ADJUST;
-		   lastOdo = current;
-	   }
+		if (fabs(normalizeAngle(desiredAngle-currentAngle)) < 0.05){
+			state = STATE_ADJUST;
+			lastOdo = current;
+		}
 	}
 	if (state == STATE_MOVE_TO){
 		float x = (current.pose.pose.position.x-lastOdo.pose.pose.position.x);
@@ -170,10 +168,10 @@ void odomCallback(const nav_msgs::Odometry &msg)
 		base_cmd.angular.z = 0; 
 		cmd_vel.publish(base_cmd);
 		if (fabs(desiredDistance - travelledDistance) < 0.02){
-			 state = STATE_ROTATE_BACK;
-			 if (rotateBy < 0) rotateBy = -M_PI/2; else rotateBy = M_PI/2;
-			 head.position[0] = 0;
-			 desiredAngle = normalizeAngle(currentAngle-rotateBy);
+			state = STATE_ROTATE_BACK;
+			if (rotateBy < 0) rotateBy = -M_PI/2; else rotateBy = M_PI/2;
+			head.position[0] = 0;
+			desiredAngle = normalizeAngle(currentAngle-rotateBy);
 		}
 	}
 	if (state == STATE_RETRY){
@@ -184,30 +182,60 @@ void odomCallback(const nav_msgs::Odometry &msg)
 		base_cmd.angular.z = 0; 
 		cmd_vel.publish(base_cmd);
 		if (fabs(desiredDistance - travelledDistance) < 0.02){
-			 state = STATE_APPROACH;
-			 if (rotateBy < 0) rotateBy = -M_PI/2; else rotateBy = M_PI/2;
-			 head.position[0] = 0;
-			 desiredAngle = normalizeAngle(currentAngle-rotateBy);
+			state = STATE_APPROACH;
+			if (rotateBy < 0) rotateBy = -M_PI/2; else rotateBy = M_PI/2;
+			head.position[0] = 0;
+			desiredAngle = normalizeAngle(currentAngle-rotateBy);
 		}
 	}
 	if (state == STATE_UNDOCK_MOVE)
 	{
+		desiredDistance = 0.5;
 		float x = (current.pose.pose.position.x-lastOdo.pose.pose.position.x);
 		float y = (current.pose.pose.position.y-lastOdo.pose.pose.position.y);
 		float travelledDistance = sqrt(x*x+y*y);
-		base_cmd.linear.x = -(desiredDistance - travelledDistance);
+		base_cmd.linear.x = -fabs(desiredDistance - travelledDistance)*0.5;
 		base_cmd.angular.z = 0; 
 		cmd_vel.publish(base_cmd);
-		if (fabs(desiredDistance - travelledDistance) < 0.02){
-			 state = STATE_UNDOCK_ROTATE;
-			 rotateBy = M_PI;
-			 head.name[0] ="EyeLidLeft";
-			 head.position[0] = 0;
-			 desiredAngle = normalizeAngle(currentAngle-rotateBy);
+			head.name[0] ="EyeLidLeft";
+			 head.position[0] = 180;
+			head.name[1] ="EyeLidRight";
+			 head.position[1] = 180;
+			head.name[2] ="HeadPan";
+			 head.position[2] = 180;
+		if (fabs(desiredDistance - travelledDistance) < 0.04){
+			state = STATE_UNDOCK_ROTATE;
+			rotateBy = M_PI;
+			head.name[0] ="EyeLidLeft";
+			 head.position[0] = 180;
+			head.name[1] ="EyeLidRight";
+			 head.position[1] = 180;
+			head.name[2] ="HeadPan";
+			 head.position[2] = 0;
+			 desiredAngle = normalizeAngle(currentAngle-M_PI);
 		}
 	}
-	if (state == STATE_UNDOCK_ROTATE){
-		
+	if (state == STATE_UNDOCK_ROTATE)
+	{
+		base_cmd.linear.x = 0; 
+		base_cmd.angular.z = normalizeAngle(desiredAngle-currentAngle);
+		cmd_vel.publish(base_cmd);
+		if (fabs(normalizeAngle(desiredAngle-currentAngle)) < 0.05){
+			desiredAngle = normalizeAngle(currentAngle+(rand()%100)/50.0);
+			testSpeed = (rand()%100)/100.0*0.3; 
+			state = STATE_SUCCESS;
+			lastOdo = current;
+		}
+	}
+	if (state == STATE_TEST_MOVE)
+	{
+		base_cmd.linear.x = testSpeed; 
+		base_cmd.angular.z = 0.2;
+		cmd_vel.publish(base_cmd);
+		if (fabs(normalizeAngle(desiredAngle-currentAngle)) < 0.05){
+			state = STATE_SUCCESS;
+			lastOdo = current;
+		}
 	}
 }
 
@@ -218,9 +246,11 @@ void imageCallback(const sensor_msgs::ImageConstPtr& msg)
 		head.position[0] = 100;
 		head.name[1] ="EyeLidRight";
 		head.position[1] = 100;
+		head.name[2] ="HeadPan";
+		head.position[2] = 0;
 		cmd_head.publish(head);
 	}
-	if ((int) state < (int)STATE_WAIT){
+	if ((int) state < (int)STATE_RETRY){
 		memcpy(image->data,(void*)&msg->data[0],msg->step*msg->height);
 		for (int i = 0;i<numBots;i++){
 			lastSegmentArray[i] = currentSegmentArray[i];
@@ -242,9 +272,10 @@ void imageCallback(const sensor_msgs::ImageConstPtr& msg)
 			failedToSpotStationCount = 0; 
 			if (state == STATE_APPROACH){
 				STrackedObject station = trans->getDock(objectArray);
-				base_cmd.linear.x = fmax((station.x - 5*fabs(station.y)+0.2)*0.4,0);
+				base_cmd.linear.x = fmin(fabs(station.x - 5*fabs(station.y)+0.2),1)*0.4;
 				base_cmd.angular.z = station.y*0.5;
-				if (station.x < 0.4){
+				if (station.x < 0.4) base_cmd.linear.x = 0; 
+				if (station.x < 0.4 && fabs(station.y) < 0.05){
 					state = STATE_MEASURE;
 					base_cmd.linear.x = base_cmd.angular.z = 0;
 					myPos.x = myPos.y = myPos.z = 0;
@@ -293,9 +324,11 @@ void imageCallback(const sensor_msgs::ImageConstPtr& msg)
 				head.position[0] = posCount;
 				head.name[1] ="EyeLidRight";
 				head.position[1] = posCount;
+				head.name[2] ="ignore";
 				if (posCount > 100){
 					head.name[0] ="HeadPan";
 					head.name[1] ="ignore";
+					head.name[2] ="ignore";
 					head.position[1] = 0;
 					myPos.x = myPos.x/posCount;
 					myPos.y = myPos.y/posCount;
@@ -328,6 +361,7 @@ void imageCallback(const sensor_msgs::ImageConstPtr& msg)
 				head.position[0] = posCount;
 				head.name[1] ="EyeLidRight";
 				head.position[1] = posCount;
+				head.name[2] ="ignore";
 				if (posCount > 100){
 					state = STATE_SUCCESS;
 					myPos.x = myPos.x/posCount;
@@ -355,12 +389,14 @@ void imageCallback(const sensor_msgs::ImageConstPtr& msg)
 				posCount++;
 				head.name[0] ="HeadPan";
 				head.position[0] = 180;
-				head.name[1] ="none";
+				head.name[1] ="ignore";
 				head.position[1] = 0.5;
+				head.name[2] ="ignore";
 				//if (posCount%100==0)printf("Waiting %i\n",posCount); 
 				if (posCount > 200){
 					head.name[0] ="HeadPan";
 					head.name[1] ="ignore";
+					head.name[2] ="ignore";
 					head.position[1] = 0;
 					myPos.x = myPos.x/posCount;
 					myPos.y = myPos.y/posCount;
@@ -382,8 +418,8 @@ int initComponents(){
 	failedToSpotStationCount=0;
 	image->getSaveNumber();
 	state = STATE_IDLE;
-	head.name.resize(2);
-        head.position.resize(2);
+	head.name.resize(3);
+        head.position.resize(3);
 
         ptu.velocity.resize(2);
         ptu.position.resize(2);
@@ -405,11 +441,18 @@ bool receiveCommands(scitos_apps_msgs::Charging::Request  &req, scitos_apps_msgs
 {
 //	std::cout << "Request " << req.chargeCommand << " Timeout " << (int)req.chargeTimeout << std::endl;
 	initComponents();
+	lastOdo = current;
+	char response[100];
 	if (req.chargeCommand == "charge") state = STATE_INIT;
 	if (req.chargeCommand == "calibrate") state = STATE_CALIBRATE;
-	timer.start();
+	if (req.chargeCommand == "undock") state = STATE_UNDOCK_MOVE;
+	if (state == STATE_UNDOCK_MOVE && chargerDetected == false){
+		 state = STATE_FAILURE;
+		 sprintf(response,"Undocking aborted - the robot is not at the charging station.");
+	}
 	timer.reset();
-	timeOut = (int)req.chargeTimeout;
+	timer.start();
+	timeOut = (int) req.chargeTimeout;
 	int a = 0;
 	EState lastState = STATE_IDLE;
 	while (ros::ok() && state != STATE_SUCCESS && state!=STATE_FAILURE && timer.getTime() < timeOut){
@@ -417,11 +460,16 @@ bool receiveCommands(scitos_apps_msgs::Charging::Request  &req, scitos_apps_msgs
 		ros::spinOnce();
 		usleep(10000);
 		if (state!=lastState) ROS_INFO("Charging service is %s",stateStr[state]);
-		if (chargerDetected && state!= STATE_CALIBRATE) state = STATE_SUCCESS;
+		if (chargerDetected && state!= STATE_UNDOCK_MOVE && state!= STATE_CALIBRATE && state != STATE_INIT) state = STATE_SUCCESS;
 		lastState = state;
+		if (a++> 5 && state == STATE_INIT) state = STATE_SEARCH;
 	}
-	char response[100];
-	sprintf(response,"The robot %s.",stateStr[state]);
+	if (req.chargeCommand == "charge"){
+		if (chargerDetected) sprintf(response,"The robot has successfully reached the charger."); else sprintf(response,"The robot has failed reached the charger.");
+	}
+	if (req.chargeCommand == "undock" && state == STATE_SUCCESS){
+		 sprintf(response,"Undocking  successfully completed.");
+	}
 	res.chargeResult = response;
 	return true;
 }
@@ -464,7 +512,7 @@ int main(int argc,char* argv[])
 		ros::spinOnce();
 		state = STATE_IDLE;
 		usleep(10000);
-		if (a++%200 == 0)ROS_INFO("Charging service is %s",stateStr[state]);
+		if (a++%200 == 0)ROS_INFO("Charging service state is %s",stateStr[state]);
 	}
 	delete image;
 	for (int i = 0;i<MAX_PATTERNS;i++) delete detectorArray[i];
