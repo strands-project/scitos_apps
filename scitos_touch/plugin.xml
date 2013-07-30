@@ -1,0 +1,12 @@
+<library path="lib/librqt_emergency_stop">
+  <class name="rqt_emergency_stop/EmergencyStop" type="rqt_emergency_stop::EmergencyStop" base_class_type="rqt_gui_cpp::Plugin">
+    <description>
+      A GUI plugin to trigger the emergency stop of the robot.
+    </description>
+    <qtgui>
+      <label>Emergency Stop</label>
+      <icon type="theme">image-x-generic</icon>
+      <statustip>A GUI plugin to trigger the emergency stop of the robot.</statustip>
+    </qtgui>
+  </class>
+</library>
