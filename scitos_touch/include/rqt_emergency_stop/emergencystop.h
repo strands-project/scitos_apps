@@ -47,8 +47,6 @@ signals:
     void motorStatusChanged(bool);
 
 private:
-	void start();
-	void spin();
 	void bumperCallback(const std_msgs::Bool::ConstPtr& msg);
 	bool isMotorsOn();
 	

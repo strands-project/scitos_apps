@@ -20,34 +20,21 @@ void EmergencyStop::initPlugin(qt_gui_cpp::PluginContext& context) {
     context.addWidget(widget);
     
     //Setup service clients and subscribers
-    ros::NodeHandle n("EmergencyStop");		
-    reset_client = n.serviceClient<scitos_msgs::ResetMotorStop>(RESET_MOTORS);
-    emergency_client = n.serviceClient<scitos_msgs::EmergencyStop>(EMERGENCY_STOP);
-	sub = n.subscribe(BUMPER, 1000, &EmergencyStop::bumperCallback, this);
+    reset_client = getNodeHandle().serviceClient<scitos_msgs::ResetMotorStop>(RESET_MOTORS);
+    emergency_client = getNodeHandle().serviceClient<scitos_msgs::EmergencyStop>(EMERGENCY_STOP);
+	sub = getNodeHandle().subscribe(BUMPER, 1000, &EmergencyStop::bumperCallback, this);
     
     //connect Qt signals and slots
     connect(ui.stopButton, SIGNAL(clicked()), this, SLOT(on_stopButton_clicked()));
     connect(this, SIGNAL(motorStatusChanged(bool)), this, SLOT(changeColour(bool)));
     motors_on = true;
     emit motorStatusChanged(motors_on);
-    
-    //start ros::spin thread
-    start();
-}
-
-void EmergencyStop::start() {
-    m_Thread = boost::thread(&EmergencyStop::spin, this);  
-}
-
-void EmergencyStop::spin() {
-    ros::spin();
 }
 
 void EmergencyStop::shutdownPlugin()
 {
     //Shutdown subsriber and ros::spin
     sub.shutdown();
-    ros::shutdown();
 }
 
 void EmergencyStop::saveSettings(qt_gui_cpp::Settings& plugin_settings, qt_gui_cpp::Settings& instance_settings) const
