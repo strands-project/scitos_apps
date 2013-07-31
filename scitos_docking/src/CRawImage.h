@@ -13,8 +13,8 @@ class CRawImage
 {
 public:
 
-  CRawImage(int wi,int he);
-  CRawImage(unsigned char *datai,int wi,int he);
+  CRawImage(int wi,int he,int bppi);
+  CRawImage(unsigned char *datai,int wi,int he,int bppi);
   ~CRawImage();
   void saveBmp(const char* name);
   void saveBmp();

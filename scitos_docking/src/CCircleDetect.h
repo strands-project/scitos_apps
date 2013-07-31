@@ -63,7 +63,7 @@ class CCircleDetect
 		bool lastTrackOK;
 		float outerAreaRatio,innerAreaRatio,areasRatio;
 		int queueStart,queueEnd,queueOldStart,numSegments;
-		int width,height,len,siz;
+		int width,height,len;
 		int expand[4];
 		unsigned char *ptr;
 		int sizer,sizerAll;

@@ -2,11 +2,11 @@
 
 static unsigned char sth[] = {66,77,54,16,14,0,0,0,0,0,54,0,0,0,40,0,0,0,128,2,0,0,224,1,0,0,1,0,24,0,0,0,0,0,0,16,14,0,18,11,0,0,18,11,0,0,0,0,0,0,0,0,0,0};
 
-CRawImage::CRawImage(int wi,int he)
+CRawImage::CRawImage(int wi,int he,int bppi)
 {
 	width =  wi;
 	height = he;
-	bpp= 3;
+	bpp= bppi;
 	size = bpp*width*height;
 	data = (unsigned char*)calloc(size,sizeof(unsigned char));
 	memset(header,0,122);
@@ -28,12 +28,12 @@ CRawImage::CRawImage(int wi,int he)
 	ownData = true;
 }
 
-CRawImage::CRawImage(unsigned char *datai,int wi,int he)
+CRawImage::CRawImage(unsigned char *datai,int wi,int he,int bppi)
 {
 	ownData = false;
 	width =  wi;
 	height = he;
-	bpp= 3;
+	bpp= bppi;
 	size = bpp*width*height;
 	data = datai; 
 	memset(header,0,122);
