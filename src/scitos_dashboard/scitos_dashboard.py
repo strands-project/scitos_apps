@@ -73,14 +73,14 @@ class ScitosDashboard(Dashboard):
 
     def battery_callback(self,msg):
         self._battery_stale_timer.cancel()
-        self._battery_stale_timer = Timer(30, self._batteries.set_stale)
+        self._battery_stale_timer = Timer(3, self._batteries.set_stale)
         self._battery_stale_timer.start()
         self._batteries.set_power_state(msg)
 
         
     def mileage_callback(self, msg):
         self._mileage_stale_timer.cancel()
-        self._mileage_stale_timer = Timer(1, self._drive.set_stale)
+        self._mileage_stale_timer = Timer(1, self._mileage.set_stale)
         self._mileage_stale_timer.start()
 
         self._mileage.set_mileage_from_msg(msg)
