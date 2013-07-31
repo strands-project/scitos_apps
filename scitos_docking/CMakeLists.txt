@@ -14,9 +14,6 @@ pkg_check_modules(GSL REQUIRED gsl)
 include_directories(${GSL_INCLUDE_DIRS})
 link_directories(${GSL_LIBRARY_DIRS})
 
-
-
-
 ## Uncomment this if the package has a setup.py. This macro ensures
 ## modules and global scripts declared therein get installed
 ## See http://ros.org/doc/api/catkin/html/user_guide/setup_dot_py.html
@@ -141,15 +138,15 @@ add_library(CRawImage src/CRawImage.cpp)
 add_library(CTransformation src/CTransformation.cpp)
 target_link_libraries(CTransformation ${GSL_LIBRARIES})
 
-add_executable(visual_charging_test_node src/whycon.cpp)
-add_dependencies(visual_charging_test_node scitos_msgs_gencpp scitos_apps_msgs_genccp)
+add_executable(visual_charging src/docking.cpp)
+add_dependencies(visual_charging scitos_msgs_gencpp scitos_apps_msgs_genccp)
 
-target_link_libraries (visual_charging_test_node  CDump)
-target_link_libraries (visual_charging_test_node  CTimer)
-target_link_libraries (visual_charging_test_node  CCircleDetect)
-target_link_libraries (visual_charging_test_node  CRawImage)
-target_link_libraries (visual_charging_test_node  CTransformation)
+target_link_libraries (visual_charging  CDump)
+target_link_libraries (visual_charging  CTimer)
+target_link_libraries (visual_charging  CCircleDetect)
+target_link_libraries (visual_charging  CRawImage)
+target_link_libraries (visual_charging  CTransformation)
 
-target_link_libraries (visual_charging_test_node  gsl)
-target_link_libraries (visual_charging_test_node  blas)
-target_link_libraries (visual_charging_test_node  ${catkin_LIBRARIES})
+target_link_libraries (visual_charging  gsl)
+target_link_libraries (visual_charging  blas)
+target_link_libraries (visual_charging  ${catkin_LIBRARIES})
