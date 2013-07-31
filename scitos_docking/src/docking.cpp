@@ -469,7 +469,7 @@ int main(int argc,char* argv[])
 	for (int i = 0;i<MAX_PATTERNS;i++) detectorArray[i] = new CCircleDetect(imageWidth,imageHeight);
 
 	initComponents();
-	image_transport::Subscriber subim = it.subscribe("head_xtion/rgb/image_color", 1, imageCallback);
+	image_transport::Subscriber subim = it.subscribe("head_xtion/rgb/image_mono", 1, imageCallback);
         imdebug = it.advertise("/charging/processedimage", 1);
 	ros::Subscriber subodo = nh->subscribe("odom", 1, odomCallback);
 	ros::Subscriber subcharger = nh->subscribe("battery_state", 1, batteryCallBack);

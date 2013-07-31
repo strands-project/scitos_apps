@@ -1,6 +1,6 @@
 <launch>
 
-  <node pkg="scitos_docking" type="visual_charging_test_node" name="visual_charging" output="screen">
+  <node pkg="scitos_docking" type="visual_charging" name="visual_charging" output="screen">
 		<remap from="/cmd_vel" to="/cmd_vel_mux/input/navigation"/>
   </node>
 </launch> 
