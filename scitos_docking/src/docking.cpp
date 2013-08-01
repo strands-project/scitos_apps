@@ -504,15 +504,6 @@ int main(int argc,char* argv[])
 	timer.reset();
 	int a = 0;
 	while (ros::ok()){
-		/*ptu.name[0] ="pan";
-		ptu.position[0] = 1.5;
-		ptu.velocity[0] = 1.0;
-		ptu.effort[0] = 1.0;
-		ptu.name[1] ="tilt";
-		ptu.position[1] = 0.0;
-		ptu.velocity[1] = 1.0;
-		ptu.effort[1] = 1.0;
-		cmd_ptu.publish(ptu);*/
 		ros::spinOnce();
 		state = STATE_IDLE;
 		usleep(10000);
