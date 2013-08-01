@@ -30,7 +30,7 @@ class HeadTeleop():
 		self.head_command.name=["HeadPan", "HeadTilt"] 
 		self.head_command.position=[self.currentPan, self.currentTilt]
 		self.eyelid_command = JointState() 
-		self.eyelid_command.name=["EyeLidLeft", "EyeLidRight"]
+		self.eyelid_command.name=["EyeLids"]
 		self.eye_command = JointState()
 		self.eye_command.name=["EyesTilt", "EyesPan"]
 		rospy.loginfo("Start")
@@ -76,7 +76,7 @@ class HeadTeleop():
 		self.eye_command.position=[joy.axes[4]*100, joy.axes[3]*100]
 
 		### Eye lids control ###
-		self.eyelid_command.position=[(joy.axes[5]+1)*50]*2
+		self.eyelid_command.position=[(joy.axes[5]+1)*50]
 
 		# publish
 		self.pub.publish(self.head_command)
