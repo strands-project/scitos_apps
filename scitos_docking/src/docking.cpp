@@ -380,9 +380,13 @@ void imageCallback(const sensor_msgs::ImageConstPtr& msg)
 					ROS_INFO("Position of the robot relative to the charging station is %f %f %f\n",own.x,own.y,own.z);
 					state = STATE_SUCCESS;
 					controlHead(0,180,-10);
+					base_cmd.linear.x = base_cmd.angular.z = 0;
+					cmd_vel.publish(base_cmd);
 				}else{
 					head.position[2] = 180;
 					head.position[3] = 0;
+					base_cmd.linear.x = base_cmd.angular.z = 0;
+					cmd_vel.publish(base_cmd);
 					if (measure(&own,&station)){
 						 state = STATE_RETRY;
 						 moveByDistance(-0.5);
