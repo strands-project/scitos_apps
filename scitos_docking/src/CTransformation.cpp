@@ -40,9 +40,8 @@ void CTransformation::updateParams(float a,float b, float c, float d)
 		sem_wait(&trfparamsem);
 		cc[0] = a;
 		cc[1] = b;
-		kc[0] = c;
-		kc[1] = d;
-		printf("cam param updated\n");
+		fc[0] = c;
+		fc[1] = d;
 		sem_post(&trfparamsem);
 	}
 }
