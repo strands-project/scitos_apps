@@ -463,8 +463,7 @@ bool receiveCommands(scitos_apps_msgs::Charging::Request  &req, scitos_apps_msgs
 		if (state!=lastState) ROS_INFO("Charging service is %s",stateStr[state]);
 		lastState = state;
 	}
-
-	base_cmd.linear.x = base_cmd.linear.x = 0; 
+	base_cmd.linear.x = base_cmd.angular.z = 0;
 	cmd_vel.publish(base_cmd);
 	ros::spinOnce();
 
