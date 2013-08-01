@@ -18,6 +18,7 @@
 
 #define MAX_PATTERNS 10 
 
+bool calibrated = true;
 float testSpeed = 0;
 CTimer timer;
 int timeOut = 120;
@@ -67,8 +68,8 @@ const char* stateStr[] ={
 	"waiting for charger signal",
 	"retrying to reach charger attempt",
 	"idle",
-	"has successfully reached the charger",
-	"has failed to reach the charger",
+	"happy",
+	"sad",
 	"rotating to align with station",
 	"aligning with station",
 	"rotating to face the station",
@@ -259,7 +260,7 @@ void odomCallback(const nav_msgs::Odometry &msg)
 			}
 			break;
 		case STATE_UNDOCK_ROTATE:
-			if (rotateByAngle()) state = STATE_TEST_MOVE;
+			if (rotateByAngle()) state = STATE_SUCCESS;
 			controlHead(100,0,0);
 			lastAngle = currentAngle;
 			break;
@@ -410,15 +411,14 @@ int initComponents(){
         ptu.velocity.resize(2);
         ptu.position.resize(2);
         ptu.name.resize(2);
-	posCount = -30; 
-
-	nh->getParam("/charging/ownOffsetX", trans->ownOffset.x);
-	nh->getParam("/charging/ownOffsetY", trans->ownOffset.y);
-	nh->getParam("/charging/ownOffsetZ", trans->ownOffset.z);
-	nh->getParam("/charging/dockOffsetX", trans->dockOffset.x);
-	nh->getParam("/charging/dockOffsetY", trans->dockOffset.y);
-	nh->getParam("/charging/dockOffsetZ", trans->dockOffset.z);
-
+	posCount = -30;
+	calibrated = true; 
+	calibrated = calibrated && nh->getParam("/charging/ownOffsetX", trans->ownOffset.x);
+	calibrated = calibrated && nh->getParam("/charging/ownOffsetY", trans->ownOffset.y);
+	calibrated = calibrated && nh->getParam("/charging/ownOffsetZ", trans->ownOffset.z);
+	calibrated = calibrated && nh->getParam("/charging/dockOffsetX", trans->dockOffset.x);
+	calibrated = calibrated && nh->getParam("/charging/dockOffsetY", trans->dockOffset.y);
+	calibrated = calibrated && nh->getParam("/charging/dockOffsetZ", trans->dockOffset.z);
 	myPos.x = myPos.y = myPos.z = 0;
 	dockPos.x = dockPos.y = dockPos.z = 0;
 }
@@ -428,7 +428,14 @@ bool receiveCommands(scitos_apps_msgs::Charging::Request  &req, scitos_apps_msgs
 //	std::cout << "Request " << req.chargeCommand << " Timeout " << (int)req.chargeTimeout << std::endl;
 	initComponents();
 	char response[100];
-	if (req.chargeCommand == "charge") state = STATE_INIT;
+	if (req.chargeCommand == "charge"){
+		if (calibrated==false){
+			ROS_ERROR("Cannot approach the charging station because the docking is not calibrated.\nRead the readme file on how to perform calibration procedure.");
+			state = STATE_FAILURE;
+		}else{
+			state = STATE_INIT;
+		}
+	}
 	if (req.chargeCommand == "test") state = STATE_TEST1;
 	if (req.chargeCommand == "calibrate"){
 		 state = STATE_CALIBRATE;
@@ -456,9 +463,11 @@ bool receiveCommands(scitos_apps_msgs::Charging::Request  &req, scitos_apps_msgs
 		if (state!=lastState) ROS_INFO("Charging service is %s",stateStr[state]);
 		lastState = state;
 	}
+
 	base_cmd.linear.x = base_cmd.linear.x = 0; 
 	cmd_vel.publish(base_cmd);
 	ros::spinOnce();
+
 	if (req.chargeCommand == "charge"){
 		if (chargerDetected) sprintf(response,"The robot has successfully reached the charger."); else sprintf(response,"The robot has failed reached the charger.");
 	}
