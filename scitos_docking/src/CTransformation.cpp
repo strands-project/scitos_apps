@@ -1,5 +1,6 @@
 #include "CTransformation.h"
 #include <stdio.h>
+#include <stdint.h>
 #include <gsl/gsl_math.h>
 #include <gsl/gsl_complex_math.h>
 #include <gsl/gsl_permutation.h>
@@ -20,21 +21,30 @@ void CTransformation::clearOffsets()
 	dockOffset.x = dockOffset.y = dockOffset.z = 0;
 }
 
-CTransformation::CTransformation(int widthi,int heighti,float diam,bool fullUnbarreli)
+CTransformation::CTransformation(float diam)
 {
 	clearOffsets();
-	fullUnbarrel = fullUnbarreli;
-	width = widthi;
-	height = heighti;
 	char dummy[1000];
 	trackedObjectDiameter = diam;
 	cc[0] = 320;
 	cc[1] = 240; 
-	fc[0] = fc[1] = 525;
+	fc[0] = fc[1] = 125;
 	memset(kc,0,sizeof(float)*6);
 	kc[0] = 1.0;
-//	for (int i = 0;i<6;i++) printf("%05f,",kcerr[i]);
-	unbarrelInitialized = false;
+	sem_init(&trfparamsem,0,1);
+}
+
+void CTransformation::updateParams(float a,float b, float c, float d)
+{
+	if (a != cc[0] || cc[1] != b || kc[0] != c ||kc[1] != d){
+		sem_wait(&trfparamsem);
+		cc[0] = a;
+		cc[1] = b;
+		kc[0] = c;
+		kc[1] = d;
+		printf("cam param updated\n");
+		sem_post(&trfparamsem);
+	}
 }
 
 CTransformation::~CTransformation()
@@ -67,7 +77,6 @@ float CTransformation::barrelY(float x,float y)
 
 float CTransformation::unbarrelX(float x,float y)
 {
-	if (fullUnbarrel)return x;
 	float ix,iy,dx,dy,r,rad;
 	ix = x = (x-cc[0])/fc[0];
 	iy = y = (y-cc[1])/fc[1];
@@ -84,7 +93,6 @@ float CTransformation::unbarrelX(float x,float y)
 
 float CTransformation::unbarrelY(float x,float y)
 {
-	if (fullUnbarrel) return y;
 	float ix,iy,dx,dy,r,rad;
 	ix = x = (x-cc[0])/fc[0];
 	iy = y = (y-cc[1])/fc[1];
@@ -106,7 +114,6 @@ void CTransformation::transformXYerr(float *ax,float *ay)
 	//*ay = y = (*ay-cc[1])/fc[1];
 	x = *ax;
 	y = *ay;
-	if (fullUnbarrel)return;
 	r = x*x+y*y;
 	dx = 2*kcerr[3]*x*y + kcerr[4]*(r + 2*x*x);
 	dy = 2*kcerr[4]*x*y + kcerr[3]*(r + 2*y*y);
@@ -120,7 +127,6 @@ void CTransformation::transformXY(float *ax,float *ay)
 	float x,y,ix,iy,dx,dy,r,rad;
 	*ax = ix = x = (*ax-cc[0])/fc[0];
 	*ay = iy = y = (*ay-cc[1])/fc[1];
-	if (fullUnbarrel)return;
 	for (int i= 0;i<5;i++){
 		r = x*x+y*y;
 		dx = 2*kc[3]*x*y + kc[4]*(r + 2*x*x);
@@ -141,23 +147,6 @@ float CTransformation::transformX(float xc,float yc)
 float CTransformation::transformY(float xc,float yc)
 {
 	return (unbarrelY(xc,yc)-cc[1])/fc[1];
-}
-
-void CTransformation::unbarrel(unsigned char *dst,unsigned char *src)
-{
-	src[0] = src[1] = src[2] = 255;
-	if (fullUnbarrel){
-		float gx,gy;
-		for (int p = 0;p<width*(height-1);p++){
-			gx = gArrayX[p];
-			gy = gArrayY[p];
-			dst[3*p] = src[3*pArray[p]]*(1-gx)*(1-gy)+src[3*pArray[p]+3]*gx*(1-gy)+src[3*pArray[p]+width*3]*(1-gx)*gy+src[3*pArray[p]+(width+1)*3]*gx*gy; 
-			dst[3*p+1] = src[3*pArray[p]+1]*(1-gx)*(1-gy)+src[3*pArray[p]+3+1]*gx*(1-gy)+src[3*pArray[p]+width*3+1]*(1-gx)*gy+src[3*pArray[p]+(width+1)*3+1]*gx*gy; 
-			dst[3*p+2] = src[3*pArray[p]+2]*(1-gx)*(1-gy)+src[3*pArray[p]+3+2]*gx*(1-gy)+src[3*pArray[p]+width*3+2]*(1-gx)*gy+src[3*pArray[p]+(width+1)*3+2]*gx*gy; 
-		}
-	}else{
-		fprintf(stdout,"Image unbarrel was not enabled\n");
-	}
 }
 
 float CTransformation::distance(STrackedObject o1,STrackedObject o2)
@@ -592,14 +581,14 @@ STrackedObject CTransformation::eigen(double data[])
 	return result;
 }
 
-STrackedObject CTransformation::transform(SSegment segment,bool unbarreli)
+STrackedObject CTransformation::transform(SSegment segment)
 {
 	float x,y,x1,x2,y1,y2,major,minor,v0,v1;
 	STrackedObject result;
-	fullUnbarrel = unbarreli;
 	//Transform to the Canonical camera coordinates
 	x = segment.x;
 	y = segment.y;
+	sem_wait(&trfparamsem);
 	transformXY(&x,&y);
 	//major axis
 	//vertices in image coords
@@ -625,6 +614,7 @@ STrackedObject CTransformation::transform(SSegment segment,bool unbarreli)
 	//vertices in canonical camera coords 
 	transformXY(&x1,&y1);
 	transformXY(&x2,&y2);
+	sem_post(&trfparamsem);
 	//minor axis length 
 	minor = sqrt((x1-x2)*(x1-x2)+(y1-y2)*(y1-y2))/2.0;
 	//printf("BBB: %f %f\n",sqrt((x-x1)*(x-x1)+(y-y1)*(y-y1))-sqrt((x-x2)*(x-x2)+(y-y2)*(y-y2)),minor);

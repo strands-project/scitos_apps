@@ -11,6 +11,7 @@
 #include <math.h>
 #include <unistd.h>
 #include "CCircleDetect.h"
+#include <semaphore.h> 
 
 typedef enum{
 	TRANSFORM_NONE,
@@ -38,7 +39,7 @@ typedef struct{
 class CTransformation
 {
 	public:
-		CTransformation(int widthi,int heighti,float diam,bool fullUnbarreli = false);
+		CTransformation(float diam);
 		~CTransformation();
 		void clearOffsets();
 
@@ -47,12 +48,12 @@ class CTransformation
 		float unbarrelX(float x,float y);
 		float unbarrelY(float x,float y);
 		float transformX(float x,float y);
+		void updateParams(float a,float b,float c,float d);
 		float transformY(float x,float y);
 		void transformXY(float *ix,float *iy);
 		void transformXYerr(float *ix,float *iy);
 
-		void unbarrel(unsigned char* src,unsigned char* dst);
-		STrackedObject transform(SSegment segment,bool unbarrel);
+		STrackedObject transform(SSegment segment);
 		STrackedObject eigen(double data[]);
 		int calibrate2D(STrackedObject *o,float gridDimX,float gridDimY);
 		int calibrate3D(STrackedObject *o,float gridDimX,float gridDimY);
@@ -86,8 +87,6 @@ class CTransformation
 		float gDimX,gDimY;
 		S3DTransform D3transform[4];
 		int width,height;
-		bool fullUnbarrel;
-		bool unbarrelInitialized;
 		float trackedObjectDiameter;
 		float kc[6];
 		float kcerr[6];
@@ -96,6 +95,7 @@ class CTransformation
 		float cc[2];
 		float error2D;
 		STrackedObject c2D[4];
+		sem_t trfparamsem;
 };
 
 #endif

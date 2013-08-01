@@ -5,6 +5,9 @@
 
 int* CCircleDetect::buffer = NULL;
 int* CCircleDetect::queue = NULL;
+int  CCircleDetect::width = 0;
+int  CCircleDetect::height = 0;
+int  CCircleDetect::len = 0;
 
 //Variable initialization
 CCircleDetect::CCircleDetect(int wi,int he)
@@ -43,6 +46,19 @@ CCircleDetect::CCircleDetect(int wi,int he)
 	innerAreaRatio = M_PI/4.0;
 	areasRatio = (1.0-areaRatioInner_Outer)/areaRatioInner_Outer;
 	sizer = sizerAll = 0;
+}
+
+int CCircleDetect::adjustDimensions(int wi,int he)
+{
+	width = wi;
+	height = he;
+	len = width*height;
+	free(buffer);
+	free(queue);
+	buffer = (int*)malloc(len*sizeof(int));
+	queue = (int*)malloc(len*sizeof(int));
+	SSegment dummy;
+	bufferCleanup(dummy);
 }
 
 CCircleDetect::~CCircleDetect()
@@ -193,13 +209,17 @@ void CCircleDetect::bufferCleanup(SSegment init)
 
 SSegment CCircleDetect::findSegment(CRawImage* image, SSegment init)
 {
+
 	SSegment result;
 	result.x = 0;
 	result.y = 0;
 	result.round = false;
 	result.valid = false;
 	numSegments = 0;
-
+	if (image->width != width || image->height != height){
+		 adjustDimensions(image->width,image->height);
+		 init.valid = false;
+	}
 	int pos = 0;
 	int ii = 0;
 	int start = 0;

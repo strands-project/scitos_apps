@@ -35,6 +35,7 @@ class CCircleDetect
 		CCircleDetect(int wi,int he);
 		~CCircleDetect();
 		void bufferCleanup(SSegment init);
+		int adjustDimensions(int wi,int he);
 		SSegment findSegment(CRawImage* image, SSegment init);
 		bool examineSegment(CRawImage* image,SSegment *segmen,int ii,float areaRatio);
 
@@ -63,7 +64,7 @@ class CCircleDetect
 		bool lastTrackOK;
 		float outerAreaRatio,innerAreaRatio,areasRatio;
 		int queueStart,queueEnd,queueOldStart,numSegments;
-		int width,height,len;
+		static int width,height,len;
 		int expand[4];
 		unsigned char *ptr;
 		int sizer,sizerAll;

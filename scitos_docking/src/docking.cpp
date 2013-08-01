@@ -21,8 +21,8 @@
 float testSpeed = 0;
 CTimer timer;
 int timeOut = 120;
-int  imageWidth= 640;
-int  imageHeight = 480;
+int  defaultImageWidth= 320;
+int  defaultImageHeight = 240;
 float circleDiameter = 0.05;
 float rotateBy = 0;
 bool chargerDetected = false;
@@ -172,6 +172,12 @@ bool measure(STrackedObject *o1,STrackedObject *o2=NULL,int count = 0,bool ml=tr
 	return false;
 }
 
+void cameraInfoCallBack(const sensor_msgs::CameraInfo &msg)
+{
+	trans->updateParams(msg.K[2],msg.K[5],msg.K[0],msg.K[4]);
+}
+
+
 void batteryCallBack(const scitos_msgs::BatteryState &msg)
 {
 	chargerDetected = msg.charging;
@@ -281,13 +287,19 @@ void imageCallback(const sensor_msgs::ImageConstPtr& msg)
 		} 
 	}
 	if ((int) state < (int)STATE_RETRY){
-		image->bpp = msg->step/msg->width;
+		if (image->bpp != msg->step/msg->width || image->width != msg->width || image->height != msg->height){
+			delete image;
+			image = new CRawImage(msg->width,msg->height,msg->step/msg->width);
+			printf("Readjusting image size\n");
+		}
 		memcpy(image->data,(void*)&msg->data[0],msg->step*msg->height);
+
+
 		//search image for circles
 		for (int i = 0;i<numBots;i++){
 			lastSegmentArray[i] = currentSegmentArray[i];
 			currentSegmentArray[i] = detectorArray[i]->findSegment(image,lastSegmentArray[i]);
-			if (currentSegmentArray[i].valid)objectArray[i] = trans->transform(currentSegmentArray[i],false);
+			if (currentSegmentArray[i].valid)objectArray[i] = trans->transform(currentSegmentArray[i]);
 		}
 		//and publish the result
 		memcpy((void*)&msg->data[0],image->data,msg->step*msg->height);
@@ -357,6 +369,7 @@ void imageCallback(const sensor_msgs::ImageConstPtr& msg)
 					nh->setParam("/charging/dockOffsetX", station.x);
 					nh->setParam("/charging/dockOffsetY", station.y);
 					nh->setParam("/charging/dockOffsetZ", station.z);
+					state = STATE_SUCCESS;
 				}
 			break;
 			case STATE_WAIT:
@@ -441,9 +454,11 @@ bool receiveCommands(scitos_apps_msgs::Charging::Request  &req, scitos_apps_msgs
 		ros::spinOnce();
 		usleep(10000);
 		if (state!=lastState) ROS_INFO("Charging service is %s",stateStr[state]);
-		//if (chargerDetected && state!= STATE_UNDOCK_MOVE && state!= STATE_CALIBRATE && state != STATE_INIT) state = STATE_SUCCESS;
 		lastState = state;
 	}
+	base_cmd.linear.x = base_cmd.linear.x = 0; 
+	cmd_vel.publish(base_cmd);
+	ros::spinOnce();
 	if (req.chargeCommand == "charge"){
 		if (chargerDetected) sprintf(response,"The robot has successfully reached the charger."); else sprintf(response,"The robot has failed reached the charger.");
 	}
@@ -464,15 +479,16 @@ int main(int argc,char* argv[])
 	cmd_ptu = nh->advertise<sensor_msgs::JointState>("/ptu/cmd", 2);
 
 	dump = new CDump(NULL,256,1000000);
-	image = new CRawImage(imageWidth,imageHeight,4);
-	trans = new CTransformation(imageWidth,imageHeight,circleDiameter,true);
-	for (int i = 0;i<MAX_PATTERNS;i++) detectorArray[i] = new CCircleDetect(imageWidth,imageHeight);
+	image = new CRawImage(defaultImageWidth,defaultImageHeight,4);
+	trans = new CTransformation(circleDiameter);
+	for (int i = 0;i<MAX_PATTERNS;i++) detectorArray[i] = new CCircleDetect(defaultImageWidth,defaultImageHeight);
 
 	initComponents();
 	image_transport::Subscriber subim = it.subscribe("head_xtion/rgb/image_mono", 1, imageCallback);
         imdebug = it.advertise("/charging/processedimage", 1);
 	ros::Subscriber subodo = nh->subscribe("odom", 1, odomCallback);
 	ros::Subscriber subcharger = nh->subscribe("battery_state", 1, batteryCallBack);
+	ros::Subscriber subcamera = nh->subscribe("head_xtion/rgb/camera_info", 1,cameraInfoCallBack);
 	ros::ServiceServer service = nh->advertiseService("chargingSrv", receiveCommands);
 
 	timer.start();
