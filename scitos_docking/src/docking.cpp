@@ -18,6 +18,8 @@
 
 #define MAX_PATTERNS 10 
 
+float dockingPrecision = 0.05;
+int maxMeasurements = 10;
 bool calibrated = true;
 float testSpeed = 0;
 CTimer timer;
@@ -282,7 +284,7 @@ void imageCallback(const sensor_msgs::ImageConstPtr& msg)
 		ros::spinOnce();
 		if (chargerDetected){
 			state = STATE_WAIT;
-			measure(NULL,NULL,100);	
+			measure(NULL,NULL,maxMeasurements);	
 		}else{
 			state = STATE_SEARCH;
 		} 
@@ -325,7 +327,8 @@ void imageCallback(const sensor_msgs::ImageConstPtr& msg)
 				if (station.x < 0.4) base_cmd.linear.x = 0; 
 				if (station.x < 0.4 && fabs(station.y) < 0.05){
 					state = STATE_MEASURE;
-					measure(NULL,NULL,100);
+					measure(NULL,NULL,maxMeasurements);
+					base_cmd.linear.x = base_cmd.angular.z = 0;
 				}
 				cmd_vel.publish(base_cmd);
 				break;
@@ -334,7 +337,7 @@ void imageCallback(const sensor_msgs::ImageConstPtr& msg)
 				base_cmd.angular.z = atan2(station.y,station.x);
 				if (fabs(station.y) < 0.05){
 					state = STATE_MEASURE;
-					measure(NULL,NULL,100);
+					measure(NULL,NULL,maxMeasurements);
 				}
 				cmd_vel.publish(base_cmd);
 			  break;
@@ -342,17 +345,20 @@ void imageCallback(const sensor_msgs::ImageConstPtr& msg)
 			  case STATE_DOCK:
 				base_cmd.linear.x = (station.x - 5*fabs(station.y)+0.3)*0.2;
 				if (fabs(station.y) > 0.02) base_cmd.linear.x = 0; 
-				base_cmd.angular.z = station.y;
-				cmd_vel.publish(base_cmd);
+				base_cmd.angular.z = station.y*0.3;
 				if (station.x < 0.025){
 					state = STATE_WAIT;
-					measure(NULL,NULL,400,false);	
+					measure(NULL,NULL,4*maxMeasurements,false);
+					base_cmd.linear.x = base_cmd.angular.z = 0;
 				}
+				cmd_vel.publish(base_cmd);
 			break;
 			case STATE_MEASURE:
 			own = trans->getOwnPosition(objectArray);
 			if (measure(&own)){
-				if (fabs(own.x) < 0.05) state = STATE_DOCK; else state = STATE_ROTATE;
+				base_cmd.linear.x = base_cmd.angular.z = 0;
+				cmd_vel.publish(base_cmd);
+				if (fabs(own.x) < dockingPrecision) state = STATE_DOCK; else state = STATE_ROTATE;
 				rotateBy = M_PI/2;
 				if (own.x > 0) rotateBy = -rotateBy;
 				rotateBy += sin((own.x+trans->ownOffset.x)/(own.z+trans->ownOffset.z));
@@ -443,7 +449,7 @@ bool receiveCommands(scitos_apps_msgs::Charging::Request  &req, scitos_apps_msgs
 	if (req.chargeCommand == "test") state = STATE_TEST1;
 	if (req.chargeCommand == "calibrate"){
 		 state = STATE_CALIBRATE;
-		 measure(NULL,NULL,200);
+		 measure(NULL,NULL,maxMeasurements);
 	}
 	if (req.chargeCommand == "undock"){
 		if (chargerDetected == false){
