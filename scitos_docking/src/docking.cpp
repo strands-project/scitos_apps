@@ -19,7 +19,8 @@
 #define MAX_PATTERNS 10 
 
 float dockingPrecision = 0.05;
-int maxMeasurements = 10;
+int maxMeasurements = 100;
+
 bool calibrated = true;
 float testSpeed = 0;
 CTimer timer;
@@ -273,7 +274,6 @@ void odomCallback(const nav_msgs::Odometry &msg)
 			if (fabs(lastAngle-currentAngle) > 0.6) state = STATE_SUCCESS;	
 			break;
 	}
-	cmd_head.publish(head);
 }
 
 void imageCallback(const sensor_msgs::ImageConstPtr& msg)
@@ -407,7 +407,6 @@ void imageCallback(const sensor_msgs::ImageConstPtr& msg)
 		}
 		if (failedToSpotStationCount > maxFailures) state=STATE_FAILURE; 
 	}
-	cmd_head.publish(head);
 }
 
 int initComponents(){
@@ -468,11 +467,13 @@ bool receiveCommands(scitos_apps_msgs::Charging::Request  &req, scitos_apps_msgs
 	int a = 0;
 	EState lastState = STATE_IDLE;
 	while (ros::ok() && state != STATE_SUCCESS && state!=STATE_FAILURE && timer.getTime() < timeOut){
+		cmd_head.publish(head);
 		ros::spinOnce();
 		usleep(10000);
 		if (state!=lastState) ROS_INFO("Charging service is %s",stateStr[state]);
 		lastState = state;
 	}
+	cmd_head.publish(head);
 	base_cmd.linear.x = base_cmd.angular.z = 0;
 	cmd_vel.publish(base_cmd);
 	ros::spinOnce();
