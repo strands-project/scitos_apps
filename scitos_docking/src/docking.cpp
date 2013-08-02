@@ -21,6 +21,7 @@
 float dockingPrecision = 0.05;
 int maxMeasurements = 100;
 
+std::string configFilename="";
 bool calibrated = true;
 float testSpeed = 0;
 CTimer timer;
@@ -377,6 +378,15 @@ void imageCallback(const sensor_msgs::ImageConstPtr& msg)
 					nh->setParam("/charging/dockOffsetY", station.y);
 					nh->setParam("/charging/dockOffsetZ", station.z);
 					state = STATE_SUCCESS;
+					FILE* file = fopen(configFilename.c_str(),"w");
+					fprintf(file,"charging:\n");
+					fprintf(file," dockOffsetX: %f\n",station.x);
+					fprintf(file," dockOffsetY: %f\n",station.y);
+					fprintf(file," dockOffsetZ: %f\n",station.z);
+					fprintf(file," ownOffsetX: %f\n",own.x);
+					fprintf(file," ownOffsetY: %f\n",own.y);
+					fprintf(file," ownOffsetZ: %f\n",own.z);
+					fclose(file);
 				}
 			break;
 			case STATE_WAIT:
@@ -409,9 +419,16 @@ void imageCallback(const sensor_msgs::ImageConstPtr& msg)
 	}
 }
 
-int initComponents(){
+int initComponents()
+{
+	if (nh->getParam("configFile", configFilename) == false){
+		ROS_WARN("Config file not set, calibration parameters will not be saved.\n Use the docking.launch to start the charging service or set the configFile by rosparam.\n");
+	}else{
+		std::cout << "Config file set to:" << configFilename << std::endl;
+	}
 	failedToSpotStationCount=0;
 	image->getSaveNumber();
+
 	state = STATE_IDLE;
 
 	head.name.resize(4);
@@ -501,7 +518,6 @@ int main(int argc,char* argv[])
 	image = new CRawImage(defaultImageWidth,defaultImageHeight,4);
 	trans = new CTransformation(circleDiameter);
 	for (int i = 0;i<MAX_PATTERNS;i++) detectorArray[i] = new CCircleDetect(defaultImageWidth,defaultImageHeight);
-
 	initComponents();
 	image_transport::Subscriber subim = it.subscribe("head_xtion/rgb/image_mono", 1, imageCallback);
         imdebug = it.advertise("/charging/processedimage", 1);
