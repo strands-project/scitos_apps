@@ -22,13 +22,15 @@
 	
 scitos_apps_msgs::ChargingFeedback feedback;
 scitos_apps_msgs::ChargingResult result;
+char response[1000];
 
 typedef actionlib::SimpleActionServer<scitos_apps_msgs::ChargingAction> Server;
 
+float warningLevel = 0.2;
 float dockingPrecision = 0.05;
 int maxMeasurements = 100;
 
-float angle;
+float angle,progress,startProg,progressSpeed,lastProgress;
 std::string configFilename="";
 bool calibrated = true;
 float testSpeed = 0;
@@ -73,13 +75,13 @@ float lastAngle = 0;
 
 const char* stateStr[] ={
 	"measuring the robot positition relatively to the ROBOT STATION banner",
-	"searching for the docking",
-	"approaching the station",
-	"measuring position",
-	"attempting to reach the station",
+	"searching for the charging station",
+	"approaching the charging station",
+	"measuring robot position",
+	"attempting to dock",
 	"adjusting robot position",
 	"waiting for charger signal",
-	"retrying to reach charger attempt",
+	"undocking to try again",
 	"idle",
 	"feeding",
 	"hungry",
@@ -134,11 +136,12 @@ typedef enum{
 }EState;
 
 EState state = STATE_ROTATE;
+EState lastState = STATE_IDLE;
 
-float normalizeAngle(float a)
+float normalizeAngle(float a,float minimal=-M_PI)
 {
-	while (a > +M_PI) a-=2*M_PI;
-	while (a < -M_PI) a+=2*M_PI;
+	while (a > +2*M_PI+minimal) a-=2*M_PI;
+	while (a < minimal) a+=2*M_PI;
 	return a;
 }
 
@@ -172,6 +175,7 @@ bool measure(STrackedObject *o1,STrackedObject *o2=NULL,int count = 0,bool ml=tr
 		 maxCount = count;
 		 if (posCount < 1) posCount = 1;
 	}
+	progress = 100*(posCount+30)/(maxCount+30);
 	if (posCount >=0){
 		avgPos1.x += o1->x;
 		avgPos1.y += o1->y; 
@@ -218,6 +222,7 @@ bool rotateByAngle(float angle = .0)
 	base_cmd.linear.x = 0; 
 	base_cmd.angular.z = normalizeAngle(desiredAngle-currentAngle);
 	cmd_vel.publish(base_cmd);
+	progress = 100*(1-fabs(normalizeAngle(desiredAngle-currentAngle))/fabs(rotateBy));
 	return fabs(normalizeAngle(desiredAngle-currentAngle)) < 0.05;
 }
 
@@ -237,6 +242,7 @@ bool moveByDistance(float distance = .0)
 	base_cmd.linear.x = speedSign*(desiredDistance - travelledDistance);
 	base_cmd.angular.z = 0; 
 	cmd_vel.publish(base_cmd);
+	progress = 100*travelledDistance/desiredDistance;
 	return (fabs(desiredDistance - travelledDistance) < 0.02);
 }
 
@@ -251,6 +257,7 @@ void odomCallback(const nav_msgs::Odometry &msg)
 			base_cmd.angular.z = 0.2;
 			cmd_vel.publish(base_cmd);
 			controlHead(100,0,0);
+			progress = normalizeAngle(currentAngle-lastAngle,0)/2/M_PI*100.0;
 			break;
 
 		case STATE_TEST1:
@@ -282,7 +289,8 @@ void odomCallback(const nav_msgs::Odometry &msg)
 		case STATE_UNDOCK_MOVE: 
 			controlHead(100,180,0);
 			if (moveByDistance()){
-				rotateByAngle(M_PI+0.01);
+				rotateBy = (M_PI+0.01);
+				rotateByAngle(rotateBy);
 				state = STATE_UNDOCK_ROTATE;
 			}
 			break;
@@ -306,11 +314,13 @@ void imageCallback(const sensor_msgs::ImageConstPtr& msg)
 	if (state == STATE_INIT){
 		controlHead(100,0,0);
 		ros::spinOnce();
+		progress = 10;
 		if (chargerDetected){
 			state = STATE_WAIT;
 			measure(NULL,NULL,maxMeasurements);	
 		}else{
 			state = STATE_SEARCH;
+			lastAngle = currentAngle;
 		} 
 	}
 	if ((int) state < (int)STATE_RETRY){
@@ -331,28 +341,30 @@ void imageCallback(const sensor_msgs::ImageConstPtr& msg)
 		memcpy((void*)&msg->data[0],image->data,msg->step*msg->height);
 		imdebug.publish(msg);
 		//dockVisible ?	
-		if (currentSegmentArray[2].valid && currentSegmentArray[1].valid && currentSegmentArray[0].valid){
-			station = trans->getDock(objectArray);
+		station = trans->getDock(objectArray);
+		if (station.valid){
 			failedToSpotStationCount = 0;
 			controlHead(100,180/M_PI*atan2(station.y,station.x),-180/M_PI*atan2(station.z-0.2,station.x));
 			switch (state){
-
 				case STATE_SEARCH:
 				base_cmd.linear.x = 0; 
 				base_cmd.angular.z = 0;
 				cmd_vel.publish(base_cmd);
 				state = STATE_APPROACH;
+				startProg = station.x;
 				break;
 
 				case STATE_APPROACH:
 				angle = atan2(station.y,station.x); 
 				base_cmd.linear.x = fmin(fabs(station.x*cos(cos(cos(angle)))+0.2),1)*0.4;
-				base_cmd.angular.z = station.y*0.5;
+				base_cmd.angular.z = atan2(station.y,station.x);
 				if (station.x < 0.4){ 
-					state = STATE_MEASURE;
+					state = STATE_ADJUST;
 					measure(NULL,NULL,maxMeasurements);
 					base_cmd.linear.x = base_cmd.angular.z = 0;
+					startProg = station.y;
 				}
+				progress = 100*(startProg-station.x+0.4)/(startProg+0.4);
 				cmd_vel.publish(base_cmd);
 				break;
 			  case STATE_ADJUST:
@@ -362,6 +374,7 @@ void imageCallback(const sensor_msgs::ImageConstPtr& msg)
 					state = STATE_MEASURE;
 					measure(NULL,NULL,maxMeasurements);
 				}
+				progress = 100*((0.2-fabs(station.y))/0.2);
 				cmd_vel.publish(base_cmd);
 			  break;
 
@@ -369,11 +382,13 @@ void imageCallback(const sensor_msgs::ImageConstPtr& msg)
 				base_cmd.linear.x = (station.x - 5*fabs(station.y)+0.3)*0.2;
 				if (fabs(station.y) > 0.02) base_cmd.linear.x = 0; 
 				base_cmd.angular.z = station.y;
+				base_cmd.angular.z = atan2(station.y,station.x);
 				if (station.x < 0.025){
 					state = STATE_WAIT;
 					measure(NULL,NULL,4*maxMeasurements,false);
 					base_cmd.linear.x = base_cmd.angular.z = 0;
 				}
+				progress = 100*(startProg-station.x+0.025)/(startProg+0.025);
 				cmd_vel.publish(base_cmd);
 			break;
 			case STATE_MEASURE:
@@ -381,12 +396,17 @@ void imageCallback(const sensor_msgs::ImageConstPtr& msg)
 			if (measure(&own)){
 				base_cmd.linear.x = base_cmd.angular.z = 0;
 				cmd_vel.publish(base_cmd);
-				if (fabs(own.x) < dockingPrecision) state = STATE_DOCK; else state = STATE_ROTATE;
-				rotateBy = M_PI/2;
-				if (own.x > 0) rotateBy = -rotateBy;
-				rotateBy += sin((own.x+trans->ownOffset.x)/(own.z+trans->ownOffset.z));
-				rotateByAngle(rotateBy);
-				moveByDistance(fabs(own.x));
+				if (fabs(own.x) < dockingPrecision){
+					state = STATE_DOCK;
+					startProg = station.x;
+				} else{
+					state = STATE_ROTATE;
+					rotateBy = M_PI/2;
+					if (own.x > 0) rotateBy = -rotateBy;
+					rotateBy += sin((own.x+trans->ownOffset.x)/(own.z+trans->ownOffset.z));
+					rotateByAngle(rotateBy);
+					moveByDistance(fabs(own.x));
+				}
 			}
 			break;
 			case STATE_CALIBRATE:
@@ -420,6 +440,7 @@ void imageCallback(const sensor_msgs::ImageConstPtr& msg)
 					controlHead(0,180,-10);
 					base_cmd.linear.x = base_cmd.angular.z = 0;
 					cmd_vel.publish(base_cmd);
+					progress = 100;
 				}else{
 					head.position[2] = 180;
 					head.position[3] = 0;
@@ -452,10 +473,10 @@ int initComponents()
 	image->getSaveNumber();
 
 	state = STATE_IDLE;
-
+	progressSpeed = 2.0;
 	head.name.resize(4);
         head.position.resize(4);
-
+	progress = 10;
         ptu.velocity.resize(2);
         ptu.position.resize(2);
         ptu.name.resize(2);
@@ -474,21 +495,21 @@ int initComponents()
 void startor(const scitos_apps_msgs::ChargingGoalConstPtr& goal, Server* as)
 {
 	initComponents();
-	char response[1000];
-	if (goal->chargeCommand == "charge"){
+	if (goal->Command == "charge"){
 		if (calibrated==false){
 			sprintf(response,"Cannot approach the charging station because the docking is not calibrated.\nRead the readme file on how to perform calibration procedure.");
 			state = STATE_REJECTED;
 		}else{
 			state = STATE_INIT;
+			progress = 10;
 		}
 	}
-	if (goal->chargeCommand == "test") state = STATE_TEST1;
-	if (goal->chargeCommand == "calibrate"){
+	if (goal->Command == "test") state = STATE_TEST1;
+	if (goal->Command == "calibrate"){
 		state = STATE_CALIBRATE;
 		measure(NULL,NULL,maxMeasurements);
 	}
-	if (goal->chargeCommand == "undock"){
+	if (goal->Command == "undock"){
 		if (chargerDetected == false){
 			state = STATE_REJECTED;
 			sprintf(response,"Cannot undock because not on the charging station.");
@@ -500,35 +521,38 @@ void startor(const scitos_apps_msgs::ChargingGoalConstPtr& goal, Server* as)
 		}
 	}
 	if (state == STATE_REJECTED){
-		result.chargeResult = response;
+		result.Message = response;
 		server->setAborted(result);
-	}else{
-		timer.reset();
-		timer.start();
-		timeOut = (int) goal->chargeTimeout;
-		while (state != STATE_IDLE && state != STATE_ABORTED && state != STATE_TIMEOUT){
-			usleep(100000);
-			ROS_INFO("ROBOT %s %i %i",stateStr[state],timer.getTime(),timeOut);
-		}
-		if (state != STATE_ABORTED){
-			ROS_INFO("ROBOT");
-			if (state == STATE_DOCKING_SUCCESS) sprintf(response,"The robot has successfully reached the charger."); 
-			if (state == STATE_DOCKING_FAILURE) sprintf(response,"The robot has failed reached the charger.");
-			if (state == STATE_UNDOCKING_SUCCESS) sprintf(response,"Undocking  successfully completed.");
-			if (state == STATE_UNDOCKING_FAILURE) sprintf(response,"Undocking  not completed.");
-			if (state == STATE_CALIBRATION_SUCCESS) sprintf(response,"Calibration OK.");
-			if (state == STATE_CALIBRATION_FAILURE) sprintf(response,"Calibration failed.");
-			if (state == STATE_TIMEOUT) sprintf(response,"Requested action was not completed in the requested time.");
-			server->setSucceeded(result);
-		}else{
-			server->setAborted(result);
-		}
+		return;
 	}
+	timer.reset();
+	timer.start();
+	timeOut = (int) goal->Timeout*1000;
+	while (state != STATE_IDLE && state != STATE_ABORTED && state != STATE_TIMEOUT){
+		usleep(200000);
+		server->publishFeedback(feedback);
+		ROS_INFO("ROBOT %s Progress: %.0f %.2f Time: %i/%i",stateStr[state],progress,progressSpeed,timer.getTime(),timeOut);
+	}
+	result.Message = response;
+	if (state == STATE_ABORTED){
+		server->setAborted(result);
+		return;
+	}	
+	progress = 100;
+	server->setSucceeded(result);
 }
 
 void cleanup()
 {
+	if (state == STATE_DOCKING_SUCCESS) sprintf(response,"The robot has successfully reached the charger."); 
+	if (state == STATE_DOCKING_FAILURE) sprintf(response,"The robot has failed reached the charger.");
+	if (state == STATE_UNDOCKING_SUCCESS) sprintf(response,"Undocking  successfully completed.");
+	if (state == STATE_UNDOCKING_FAILURE) sprintf(response,"Undocking  not completed.");
+	if (state == STATE_CALIBRATION_SUCCESS) sprintf(response,"Calibration OK.");
+	if (state == STATE_CALIBRATION_FAILURE) sprintf(response,"Calibration failed.");
+	if (state == STATE_TIMEOUT) sprintf(response,"Requested action was not completed in the requested time.");
 	if ((int) state >= STATE_DOCKING_SUCCESS && (int)state <= STATE_TIMEOUT){
+		progress = 100;
 		state = STATE_IDLE;
 		cmd_head.publish(head);
 		base_cmd.linear.x = base_cmd.angular.z = 0;
@@ -537,20 +561,48 @@ void cleanup()
 	}
 }
 
+void progressCheck()
+{
+	static int lastTimer;
+	float progr = progress;
+	int timi = timer.getTime();
+	if (state != STATE_IDLE){
+		if (state == STATE_SEARCH && progress > 95){
+			state = STATE_ABORTED;
+			sprintf(response,"No charging station detected."); 
+		}
+		float filterFactor = 0.02;
+		if (lastProgress > progr+5){
+			progressSpeed = 2;
+		}else{
+			if (lastTimer < timi)	progressSpeed =  progressSpeed*(1-filterFactor)+filterFactor*(progr-lastProgress)/(timi-lastTimer)*1000;
+			if (progressSpeed < 0) printf("KOO: %i %i %f %f\n",timi,lastTimer,progr,lastProgress);
+		}
+	}
+	lastTimer = timer.getTime();
+	lastProgress = progr; 
+}
+
 void rotor()
 {
 	char status[1000];
 	int a = 0;
-	EState lastState = STATE_IDLE;
 	while (ros::ok()){
 		if (timeOut < timer.getTime() && state != STATE_IDLE ) state = STATE_TIMEOUT;
 		if (state != STATE_IDLE) cmd_head.publish(head);
 		ros::spinOnce();
-		usleep(10000);
+		usleep(30000);
 		if (state!=lastState){
 			sprintf(status,"Charging service is %s",stateStr[state]);
-			feedback.chargeProcessStatus = status;
+			feedback.Progress = (int)progress;
+			feedback.Message = stateStr[state];
 			server->publishFeedback(feedback);
+		}
+		if (server->isActive()){
+			feedback.Message = stateStr[state];
+			feedback.Progress = (int)progress;
+			feedback.Level = 0;
+			if (progressSpeed < warningLevel) feedback.Level = 1;
 		}
 		if (server->isPreemptRequested()){
 			state = STATE_ABORTED;
@@ -558,12 +610,13 @@ void rotor()
 			cmd_vel.publish(base_cmd);
 			ros::spinOnce();
 			if (server->isActive()==false){
-				result.chargeResult = "Current action preempted by external request.";
+				result.Message = "Current action preempted by external request.";
 				state = STATE_IDLE;
 				server->setPreempted(result);
 			}
 		}
 		cleanup();
+		progressCheck();
 		lastState = state;
 	}
 }

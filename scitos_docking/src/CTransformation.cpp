@@ -155,17 +155,23 @@ float CTransformation::distance(STrackedObject o1,STrackedObject o2)
 
 STrackedObject CTransformation::getDock(STrackedObject o[])
 {
-	STrackedObject trk[4];
-	for (int i=0;i<3;i++) trk[i] = o[i];
-	for (int i=0;i<3;i++) trk[i].d = distance(trk[(i+1)%3],trk[(i+2)%3]);
-	qsort(trk,3,sizeof(STrackedObject),sortByDistance);
-	float an = atan2(trk[2].x-trk[0].x,trk[2].y-trk[0].y);
-	trk[0].roll = 180*an/M_PI;
-	trk[0].x-=dockOffset.x;
-	trk[0].y-=dockOffset.y;
-	trk[0].z-=dockOffset.z;
+	STrackedObject result;
+	result.valid = false;
+	if (o[0].valid && o[1].valid && o[2].valid){ 
+		STrackedObject trk[4];
+		for (int i=0;i<3;i++) trk[i] = o[i];
+		for (int i=0;i<3;i++) trk[i].d = distance(trk[(i+1)%3],trk[(i+2)%3]);
+		qsort(trk,3,sizeof(STrackedObject),sortByDistance);
+		float an = atan2(trk[2].x-trk[0].x,trk[2].y-trk[0].y);
+		trk[0].roll = 180*an/M_PI;
+		trk[0].x-=dockOffset.x;
+		trk[0].y-=dockOffset.y;
+		trk[0].z-=dockOffset.z;
+		result=trk[0];
+		result.valid=true;
+	}
 //	fprintf(stdout,"Dock: %.3f %.3f %.3f\n",trk[0].x,trk[0].y,trk[0].z);
-	return trk[0];
+	return result;
 }
 
 STrackedObject CTransformation::getOwnPosition(STrackedObject o[])
@@ -629,6 +635,7 @@ STrackedObject CTransformation::transform(SSegment segment)
 	
 	double data[] ={a,b,d,b,c,e,d,e,f};
 	result = eigen(data);
+	result.valid=isnormal(result.x) && isnormal(result.y) && isnormal(result.z);
 	return result;
 }
 

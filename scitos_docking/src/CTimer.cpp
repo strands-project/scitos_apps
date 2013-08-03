@@ -21,7 +21,7 @@ int CTimer::getRealTime()
 {
   struct  timeval currentTime;
   gettimeofday(&currentTime, NULL);
-  return currentTime.tv_sec;
+  return currentTime.tv_sec*1000+currentTime.tv_usec/1000;
 }
 
 int CTimer::getTime()

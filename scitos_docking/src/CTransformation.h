@@ -29,6 +29,7 @@ typedef struct{
 	float bwratio;
 	float error;
 	float esterror;
+	bool valid;
 }STrackedObject;
 
 typedef struct{
