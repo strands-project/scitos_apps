@@ -4,7 +4,7 @@ project(scitos_docking)
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
-find_package(catkin REQUIRED COMPONENTS image_transport roscpp rospy std_msgs scitos_msgs scitos_apps_msgs message_generation)
+find_package(catkin REQUIRED COMPONENTS image_transport roscpp rospy std_msgs scitos_msgs scitos_apps_msgs message_generation genmsg actionlib_msgs actionlib)
 
 ## System dependencies are found with CMake's conventions
 # find_package(Boost REQUIRED COMPONENTS system)
@@ -139,7 +139,10 @@ add_library(CTransformation src/CTransformation.cpp)
 target_link_libraries(CTransformation ${GSL_LIBRARIES})
 
 add_executable(visual_charging src/docking.cpp)
-add_dependencies(visual_charging scitos_msgs_gencpp scitos_apps_msgs_genccp)
+add_executable(visual_charging_client src/dockingClient.cpp)
+
+add_dependencies(visual_charging_client scitos_msgs_gencpp scitos_apps_msgs_genccp actionlib)
+add_dependencies(visual_charging scitos_msgs_gencpp scitos_apps_msgs_genccp actionlib)
 
 target_link_libraries (visual_charging  CDump)
 target_link_libraries (visual_charging  CTimer)
@@ -150,3 +153,4 @@ target_link_libraries (visual_charging  CTransformation)
 target_link_libraries (visual_charging  gsl)
 target_link_libraries (visual_charging  blas)
 target_link_libraries (visual_charging  ${catkin_LIBRARIES})
+target_link_libraries (visual_charging_client  ${catkin_LIBRARIES})
