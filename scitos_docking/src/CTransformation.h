@@ -12,6 +12,7 @@
 #include <unistd.h>
 #include "CCircleDetect.h"
 #include <semaphore.h> 
+#include "ros/ros.h"
 
 typedef enum{
 	TRANSFORM_NONE,
@@ -40,7 +41,7 @@ typedef struct{
 class CTransformation
 {
 	public:
-		CTransformation(float diam);
+		CTransformation(float diam,ros::NodeHandle *nh);
 		~CTransformation();
 		void clearOffsets();
 
@@ -64,12 +65,13 @@ class CTransformation
 		STrackedObject crossPrd(STrackedObject o0,STrackedObject o1,STrackedObject o2,float gridDimX,float gridDimY);
 
 		ETransformType transformType;
-		void saveCalibration(const char *str);
-		void loadCalibration(const char *str);
+		bool saveCalibration();
+		bool loadCalibration();
 		float distance(STrackedObject o1,STrackedObject o2);
 		STrackedObject getDock(STrackedObject o[]);
 		STrackedObject getOwnPosition(STrackedObject o[]);
 		STrackedObject ownOffset,dockOffset;
+		void updateCalibration(STrackedObject own,STrackedObject station);
 
 	private:
 		STrackedObject  normalize(STrackedObject o);
@@ -97,6 +99,7 @@ class CTransformation
 		float error2D;
 		STrackedObject c2D[4];
 		sem_t trfparamsem;
+		ros::NodeHandle *nh;
 };
 
 #endif

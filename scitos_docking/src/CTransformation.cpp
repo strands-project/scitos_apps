@@ -21,8 +21,9 @@ void CTransformation::clearOffsets()
 	dockOffset.x = dockOffset.y = dockOffset.z = 0;
 }
 
-CTransformation::CTransformation(float diam)
+CTransformation::CTransformation(float diam, ros::NodeHandle *n)
 {
+	nh = n;
 	clearOffsets();
 	char dummy[1000];
 	trackedObjectDiameter = diam;
@@ -245,64 +246,81 @@ STrackedObject CTransformation::transform3D(STrackedObject o,int num)
 	return final;
 }
 
-void CTransformation::loadCalibration(const char *str)
+void CTransformation::updateCalibration(STrackedObject own,STrackedObject station)
 {
-	FILE* file = fopen(str,"r+");
-	int k = 0;
-	if (file == NULL){
-		for (int i = 0;i<3;i++){
-			for (int j = 0;j<3;j++)D3transform[k].simlar[i][j]=0;
-		}
-		D3transform[k].orig.x=D3transform[k].orig.y=D3transform[k].orig.z=0;
-		for (int i = 0;i<9;i++)hom[i] = 0;
-		hom[8] = 1;
-	}else{/*
-		char errStr[1000];
-		char dumStr[1000];
-		sprintf(errStr,"Transformation: error reading coordinate system transformation file %s\n",str);
-		if (fscanf(file,"Dimensions %f %f\n",&gDimX,&gDimY)!=2) fprintf(stderr,errStr);
-		int dum = 0;
-		for (int k = 0;k<4;k++){
-			if (fscanf(file,"3D_calibration %i\n",&dum)!=1) fprintf(stderr,errStr);
-			for (int i = 0;i<3;i++){
-				for (int j = 0;j<3;j++){
-					if (fscanf(file,"%f ",&D3transform[k].simlar[i][j])!=1) fprintf(stderr,errStr);
-				}
-				if (fscanf(file,"\n")!=0) fprintf(stderr,errStr);
-			}
-			if (fscanf(file,"Offset %f %f %f\n",&D3transform[k].orig.x,&D3transform[k].orig.y,&D3transform[k].orig.z)!=3)fprintf(stderr,errStr);
-		}
-		if (fscanf(file,"%s\n",dumStr)!=1) fprintf(stderr,errStr);
-		for (int i = 0;i<9;i++){
-			if (fscanf(file,"%f ",&hom[i])!=1)fprintf(stderr,errStr);
-			if (i%3 == 2){
-				if (fscanf(file,"\n")!=0) fprintf(stderr,errStr);
-			}
-		}
-		fclose(file);*/
-	}
+	ownOffset = own;
+	dockOffset = station;
+	nh->setParam("/charging/ownOffsetX", ownOffset.x);
+	nh->setParam("/charging/ownOffsetY", ownOffset.y);
+	nh->setParam("/charging/ownOffsetZ", ownOffset.z);
+	nh->setParam("/charging/dockOffsetX", dockOffset.x);
+	nh->setParam("/charging/dockOffsetY", dockOffset.y);
+	nh->setParam("/charging/dockOffsetZ", dockOffset.z);
+
 }
 
-void CTransformation::saveCalibration(const char *str)
+bool CTransformation::loadCalibration()
 {
-	FILE* file = fopen(str,"w+");
-	fprintf(file,"Dimensions %f %f\n",gDimX,gDimY);
-	for (int k = 0;k<4;k++){
-		fprintf(file,"3D_calibration %i\n",k);
-		for (int i = 0;i<3;i++){
-			for (int j = 0;j<3;j++){
-				fprintf(file,"%f ",D3transform[k].simlar[i][j]);
-			}
-			fprintf(file,"\n");
+	bool calibrated = true;
+	calibrated = calibrated && nh->getParam("/charging/ownOffsetX", ownOffset.x);
+	calibrated = calibrated && nh->getParam("/charging/ownOffsetY", ownOffset.y);
+	calibrated = calibrated && nh->getParam("/charging/ownOffsetZ", ownOffset.z);
+	calibrated = calibrated && nh->getParam("/charging/dockOffsetX", dockOffset.x);
+	calibrated = calibrated && nh->getParam("/charging/dockOffsetY", dockOffset.y);
+	calibrated = calibrated && nh->getParam("/charging/dockOffsetZ", dockOffset.z);
+	if (calibrated){
+		 ROS_INFO("Calibration parameters updated from rosParam");
+		 return true;
+	}
+
+	std::string configFilename = "";
+	if (nh->getParam("configFile", configFilename) == false){
+		ROS_WARN("Config file not set, calibration parameters will not be loaded.");
+		return false;
+	}else{
+		FILE* file = fopen(configFilename.c_str(),"r");
+		if (file == NULL){
+			ROS_WARN("Calibration file %s could not be loaded and the calibration parameters are not set.",configFilename.c_str());
+			ROS_WARN("Place the robot on the charging station and run calibration");
+			return false;
 		}
-		fprintf(file,"Offset %f %f %f\n",D3transform[k].orig.x,D3transform[k].orig.y,D3transform[k].orig.z);
+		fscanf(file,"charging:\n");
+		fscanf(file," dockOffsetX: %lf\n",&dockOffset.x);
+		fscanf(file," dockOffsetY: %lf\n",&dockOffset.y);
+		fscanf(file," dockOffsetZ: %lf\n",&dockOffset.z);
+		fscanf(file," ownOffsetX: %lf\n",&ownOffset.x);
+		fscanf(file," ownOffsetY: %lf\n",&ownOffset.y);
+		fscanf(file," ownOffsetZ: %lf\n",&ownOffset.z);
+		fclose(file);
+		ROS_WARN("Calibration parameters loaded from: %s",configFilename.c_str());
+		updateCalibration(ownOffset,dockOffset);
 	}
-	fprintf(file,"2D_calibration\n");
-	for (int i = 0;i<9;i++){
-		fprintf(file,"%f ",hom[i]);
-		if (i%3 == 2) fprintf(file,"\n");
+	return true;
+}
+
+bool CTransformation::saveCalibration()
+{
+	std::string configFilename = "";
+	if (nh->getParam("configFile", configFilename) == false){
+		ROS_WARN("Config file not set, calibration parameters will not be saved.");
+		return false;
+	}else{
+		FILE* file = fopen(configFilename.c_str(),"w");
+		if (file == NULL){
+			ROS_WARN("Calibration file %s could not be saved.",configFilename.c_str());
+			return false;
+		}
+		fprintf(file,"charging:\n");
+		fprintf(file," dockOffsetX: %lf\n",dockOffset.x);
+		fprintf(file," dockOffsetY: %lf\n",dockOffset.y);
+		fprintf(file," dockOffsetZ: %lf\n",dockOffset.z);
+		fprintf(file," ownOffsetX: %lf\n",ownOffset.x);
+		fprintf(file," ownOffsetY: %lf\n",ownOffset.y);
+		fprintf(file," ownOffsetZ: %lf\n",ownOffset.z);
+		fclose(file);
+		ROS_INFO("Calibration parameters saved to: %s",configFilename.c_str());
 	}
-	fclose(file);
+	return true;
 }
 
 STrackedObject CTransformation::normalize(STrackedObject o)
@@ -635,7 +653,7 @@ STrackedObject CTransformation::transform(SSegment segment)
 	
 	double data[] ={a,b,d,b,c,e,d,e,f};
 	result = eigen(data);
-	result.valid=isnormal(result.x) && isnormal(result.y) && isnormal(result.z);
+	result.valid=boost::math::isnormal(result.x) && boost::math::isnormal(result.y) && boost::math::isnormal(result.z);
 	return result;
 }
 
