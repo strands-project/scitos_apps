@@ -1,0 +1,8 @@
+string Command
+int64 Timeout
+----
+string Message 
+----
+byte  Progress
+byte  Level 
+string Message 
