@@ -30,6 +30,7 @@ typedef actionlib::SimpleActionServer<scitos_apps_msgs::ChargingAction> Server;
 
 int maxMeasurements = 100;
 float dockingPrecision = 0.1;
+float realPrecision,tangle,tdistance;
 
 bool calibrated = true;
 CTimer timer;
@@ -101,7 +102,7 @@ void odomCallback(const nav_msgs::Odometry &msg)
 			}
 			break;
 		case STATE_TEST3:
-			if (robot->rotateByAngle())state = STATE_UNDOCKING_SUCCESS;
+			if (robot->rotateByAngle())state = STATE_TEST_SUCCESS;
 			break;
 		case STATE_ROTATE:
 			if (robot->rotateByAngle()) state = STATE_MOVE_TO;
@@ -219,8 +220,9 @@ void imageCallback(const sensor_msgs::ImageConstPtr& msg)
 					break;
 				case STATE_WAIT:
 					own = trans->getOwnPosition(objectArray);
-					if (robot->wait(own,station,chargerDetected)){
+					if (robot->wait(&own,station,chargerDetected)){
 						if (chargerDetected) state = STATE_DOCKING_SUCCESS; else state = STATE_RETRY;
+						realPrecision = sqrt(own.x*own.x+own.y*own.y);
 					}
 					break;
 			}
@@ -245,8 +247,8 @@ void actionServerCallback(const scitos_apps_msgs::ChargingGoalConstPtr& goal, Se
 		}
 	}
 	if (goal->Command == "test"){
-		 float tangle = (rand()%100)/100.0;
-		 float tdistance = 2.0*(rand()%100)/100;
+		 tangle = (rand()%100)/100.0;
+		 tdistance = 2.0*(rand()%100)/100;
 		 robot->rotateByAngle(tangle); 
 		 robot->moveByDistance(tdistance);
 		 ROS_INFO("Testing %f %f",tangle,tdistance);
@@ -304,9 +306,10 @@ void joyCallback(const scitos_apps_msgs::action_buttons::ConstPtr &msg)
 
 void state_cleanup()
 {
-	if (state == STATE_DOCKING_SUCCESS) sprintf(response,"The robot has successfully reached the charger in %i s.",timer.getTime()/1000); 
+	if (state == STATE_DOCKING_SUCCESS) sprintf(response,"The robot has successfully reached the charger in %i s with precision %.0f mm.",timer.getTime()/1000,realPrecision*1000);
 	if (state == STATE_DOCKING_FAILURE) sprintf(response,"The robot has failed reached the charger.");
 	if (state == STATE_UNDOCKING_SUCCESS) sprintf(response,"Undocking  successfully completed.");
+	if (state == STATE_TEST_SUCCESS) sprintf(response,"Testrun successfully completed at %f %f.",cos(tangle)*tdistance+0.55,sin(tangle)*tdistance);
 	if (state == STATE_UNDOCKING_FAILURE) sprintf(response,"Undocking  not completed.");
 	if (state == STATE_CALIBRATION_SUCCESS) sprintf(response,"Calibration OK.");
 	if (state == STATE_CALIBRATION_FAILURE) sprintf(response,"Calibration failed.");

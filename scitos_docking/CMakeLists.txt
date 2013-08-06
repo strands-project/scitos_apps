@@ -143,8 +143,9 @@ target_link_libraries(CTransformation ${GSL_LIBRARIES})
 add_executable(visual_charging src/docking.cpp)
 add_executable(visual_charging_client src/dockingClient.cpp)
 
-add_dependencies(visual_charging_client scitos_msgs_gencpp scitos_apps_msgs_genccp actionlib)
-add_dependencies(visual_charging scitos_msgs_gencpp scitos_apps_msgs_genccp actionlib)
+add_dependencies(CChargingClient scitos_msgs_gencpp scitos_apps_msgs_genccp actionlib scitos_apps_msgs actionlib_msgs scitos_apps_msgs_generate_messages_cpp)
+add_dependencies(visual_charging_client scitos_msgs_gencpp scitos_apps_msgs_genccp actionlib scitos_apps_msgs  actionlib_msgs scitos_apps_msgs_generate_messages_cpp)
+add_dependencies(visual_charging scitos_msgs_gencpp scitos_apps_msgs_genccp actionlib scitos_apps_msgs  actionlib_msgs scitos_apps_msgs_generate_messages_cpp)
 
 target_link_libraries (visual_charging  CDump)
 target_link_libraries (visual_charging  CTimer)

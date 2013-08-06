@@ -173,7 +173,7 @@ bool CChargingActions::adjust(STrackedObject station,float in)
 	static float init;
 	if (in != 0.0) init = fabs(in);
 	base_cmd.linear.x = 0; 
-	base_cmd.angular.z = atan2(station.y,station.x);
+	base_cmd.angular.z = atan2(station.y,station.x)*0.5;
 	if (fabs(station.y) < 0.05){
 		base_cmd.angular.z = 0;
 		 return true;
@@ -199,12 +199,12 @@ bool CChargingActions::dock(STrackedObject station)
 	return complete;
 }
 
-bool CChargingActions::wait(STrackedObject own,STrackedObject station,bool chargerDetect)
+bool CChargingActions::wait(STrackedObject *own,STrackedObject station,bool chargerDetect)
 {
 	if (chargerDetect){
-		measure(&own,&station,-1);
-		float prec = sqrt(own.x*own.x+own.y*own.y);
-		ROS_INFO("Position of the robot relative to the charging station is %.3f %.3f %.3f, i.e. %.0f mm from the desired position.",own.x,own.y,own.z,prec*1000);
+		measure(own,&station,-1);
+		float prec = sqrt(own->x*own->x+own->y*own->y);
+		ROS_INFO("Position of the robot relative to the charging station is %.3f %.3f %.3f, i.e. %.0f mm from the desired position->",own->x,own->y,own->z,prec*1000);
 		controlHead(0,180,-10);
 		base_cmd.linear.x = base_cmd.angular.z = 0;
 		cmd_vel.publish(base_cmd);
@@ -215,11 +215,11 @@ bool CChargingActions::wait(STrackedObject own,STrackedObject station,bool charg
 		head.position[3] = 0;
 		base_cmd.linear.x = base_cmd.angular.z = 0;
 		cmd_vel.publish(base_cmd);
-		if (measure(&own,&station)){
+		if (measure(own,&station)){
 			moveByDistance(-0.5);
 			controlHead(100,0,0);
-			float prec = sqrt(own.x*own.x+own.y*own.y+own.z*own.z);
-			ROS_INFO("Position of the robot relative to the charging station is %.3f %.3f %.3f, i.e. %f mm from the desired position, but no charging signal received.",own.x,own.y,own.z,prec*1000);
+			float prec = sqrt(own->x*own->x+own->y*own->y+own->z*own->z);
+			ROS_INFO("Position of the robot relative to the charging station is %.3f %.3f %.3f, i.e. %f mm from the desired position, but no charging signal received.",own->x,own->y,own->z,prec*1000);
 			return true;
 		}
 	}
