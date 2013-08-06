@@ -1,6 +1,6 @@
 for i in $(seq 1 100);
 do 
-a=$(rosrun scitos docking visual_charging_client undock 100|tee -a testlog.txt |grep -c success);
+a=$(rosrun scitos_docking visual_charging_client undock 100|tee -a testlog.txt |grep -c success);
 
 if [ $a == 1 ]  
 then
