@@ -1,4 +1,5 @@
-for i in $(seq 1 100);
+rosrun scitos_docking visual_charging_client charge 100
+for i in $(seq 1 $1);
 do 
 a=$(rosrun scitos_docking visual_charging_client undock 100|tee -a testlog.txt |grep -c success);
 
