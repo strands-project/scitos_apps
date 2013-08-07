@@ -26,10 +26,9 @@ The scitos_teleop package is designed to work with a Logitech Wireless Gamepad F
  * Move eye lids: use lower right shoulder button.
  
 ### Troubleshooting
-* If you get a message like: ```[ERROR] [1372933726.815471480]: Couldn't open joystick /dev/input/js1. Will retry every second.``` 
-you have to edit the scitos_teleop/launch/teleop_joystick.launch file and replace the line: 
-``<param name="dev" value="/dev/input/js1" type="string"/>`` with 
-``<param name="dev" value="/dev/input/js0" type="string"/>`` This is because the launch file is currently otimized 
-for the use with the real robot. The real robot does have a touchscreen which will be /dev/input/js0 and therefore the 
-rumblepad will be /dev/input/js1. Since your PC will most likely not have a touch screen, the rumblepad on your PC will 
-be on /dev/input/js0.
+If you get a message like: ```[ERROR] [1372933726.815471480]: Couldn't open joystick /dev/.... Will retry every second.``` 
+you have to export the joystick device, e.g.: `export JOYSTICK_DEVICE=/dev/input/js1` and start the launch file again.
+* Using udev: 
+ * You can also make sure that the joystick will always be found if you use the udev rule provided: Copy `scitos_apps/scitos_teleop/udev/73-persistent-joystick.rules` to `/etc/udev/rules.d/`
+ * Now just export the joystick variable: `export JOYSTICK_DEVICE=/dev/input/rumblepad` or add this to your `.bashrc` and source it
+ * You might have to restart the udev service or log out and back in again before this shows any effect.
