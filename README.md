@@ -8,12 +8,12 @@ Dependencies
 ------------
 The following depencies are required for this package:
 
-* mpstat, from the systat package
+* mpstat, from the sysstat package
 * sensors, from the lm-sensors
 
 These are met by running
 ```
-sudo apt-get install lm-sensors systat
+sudo apt-get install lm-sensors sysstat
 ```
 
 Running
