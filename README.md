@@ -6,7 +6,7 @@ This package provides a node that monitors the health of the embedded scitos pc.
 
 Dependencies
 ------------
-The following depencies are required for this package:
+The following decencies are required for this package:
 
 * mpstat, from the sysstat package
 * sensors, from the lm-sensors
@@ -18,7 +18,7 @@ sudo apt-get install lm-sensors sysstat
 
 Running
 -------
-To start (assuming a roscore is existing somewhere, ie from scitos bringup):
+The monitor is now started automatically when you use scitos_bringup. To start independently (assuming a roscore is existing somewhere, ie from scitos bringup):
 
 ```
 rosrun scitos_pc_monitor pc_monitor.py
@@ -35,4 +35,6 @@ and view the message on the dashboard on your of-board pc:
 ```
 rosrun scitos_dashboard scitos_dashboard.py
 ```
+
+See https://github.com/strands-project/scitos_apps/tree/master/scitos_dashboard for dashboard documentation.
 
