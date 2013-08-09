@@ -1,0 +1,13 @@
+<launch>
+  <!-- Core rumblepad control -->
+  <include file="$(find scitos_teleop)/launch/teleop_joystick_core.launch"/>
+
+  <!-- Base teleop --> 
+  <node pkg="scitos_teleop" type="teleop_base" name="teleop_base" output="screen">
+		<param name="scale_angular" value=".7" type="double"/>
+		<param name="scale_linear" value=".7" type="double"/>
+  </node>
+
+  <!-- Head teleop -->
+  <node pkg="scitos_teleop" type="head_teleop.py" name="teleop_head" />
+</launch> 
