@@ -1,0 +1,12 @@
+<library path="src">
+  <class name="ScitosDashboard" type="scitos_dashboard.scitos_dashboard.ScitosDashboard" base_class_type="rqt_gui_py::Plugin">
+    <description>
+      A Python GUI plugin for displaying a dashboard that displays and interacts with low level scitos states.
+    </description>
+    <qtgui>
+      <label>Scitos Dashboard</label>
+      <icon type="theme">task-past-due</icon>
+      <statustip>A Python GUI plugin for displaying a dashboard that displays and interacts with low level scitos states.</statustip>
+    </qtgui>
+  </class>
+</library>
