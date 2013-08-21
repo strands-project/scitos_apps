@@ -1,6 +1,14 @@
 <launch>
+  <!-- Joystick device path.
+  Default is /dev/js1. If an environment variable JOYSTICK_DEVICE
+  is set then this replaces the default. If the launch file is started with
+  the argument js:=blah then blah overides both the default and the environment. -->
+  <arg name="js" default="$(optenv JOYSTICK_DEVICE /dev/js1)" />
+
   <!-- Core rumblepad control -->
-  <include file="$(find scitos_teleop)/launch/teleop_joystick_core.launch"/>
+  <include file="$(find scitos_teleop)/launch/teleop_joystick_core.launch">
+    <arg name="js" value="$(arg js)"/>
+  </include>
 
   <!-- Head teleop -->
   <node pkg="scitos_teleop" type="head_teleop.py" name="teleop_head" output="screen"/>
