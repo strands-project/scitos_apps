@@ -27,6 +27,7 @@ Then in the `Goal` textfield complete as follows:
 Command: calibrate
 Timeout: 1000
 ```
+And then press the `SEND GOAL` button.
 
 The robot should move its eyelids to indicate progress of the calibration process.
 
