@@ -91,6 +91,25 @@ bool CChargingActions::search()
 	progress = normalizeAngle(currentAngle-lastAngle,0)/2/M_PI*100.0;
 }
 
+bool CChargingActions::wait(int count)
+{
+ 	static int maxCount;
+ 	static int posCount;
+	if (count > 0){
+		posCount = -30;
+		maxCount = count;
+	}
+	progress = 100*(posCount+30)/(maxCount+30);
+	head.position[0] = fmax(100*posCount/maxCount,0);
+	head.position[1] = fmax(100*posCount/maxCount,0);
+	head.name[0] ="EyeLidRight";
+	head.name[1] ="EyeLidLeft";
+	moveHead();
+	if (posCount++ > maxCount) return true;
+	base_cmd.linear.x = base_cmd.angular.z = 0;
+	return false;
+}
+
 bool CChargingActions::measure(STrackedObject *o1,STrackedObject *o2,int count,bool ml)
 {
 	static bool moveLids;

@@ -97,8 +97,8 @@ void odomCallback(const nav_msgs::Odometry &msg)
 			break;
 		case STATE_TEST2:
 			if (robot->moveByDistance()){
-				 state = STATE_TEST3;
-				 robot->rotateByAngle(M_PI-0.2);
+				state = STATE_TEST3;
+				robot->rotateByAngle(M_PI-0.2);
 			}
 			break;
 		case STATE_TEST3:
@@ -146,10 +146,19 @@ void imageCallback(const sensor_msgs::ImageConstPtr& msg)
 		robot->initCharging(chargerDetected,maxMeasurements);
 		if (chargerDetected) state = STATE_WAIT; else state = STATE_SEARCH; 
 	}
+	if (state == STATE_UNDOCK_INIT)
+	{
+		if (robot->wait()){
+			robot->moveByDistance(-0.55);
+			state = STATE_UNDOCK_MOVE;
+			robot->controlHead(100,180,0);
+			robot->moveHead();
+		}
+	}
 	if ((int) state < (int)STATE_RETRY){
 		if (image->bpp != msg->step/msg->width || image->width != msg->width || image->height != msg->height){
 			delete image;
-			ROS_INFO("Readjusting image format from %ix%i %ibpp, to %ix%i %ibpp.",image->width,image->height,image->bpp,msg->width,msg->height,msg->step/msg->width);
+			ROS_DEBUG("Readjusting image format from %ix%i %ibpp, to %ix%i %ibpp.",image->width,image->height,image->bpp,msg->width,msg->height,msg->step/msg->width);
 			image = new CRawImage(msg->width,msg->height,msg->step/msg->width);
 		}
 		memcpy(image->data,(void*)&msg->data[0],msg->step*msg->height);
@@ -251,7 +260,7 @@ void actionServerCallback(const scitos_apps_msgs::ChargingGoalConstPtr& goal, Se
 		 tdistance = 2.0*(rand()%100)/100;
 		 robot->rotateByAngle(tangle); 
 		 robot->moveByDistance(tdistance);
-		 ROS_INFO("Testing %f %f",tangle,tdistance);
+		 ROS_DEBUG("Testing %f %f",tangle,tdistance);
 		 state = STATE_TEST1;
 	}
 	if (goal->Command == "calibrate"){
@@ -263,10 +272,8 @@ void actionServerCallback(const scitos_apps_msgs::ChargingGoalConstPtr& goal, Se
 			state = STATE_REJECTED;
 			sprintf(response,"Cannot undock because not on the charging station.");
 		}else{
-			robot->moveByDistance(-0.55);
-			state = STATE_UNDOCK_MOVE;
-			robot->controlHead(100,180,0);
-			robot->moveHead();
+			robot->wait(100);
+			state = STATE_UNDOCK_INIT;
 		}
 	}
 	if (state == STATE_REJECTED){
@@ -280,7 +287,7 @@ void actionServerCallback(const scitos_apps_msgs::ChargingGoalConstPtr& goal, Se
 	while (state != STATE_IDLE && state != STATE_ABORTED && state != STATE_TIMEOUT){
 		usleep(200000);
 		server->publishFeedback(feedback);
-		ROS_INFO("ROBOT %s Progress: %.0f %.2f Time: %i/%i",stateStr[state],robot->progress,robot->progressSpeed,timer.getTime(),timeOut);
+		//ROS_DEBUG("ROBOT %s Progress: %.0f %.2f Time: %i/%i",stateStr[state],robot->progress,robot->progressSpeed,timer.getTime(),timeOut);
 	}
 	result.Message = response;
 	if (state == STATE_ABORTED){
@@ -295,7 +302,8 @@ void joyCallback(const scitos_apps_msgs::action_buttons::ConstPtr &msg)
 {
 	if (msg->X && state == STATE_IDLE && server->isActive() == false){
 		if (chargerDetected){
-			state = STATE_UNDOCK_MOVE;
+			robot->wait(100);
+			state = STATE_UNDOCK_INIT;
 			chargingClient.initiateUndocking();
 		} else {
 			state = STATE_INIT;
@@ -383,7 +391,7 @@ int main(int argc,char* argv[])
 	server = new Server(*nh, "chargingServer", boost::bind(&actionServerCallback, _1, server), false);
 
 	server->start();
-	ROS_INFO("Server running");
+	ROS_DEBUG("Server running");
 	while (ros::ok()) mainLoop();
 	delete image;
 	for (int i = 0;i<MAX_PATTERNS;i++) delete detectorArray[i];
