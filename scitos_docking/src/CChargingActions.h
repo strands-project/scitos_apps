@@ -29,6 +29,7 @@ class CChargingActions
 		bool moveByDistance(float distance = .0);
 		bool search();
 		bool measure(STrackedObject *o1,STrackedObject *o2=NULL,int count = 0,bool ml=true);
+		bool wait(int count = 0);
 		void initCharging(bool isCharging,int maxMeasurements);
 		bool approach(STrackedObject station,float dist = 0.0);
 		bool adjust(STrackedObject station,float in = 0.0);

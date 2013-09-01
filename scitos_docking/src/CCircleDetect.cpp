@@ -312,12 +312,18 @@ SSegment CCircleDetect::findSegment(CRawImage* image, SSegment init)
 							fm2 = cm2f/queueEnd;
 							float det = (fm0+fm2)*(fm0+fm2)-4*(fm0*fm2-fm1*fm1);
 							if (det > 0) det = sqrt(det); else det = 0;
+
 							f0 = ((fm0+fm2)+det)/2;
 							f1 = ((fm0+fm2)-det)/2;
 							segmentArray[numSegments-1].m0 = sqrt(f0);
 							segmentArray[numSegments-1].m1 = sqrt(f1);
+							if (fm1 != 0){                                                            //aligned ?
 							segmentArray[numSegments-1].v0 = -fm1/sqrt(fm1*fm1+(fm0-f0)*(fm0-f0));
 							segmentArray[numSegments-1].v1 = (fm0-f0)/sqrt(fm1*fm1+(fm0-f0)*(fm0-f0));
+							}else{
+								result.v0 = result.v1 = 0;
+								if (fm0 > fm2) result.v0 = 1.0; else result.v1 = 1.0;   // aligned, hm, is is aligned with x or y ?
+							}
 							segmentArray[numSegments-1].bwRatio = (float)segmentArray[numSegments-2].size/segmentArray[numSegments-1].size;
 
 							if (track) ii = start -1;
