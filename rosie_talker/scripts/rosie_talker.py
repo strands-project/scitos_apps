@@ -13,15 +13,15 @@ class rosie_talker():
     # Must have __init__(self) function for a class, similar to a C++ class constructor.
     def __init__(self):
         # Get the ~private namespace parameters from command line or launch file.
-        rate = float(rospy.get_param('~rate', '1.0'))
+        minwait = float(rospy.get_param('~min', '3.0'))
+        maxwait = float(rospy.get_param('~max', '15.0'))
         filename = rospy.get_param('~sentences', None)
         if filename == None:
-            print "didnt get sentences"
+            print "Provide a path to a file with sentences."
             return
         sentences = open(os.path.abspath(filename), 'r')
         lines = sentences.readlines()
         length = len(lines)
-        rospy.loginfo('rate = %d', rate)
         rospy.loginfo('file = %s', filename)
         # Main while loop.
         last = -1
@@ -33,10 +33,8 @@ class rosie_talker():
             line = lines[nbr]
             os.system('espeak "' + line + '"')
             # Sleep for a while before publishing new messages. Division is so rate != period.
-            if rate:
-                rospy.sleep(1/rate)
-            else:
-                rospy.sleep(1.0)
+            wait = random.uniform(minwait, maxwait)
+            rospy.sleep(wait)
 
 # Main function.    
 if __name__ == '__main__':
