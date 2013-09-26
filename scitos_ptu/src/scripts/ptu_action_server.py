@@ -37,24 +37,30 @@ class PTUServer:
 		self.reached = True
 	else:
 		self.reached = False
+
   def execute(self, goal):
     
-    panstart = int(goal.target_ptu_pose.position[0])
+    panstart = goal.pan_start
     if (panstart < self.min_pan):
-	panstart = int(self.min_pan)
+        panstart = self.min_pan
 	print 'Warning, panstart value outside range. Clamping to ',panstart
-    panstep = int(goal.target_ptu_pose.position[1])
-    panend = int(goal.target_ptu_pose.position[2])
+
+    panstep = goal.pan_step
+
+    panend = goal.pan_end
     if (panend > self.max_pan):
-	panend = int(self.max_pan)
+        panend = self.max_pan
 	print 'Warning, panend value outside range. Clamping to ',panend
 
-    tiltstart = int(goal.target_ptu_pose.position[3])
+    tiltstart = goal.tilt_start
+
     if (tiltstart < self.min_tilt):
-	tiltstart = int(self.min_tilt)
+        tiltstart = self.min_tilt
 	print 'Warning, tiltstart value outside range. Clamping to ',tiltstart
+
     tiltstep = int(goal.target_ptu_pose.position[4])
-    tiltend = int(goal.target_ptu_pose.position[5])
+
+    tiltend = goal.tilt_end
     if (tiltend > self.max_tilt):
 	tiltend = int(self.max_tilt)
 	print 'Warning, tiltend value outside range. Clamping to ',tiltend
