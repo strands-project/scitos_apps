@@ -27,7 +27,7 @@ class PTUServer:
     self.ptu_command.position=[0.0, 0.0]
     self.ptu_command.velocity=[1.0,1.0]
 
-    self.feedback = scitos_ptu.msg.PanTiltActionFeedback()
+    self.feedback = scitos_ptu.msg.PanTiltFeedback()
 
     self.max_pan = 120.0 # degrees
     self.min_pan = -120.0 # degrees
@@ -75,23 +75,25 @@ class PTUServer:
         tiltstart = self.min_tilt
 	print 'Warning, tiltstart value outside range. Clamping to ',tiltstart
 
-    tiltstep = goal.tilt_start
+    tiltstep = goal.tilt_step
 
     tiltend = goal.tilt_end
     if (tiltend > self.max_tilt):
 	tiltend = int(self.max_tilt)
 	print 'Warning, tiltend value outside range. Clamping to ',tiltend
 
+    print 'Starting pan tilt action ',panstart, panstep, panend, tiltstart, tiltstep, tiltend
     # start position
     self.ptu_command.position=[math.radians(-panstart),math.radians(-tiltstart)]
     self.pub.publish(self.ptu_command)
     self.reached = False
 
-    if (wait_for_ptu_motion(self.pan_tilt_timeout)):
-        self.feedback.ptu_pose = ptu_command
+    if (self.wait_for_ptu_motion(self.pan_tilt_timeout)):
+        self.feedback.feedback_ptu_pose = self.ptu_command
         self.server.publish_feedback(self.feedback)
     else:
         rospy.logerror('Ptu failed to move to desired position. Exiting')
+        print 'Ptu failed to move to desired position. Exiting'
         return
     
     for i in range(panstart, panend, panstep):
@@ -100,11 +102,12 @@ class PTUServer:
           self.pub.publish(self.ptu_command)
     	  self.reached = False
 
-          if (wait_for_ptu_motion(self.pan_tilt_timeout)):
-            self.feedback.ptu_pose = ptu_command
+          if (self.wait_for_ptu_motion(self.pan_tilt_timeout)):
+            self.feedback.feedback_ptu_pose = self.ptu_command
             self.server.publish_feedback(self.feedback)
           else:
             rospy.logerror('Ptu failed to move to desired position. Exiting')
+            print 'Ptu failed to move to desired position. Exiting'
             return
 
 
@@ -113,14 +116,17 @@ class PTUServer:
     self.pub.publish(self.ptu_command)
     self.reached = False
     
-    if (wait_for_ptu_motion(self.pan_tilt_timeout)):
-        self.feedback.ptu_pose = ptu_command
+    if (self.wait_for_ptu_motion(self.pan_tilt_timeout)):
+        self.feedback.feedback_ptu_pose = self.ptu_command
         self.server.publish_feedback(self.feedback)
     else:
         rospy.logerror('Ptu failed to move to desired position. Exiting')
+	print 'Ptu failed to move to desired position. Exiting'
         return
     
-    self.server.set_succeeded()
+    result = scitos_ptu.msg.PanTiltResult()
+    result.ptu_pose = self.ptu_command
+    self.server.set_succeeded(result)
 
 if __name__ == '__main__':
   server = PTUServer()
