@@ -14,6 +14,7 @@
 #include "ros/ros.h"
 #include "CTransformation.h"
 #include "CTimer.h"
+#include "CLightClient.h" 
 #include <tf/tf.h>
 
 #define TIMEOUT_INTERVAL 40000
@@ -41,6 +42,8 @@ class CChargingActions
 		bool testMove();
 		void updatePosition(const nav_msgs::Odometry &msg);
 		float progress,progressSpeed,lastProgress, startProg;
+		void lightsOn();
+		void lightsOff();
 	private:
 		CTimer timer;
 		ros::NodeHandle *nh;
@@ -53,6 +56,7 @@ class CChargingActions
 		nav_msgs::Odometry current;
 		float currentAngle,lastAngle;
 		float warningLevel;
+		CLightClient light;
 };
 
 #endif

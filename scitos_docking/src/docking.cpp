@@ -21,6 +21,7 @@
 #include <scitos_apps_msgs/Charging.h>
 #include "CChargingActions.h" 
 
+
 #define MAX_PATTERNS 10 
 
 float ptuPan = 0.0;
@@ -102,8 +103,8 @@ void odomCallback(const nav_msgs::Odometry &msg)
 			}
 			break;
 		case STATE_TEST1:
-			robot->movePtu(ptupos,0);
 			if (waitCycles++ > 10){
+				robot->lightsOff();
 				success = true;
 				state = STATE_TEST_SUCCESS;
 			}
@@ -148,7 +149,10 @@ void odomCallback(const nav_msgs::Odometry &msg)
 			}
 			break;
 		case STATE_UNDOCK_ROTATE:
-			if (robot->rotateByAngle()) state = STATE_UNDOCK_ADJUST;
+			if (robot->rotateByAngle()){
+				 state = STATE_UNDOCK_ADJUST;
+				 robot->lightsOn();
+			}
 			robot->controlHead(100,0,0);
 			break;
 	}
@@ -306,6 +310,9 @@ void imageCallback(const sensor_msgs::ImageConstPtr& msg)
 void actionServerCallback(const scitos_apps_msgs::ChargingGoalConstPtr& goal, Server* as)
 {
 	initComponents();
+	timer.reset();
+	timer.start();
+	timeOut = (int) goal->Timeout*1000;
 	if (goal->Command == "charge"){
 		if (calibrated==false){
 			sprintf(response,"Cannot approach the charging station because the docking is not calibrated.\nRead the readme file on how to perform calibration procedure.");
@@ -313,6 +320,7 @@ void actionServerCallback(const scitos_apps_msgs::ChargingGoalConstPtr& goal, Se
 		}else{
 			state = STATE_INIT;
 			robot->progress = 10;
+			robot->lightsOn();
 		}
 	}
 	if (goal->Command == "test"){
@@ -321,6 +329,7 @@ void actionServerCallback(const scitos_apps_msgs::ChargingGoalConstPtr& goal, Se
 		 robot->rotateByAngle(tangle); 
 		 robot->moveByDistance(tdistance);
 		 ROS_DEBUG("Testing %f %f",tangle,tdistance);*/
+		 robot->lightsOn();
 		 ptupos = (int)goal->Timeout;
 		 robot->movePtu(ptupos,0);
 		 waitCycles = 0;
@@ -329,6 +338,7 @@ void actionServerCallback(const scitos_apps_msgs::ChargingGoalConstPtr& goal, Se
 	if (goal->Command == "calibrate"){
 		state = STATE_CALIBRATE;
 		robot->measure(NULL,NULL,maxMeasurements);
+		robot->lightsOn();
 	}
 	if (goal->Command == "undock"){
 		if (chargerDetected == false){
@@ -343,11 +353,9 @@ void actionServerCallback(const scitos_apps_msgs::ChargingGoalConstPtr& goal, Se
 		result.Message = response;
 		//ROS_WARN("ZMRDO");
 		server->setAborted(result);
+		robot->lightsOff();
 		return;
 	}
-	timer.reset();
-	timer.start();
-	timeOut = (int) goal->Timeout*1000;
 	while (state != STATE_IDLE && state != STATE_ABORTED && state != STATE_TIMEOUT && state != STATE_PREEMPTED){
 		usleep(200000);
 		server->publishFeedback(feedback);
@@ -357,9 +365,11 @@ void actionServerCallback(const scitos_apps_msgs::ChargingGoalConstPtr& goal, Se
 	if (state == STATE_PREEMPTED){
 		server->setPreempted(result);
 		state = STATE_IDLE;
+		robot->lightsOff();
 		return;
 	}else if (state == STATE_ABORTED){
 		server->setAborted(result);
+		robot->lightsOff();
 		return;
 	}else if (success)
 	{
@@ -369,6 +379,7 @@ void actionServerCallback(const scitos_apps_msgs::ChargingGoalConstPtr& goal, Se
 	}else{
 		server->setAborted(result);
 	}
+	robot->lightsOff();
 }
 
 void ptuCallback(const sensor_msgs::JointState::ConstPtr &msg)

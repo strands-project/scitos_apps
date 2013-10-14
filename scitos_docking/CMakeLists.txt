@@ -132,6 +132,7 @@ include_directories(include
 # catkin_add_nosetests(test)
 
 add_library(CCircleDetect src/CCircleDetect.cpp)
+add_library(CLightClient src/CLightClient.cpp)
 add_library(CDump src/CDump.cpp)
 add_library(CTimer src/CTimer.cpp)
 add_library(CRawImage src/CRawImage.cpp)
@@ -152,12 +153,13 @@ add_dependencies(visual_charging scitos_msgs_gencpp scitos_apps_msgs_genccp acti
 add_dependencies(simple_move_client scitos_msgs_gencpp scitos_apps_msgs_genccp actionlib scitos_apps_msgs  actionlib_msgs scitos_apps_msgs_generate_messages_cpp move_base move_base_msgs)
 
 target_link_libraries (visual_charging  CDump)
+target_link_libraries (visual_charging  CLightClient)
 target_link_libraries (visual_charging  CTimer)
 target_link_libraries (visual_charging  CCircleDetect)
 target_link_libraries (visual_charging  CRawImage)
 target_link_libraries (visual_charging  CTransformation)
 target_link_libraries (visual_charging  CChargingClient)
-target_link_libraries (visual_charging  CPtuClient)
+target_link_libraries (CChargingActions  CLightClient)
 target_link_libraries (visual_charging  CChargingActions)
 
 target_link_libraries (visual_charging  gsl)

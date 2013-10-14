@@ -10,7 +10,12 @@ CChargingActions::CChargingActions(ros::NodeHandle *n)
 	cmd_ptu = nh->advertise<sensor_msgs::JointState>("/ptu/cmd", 1);
 	currentAngle = 0;
 	head.name.resize(4);
+	head.name[0] ="EyeLidRight";
+	head.name[1] ="EyeLidLeft";
+	head.name[2] ="HeadPan";
+	head.name[3] ="HeadTilt";
         head.position.resize(4);
+	head.position[0] = head.position[1] = head.position[2] = head.position[3] = 0;
 	ptu.name.resize(2);
 	ptu.position.resize(2);
 	ptu.velocity.resize(2);
@@ -26,6 +31,17 @@ float normalizeAngle(float a,float minimal=-M_PI)
 	while (a > +2*M_PI+minimal) a-=2*M_PI;
 	while (a < minimal) a+=2*M_PI;
 	return a;
+}
+
+void CChargingActions::lightsOff()
+{
+	light.set(false);
+}
+
+
+void CChargingActions::lightsOn()
+{
+	light.set(true);
 }
 
 void CChargingActions::movePtu(int pan,int tilt)
