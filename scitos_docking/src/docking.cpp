@@ -22,16 +22,21 @@
 #include "CChargingActions.h" 
 
 #define MAX_PATTERNS 10 
-	
+
+float ptuPan = 0.0;
+bool success = false;
+int failedToSpotStationCount=0;
 scitos_apps_msgs::ChargingFeedback feedback;
 scitos_apps_msgs::ChargingResult result;
-char response[1000];
+char response[3000];
+char posString[3000];
 typedef actionlib::SimpleActionServer<scitos_apps_msgs::ChargingAction> Server;
 
 int maxMeasurements = 100;
 float dockingPrecision = 0.1;
 float realPrecision,tangle,tdistance;
 
+int stationSpotted = 0;
 bool calibrated = true;
 CTimer timer;
 int timeOut = 120;
@@ -51,7 +56,8 @@ int maxFailures=60;
 TLogModule module = LOG_MODULE_MAIN;
 int numSaved = 0;
 CRawImage *image;
-
+int waitCycles = 0;
+int ptupos = 0;
 CCircleDetect *detectorArray[MAX_PATTERNS];
 STrackedObject objectArray[MAX_PATTERNS];
 SSegment currentSegmentArray[MAX_PATTERNS];
@@ -61,6 +67,7 @@ CChargingClient chargingClient;
 
 EState state = STATE_ROTATE;
 EState lastState = STATE_IDLE;
+
 
 void cameraInfoCallBack(const sensor_msgs::CameraInfo &msg)
 {
@@ -74,11 +81,13 @@ void batteryCallBack(const scitos_msgs::BatteryState &msg)
 
 int initComponents()
 {
+	failedToSpotStationCount = 0;
 	image->getSaveNumber();
 	state = STATE_IDLE;
 	robot->progress = 10;
 	robot->progressSpeed = 2.0;
 	calibrated = trans->loadCalibration();
+	stationSpotted = 0;
 }
 
 void odomCallback(const nav_msgs::Odometry &msg)
@@ -93,7 +102,11 @@ void odomCallback(const nav_msgs::Odometry &msg)
 			}
 			break;
 		case STATE_TEST1:
-			if (robot->rotateByAngle())state = STATE_TEST2;
+			robot->movePtu(ptupos,0);
+			if (waitCycles++ > 10){
+				success = true;
+				state = STATE_TEST_SUCCESS;
+			}
 			break;
 		case STATE_TEST2:
 			if (robot->moveByDistance()){
@@ -102,7 +115,10 @@ void odomCallback(const nav_msgs::Odometry &msg)
 			}
 			break;
 		case STATE_TEST3:
-			if (robot->rotateByAngle())state = STATE_TEST_SUCCESS;
+			if (robot->rotateByAngle()){
+				success = true;
+				state = STATE_TEST_SUCCESS;
+			}
 			break;
 		case STATE_ROTATE:
 			if (robot->rotateByAngle()) state = STATE_MOVE_TO;
@@ -132,7 +148,7 @@ void odomCallback(const nav_msgs::Odometry &msg)
 			}
 			break;
 		case STATE_UNDOCK_ROTATE:
-			if (robot->rotateByAngle()) state = STATE_UNDOCKING_SUCCESS;
+			if (robot->rotateByAngle()) state = STATE_UNDOCK_ADJUST;
 			robot->controlHead(100,0,0);
 			break;
 	}
@@ -140,14 +156,16 @@ void odomCallback(const nav_msgs::Odometry &msg)
 
 void imageCallback(const sensor_msgs::ImageConstPtr& msg)
 {
-	static int failedToSpotStationCount;
 	STrackedObject own,station;
 	if (state == STATE_INIT){
 		robot->initCharging(chargerDetected,maxMeasurements);
-		if (chargerDetected) state = STATE_WAIT; else state = STATE_SEARCH; 
+		robot->movePtu(0,0);
+		if (chargerDetected) state = STATE_WAIT;
+		if (chargerDetected == false && fabs(ptuPan<0.01)) state = STATE_SEARCH; 
 	}
 	if (state == STATE_UNDOCK_INIT)
 	{
+		robot->movePtu(275,0);
 		if (robot->wait()){
 			robot->moveByDistance(-0.55);
 			state = STATE_UNDOCK_MOVE;
@@ -177,6 +195,7 @@ void imageCallback(const sensor_msgs::ImageConstPtr& msg)
 		//is the ROBOT STATION label visible ?	
 		station = trans->getDock(objectArray);
 		if (station.valid){
+			stationSpotted++;
 			failedToSpotStationCount = 0;
 			robot->controlHead(100,180/M_PI*atan2(station.y,station.x),-180/M_PI*atan2(station.z-0.2,station.x));
 			switch (state){
@@ -190,6 +209,24 @@ void imageCallback(const sensor_msgs::ImageConstPtr& msg)
 						robot->adjust(station,station.y);
 					}
 					break;
+				case STATE_UNDOCK_ADJUST:
+					if (robot->adjust(station,station.y,0.001)){
+						robot->halt();
+						robot->measure(NULL,NULL,maxMeasurements);
+						state = STATE_UNDOCK_MEASURE;
+					}
+					break;
+				case STATE_UNDOCK_MEASURE:
+					own = trans->getOwnPosition(objectArray);
+					if (robot->measure(&own)){
+						robot->halt();
+						robot->movePtu(0,0);
+						sprintf(posString,"Robot position after undock: %f %f %f",own.x,own.y,own.z);
+						printf("%s\n",response);
+						success = true;
+						state = STATE_UNDOCKING_SUCCESS;
+					}
+					break;				
 				case STATE_ADJUST:
 					if (robot->adjust(station)){
 						state = STATE_MEASURE;
@@ -224,13 +261,26 @@ void imageCallback(const sensor_msgs::ImageConstPtr& msg)
 					own = trans->getOwnPosition(objectArray);
 					if (robot->measure(&own,&station)){
 						trans->updateCalibration(own,station);
-						if(trans->saveCalibration()) state = STATE_CALIBRATION_SUCCESS; else state = STATE_CALIBRATION_FAILURE;
+						if(trans->saveCalibration()){
+							success = true;
+							state = STATE_CALIBRATION_SUCCESS;
+							sprintf(response,"Calibration OK.");
+						} else{
+							success = false;
+							state = STATE_CALIBRATION_FAILURE;
+							sprintf(response,"Calibration OK, but the calibration parameters were saved neither in a file nor in the STRANDS datacentre. Autonomous charging will work for now, but you will have to perform calibration again after restarting ROS or the robot.");
+						}
 					}
 					break;
 				case STATE_WAIT:
 					own = trans->getOwnPosition(objectArray);
 					if (robot->wait(&own,station,chargerDetected)){
-						if (chargerDetected) state = STATE_DOCKING_SUCCESS; else state = STATE_RETRY;
+						if (chargerDetected){
+							 state = STATE_DOCKING_SUCCESS;
+							 success = true;
+						} else{
+							state = STATE_RETRY;
+						}
 						realPrecision = sqrt(own.x*own.x+own.y*own.y);
 					}
 					break;
@@ -239,7 +289,17 @@ void imageCallback(const sensor_msgs::ImageConstPtr& msg)
 			failedToSpotStationCount++;
 			if (state == STATE_SEARCH) failedToSpotStationCount=0;
 		}
-		if (failedToSpotStationCount > maxFailures) state=STATE_DOCKING_FAILURE; 
+		if (failedToSpotStationCount > maxFailures){
+			if (state == STATE_CALIBRATE){
+				 state=STATE_CALIBRATION_FAILURE;
+				 sprintf(response,"Cannot see the ROBOT STATION tag. Calibration failed.");
+			} else if (state == STATE_UNDOCK_ADJUST || state == STATE_UNDOCK_MEASURE){
+				 sprintf(response,"Cannot see the ROBOT STATION tag. Undocking was not successfull.");
+				 state=STATE_UNDOCKING_FAILURE;
+			}else{
+				 state=STATE_DOCKING_FAILURE; 
+			}
+		}
 	}
 }
 
@@ -256,11 +316,14 @@ void actionServerCallback(const scitos_apps_msgs::ChargingGoalConstPtr& goal, Se
 		}
 	}
 	if (goal->Command == "test"){
-		 tangle = (rand()%100)/100.0;
+		 /*tangle = (rand()%100)/100.0;
 		 tdistance = 2.0*(rand()%100)/100;
 		 robot->rotateByAngle(tangle); 
 		 robot->moveByDistance(tdistance);
-		 ROS_DEBUG("Testing %f %f",tangle,tdistance);
+		 ROS_DEBUG("Testing %f %f",tangle,tdistance);*/
+		 ptupos = (int)goal->Timeout;
+		 robot->movePtu(ptupos,0);
+		 waitCycles = 0;
 		 state = STATE_TEST1;
 	}
 	if (goal->Command == "calibrate"){
@@ -278,24 +341,41 @@ void actionServerCallback(const scitos_apps_msgs::ChargingGoalConstPtr& goal, Se
 	}
 	if (state == STATE_REJECTED){
 		result.Message = response;
+		//ROS_WARN("ZMRDO");
 		server->setAborted(result);
 		return;
 	}
 	timer.reset();
 	timer.start();
 	timeOut = (int) goal->Timeout*1000;
-	while (state != STATE_IDLE && state != STATE_ABORTED && state != STATE_TIMEOUT){
+	while (state != STATE_IDLE && state != STATE_ABORTED && state != STATE_TIMEOUT && state != STATE_PREEMPTED){
 		usleep(200000);
 		server->publishFeedback(feedback);
 		//ROS_DEBUG("ROBOT %s Progress: %.0f %.2f Time: %i/%i",stateStr[state],robot->progress,robot->progressSpeed,timer.getTime(),timeOut);
 	}
 	result.Message = response;
-	if (state == STATE_ABORTED){
+	if (state == STATE_PREEMPTED){
+		server->setPreempted(result);
+		state = STATE_IDLE;
+		return;
+	}else if (state == STATE_ABORTED){
 		server->setAborted(result);
 		return;
-	}	
-	robot->progress = 100;
-	server->setSucceeded(result);
+	}else if (success)
+	{
+		robot->progress = 100;
+		server->setSucceeded(result);
+		success = false;
+	}else{
+		server->setAborted(result);
+	}
+}
+
+void ptuCallback(const sensor_msgs::JointState::ConstPtr &msg)
+{
+	for (int i = 0;i<2;i++){
+		if (msg->name[i] == "pan") ptuPan = msg->position[i];
+	}
 }
 
 void joyCallback(const scitos_apps_msgs::action_buttons::ConstPtr &msg)
@@ -315,13 +395,13 @@ void joyCallback(const scitos_apps_msgs::action_buttons::ConstPtr &msg)
 void state_cleanup()
 {
 	if (state == STATE_DOCKING_SUCCESS) sprintf(response,"The robot has successfully reached the charger in %i s with precision %.0f mm.",timer.getTime()/1000,realPrecision*1000);
-	if (state == STATE_DOCKING_FAILURE) sprintf(response,"The robot has failed reached the charger.");
-	if (state == STATE_UNDOCKING_SUCCESS) sprintf(response,"Undocking  successfully completed.");
+	if (state == STATE_DOCKING_FAILURE) sprintf(response,"The robot has failed reach the charger, which has been seen %i times.",stationSpotted);
+	if (state == STATE_UNDOCKING_SUCCESS) sprintf(response,"Undocking  successfully completed.%s",posString);
 	if (state == STATE_TEST_SUCCESS) sprintf(response,"Testrun successfully completed at %f %f.",cos(tangle)*tdistance+0.55,sin(tangle)*tdistance);
 	if (state == STATE_UNDOCKING_FAILURE) sprintf(response,"Undocking  not completed.");
 	if (state == STATE_CALIBRATION_SUCCESS) sprintf(response,"Calibration OK.");
-	if (state == STATE_CALIBRATION_FAILURE) sprintf(response,"Calibration failed.");
-	if (state == STATE_TIMEOUT) sprintf(response,"Requested action was not completed in the requested time.");
+//	if (state == STATE_CALIBRATION_FAILURE) sprintf(response,"Calibration failed.");
+	if (state == STATE_TIMEOUT) sprintf(response,"Requested action was not completed in the requested time. Station spotted %i times.\n",stationSpotted);
 	if ((int) state >= STATE_DOCKING_SUCCESS && (int)state <= STATE_TIMEOUT){
 		robot->progress = 100;
 		state = STATE_IDLE;
@@ -354,14 +434,10 @@ void mainLoop()
 			if (robot->actionStuck()) feedback.Level = 1; else feedback.Level = 0;
 		}
 		if (server->isPreemptRequested()){
-			state = STATE_ABORTED;
+			state = STATE_PREEMPTED;
 			robot->halt();
 			ros::spinOnce();
-			if (server->isActive()==false){
-				result.Message = "Current action preempted by external request.";
-				state = STATE_IDLE;
-				server->setPreempted(result);
-			}
+			if (server->isActive()) result.Message = "Current action preempted by external request.";
 		}
 		state_cleanup();
 		lastState = state;
@@ -381,13 +457,15 @@ int main(int argc,char* argv[])
 	for (int i = 0;i<MAX_PATTERNS;i++) detectorArray[i] = new CCircleDetect(defaultImageWidth,defaultImageHeight);
 
 	initComponents();
-
+	success = false;
 	image_transport::Subscriber subim = it.subscribe("head_xtion/rgb/image_mono", 1, imageCallback);
+	//image_transport::Subscriber subim = it.subscribe("head_xtion/ir/image_raw", 1, imageCallback);
         imdebug = it.advertise("/charging/processedimage", 1);
 	ros::Subscriber subodo = nh->subscribe("odom", 1, odomCallback);
 	ros::Subscriber subcharger = nh->subscribe("battery_state", 1, batteryCallBack);
 	ros::Subscriber subcamera = nh->subscribe("head_xtion/rgb/camera_info", 1,cameraInfoCallBack);
 	ros::Subscriber joy_sub_ = nh->subscribe("/teleop_joystick/action_buttons", 10, joyCallback);
+	ros::Subscriber ptu_sub_ = nh->subscribe("/ptu/state", 10, ptuCallback);
 	server = new Server(*nh, "chargingServer", boost::bind(&actionServerCallback, _1, server), false);
 
 	server->start();
