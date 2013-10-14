@@ -1,0 +1,13 @@
+#goal
+int32 pan_start
+int32 pan_step
+int32 pan_end
+int32 tilt_start
+int32 tilt_step
+int32 tilt_end
+---
+#result
+sensor_msgs/JointState ptu_pose
+---
+#feedback
+sensor_msgs/JointState feedback_ptu_pose
