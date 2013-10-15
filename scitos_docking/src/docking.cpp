@@ -444,7 +444,7 @@ void mainLoop()
 			feedback.Progress = (int)robot->progress;
 			if (robot->actionStuck()) feedback.Level = 1; else feedback.Level = 0;
 		}
-		if (server->isPreemptRequested()){
+		if (server->isPreemptRequested() && state != STATE_IDLE){
 			state = STATE_PREEMPTED;
 			robot->halt();
 			ros::spinOnce();
