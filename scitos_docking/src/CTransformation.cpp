@@ -259,6 +259,25 @@ void CTransformation::updateCalibration(STrackedObject own,STrackedObject statio
 
 }
 
+bool CTransformation::saveParamInDB(char *param)
+{
+	ros::ServiceClient client = nh->serviceClient<strands_datacentre::SetParam>("/config_manager/save_param");
+	strands_datacentre::SetParam srv;
+	ROS_INFO("Requesting update for %s", param);
+	srv.request.param = param;
+	if (client.call(srv))
+	{
+		//ROS_INFO("%s Param updated on MongoDB", param);
+		return true;
+	}
+	else
+	{
+		//ROS_ERROR("Failed to call service save_param");
+		return false;
+	}
+}
+
+
 bool CTransformation::loadCalibration()
 {
 	bool calibrated = true;
@@ -301,6 +320,15 @@ bool CTransformation::loadCalibration()
 bool CTransformation::saveCalibration()
 {
 	std::string configFilename = "";
+	bool savedOK = true;
+
+	savedOK = savedOK && saveParamInDB("/charging/ownOffsetX");
+	savedOK = savedOK && saveParamInDB("/charging/ownOffsetY");
+	savedOK = savedOK && saveParamInDB("/charging/ownOffsetZ");
+	savedOK = savedOK && saveParamInDB("/charging/dockOffsetX");
+	savedOK = savedOK && saveParamInDB("/charging/dockOffsetY");
+	savedOK = savedOK && saveParamInDB("/charging/dockOffsetZ");
+	if (savedOK == false) ROS_WARN("Calibration parameters could not be saved in the datacentre.");
 	if (nh->getParam("configFile", configFilename) == false){
 		ROS_WARN("Config file not set, calibration parameters will not be saved.");
 		return false;
@@ -319,8 +347,9 @@ bool CTransformation::saveCalibration()
 		fprintf(file," ownOffsetZ: %lf\n",ownOffset.z);
 		fclose(file);
 		ROS_INFO("Calibration parameters saved to: %s",configFilename.c_str());
+		return true;
 	}
-	return true;
+	return savedOK;
 }
 
 STrackedObject CTransformation::normalize(STrackedObject o)
