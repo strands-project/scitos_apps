@@ -141,6 +141,10 @@ add_library(CChargingClient src/CChargingClient.cpp)
 add_library(CPtuClient src/CPtuClient.cpp)
 add_library(CChargingActions src/CChargingActions.cpp)
 target_link_libraries(CTransformation ${GSL_LIBRARIES})
+target_link_libraries(CTransformation ${catkin_LIBRARIES})
+target_link_libraries(CChargingClient ${catkin_LIBRARIES})
+target_link_libraries(CChargingActions ${catkin_LIBRARIES} CTimer)
+
 
 add_executable(visual_charging src/docking.cpp)
 add_executable(visual_charging_client src/dockingClient.cpp)
