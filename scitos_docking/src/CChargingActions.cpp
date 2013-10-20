@@ -8,6 +8,7 @@ CChargingActions::CChargingActions(ros::NodeHandle *n)
 	cmd_vel = nh->advertise<geometry_msgs::Twist>("/cmd_vel", 1);
 	cmd_head = nh->advertise<sensor_msgs::JointState>("/head/commanded_state", 1);
 	cmd_ptu = nh->advertise<sensor_msgs::JointState>("/ptu/cmd", 1);
+	poseInjection = nh->advertise<geometry_msgs::PoseWithCovarianceStamped>("/initialpose", 1);
 	currentAngle = 0;
 	head.name.resize(4);
 	head.name[0] ="EyeLidRight";
@@ -20,6 +21,8 @@ CChargingActions::CChargingActions(ros::NodeHandle *n)
 	ptu.position.resize(2);
 	ptu.velocity.resize(2);
 	warningLevel = .2;
+	poseSet = true;
+	injectX = injectY = injectPhi = 0;
 }
 
 CChargingActions::~CChargingActions()
@@ -32,6 +35,47 @@ float normalizeAngle(float a,float minimal=-M_PI)
 	while (a < minimal) a+=2*M_PI;
 	return a;
 }
+
+void CChargingActions::injectPosition(float x,float y,float phi) 
+{
+	float alpha = -2.75;//PTU rotation
+	injectPhi = normalizeAngle(phi+alpha);
+	injectX = x + 0.365/2*cos(injectPhi);//cos(alpha)*x-sin(alpha)*y;
+	injectY = y + 0.365/2*sin(injectPhi);;//sin(alpha)*x+cos(alpha)*y;
+	ROS_INFO("Injecting %f %f %f\n",injectX,injectY,injectPhi);	
+	poseSet = false;
+}
+ 
+void CChargingActions::injectPosition() 
+{
+	geometry_msgs::PoseWithCovarianceStamped pos;
+	ros::Time stamp;
+	pos.header.frame_id = "/map";
+	pos.pose.pose.position.x = injectX;
+	pos.pose.pose.position.y = injectY;
+	pos.pose.pose.position.z = 0;
+	tf::Quaternion q;
+	q.setRPY(0,0,injectPhi);
+	tf::quaternionTFToMsg(q, pos.pose.pose.orientation);
+	
+	float xc = 0.02;
+	float yc = 0.02;
+	float fc = 0.02;
+	float covariance[] = {
+		xc, 0, 0, 0, 0, 0,
+		0, yc, 0, 0, 0, 0,
+		0, 0, 1e-3, 0, 0, 0,
+		0, 0, 0, 1e-3, 0, 0,
+		0, 0, 0, 0, 1e-3, 0,
+		0, 0, 0, 0, 0, fc 
+	};
+	for (unsigned int i = 0; i < pos.pose.covariance.size(); i++) pos.pose.covariance[i] = covariance[i];
+	poseInjection.publish(pos);
+}
+
+
+
+
 
 void CChargingActions::lightsOff()
 {
@@ -150,7 +194,7 @@ bool CChargingActions::measure(STrackedObject *o1,STrackedObject *o2,int count,b
 	if (o2==NULL) o2 = &dummy;
 	if (count > 0){
 		moveLids = ml;
-		avgPos1.x = avgPos1.y = avgPos1.z = avgPos2.x = avgPos2.y = avgPos2.z = 0;
+		avgPos1.x = avgPos1.y = avgPos1.z = avgPos2.x = avgPos2.y = avgPos2.z = avgPos1.yaw = avgPos2.yaw = 0;
 	 	posCount = -30;
 		maxCount = count;
 	}
@@ -163,9 +207,10 @@ bool CChargingActions::measure(STrackedObject *o1,STrackedObject *o2,int count,b
 		avgPos1.x += o1->x;
 		avgPos1.y += o1->y; 
 		avgPos1.z += o1->z; 
+		avgPos1.yaw += o1->yaw; 
 		avgPos2.x += o2->x;
 		avgPos2.y += o2->y; 
-		avgPos2.z += o2->z; 
+		avgPos2.yaw += o2->yaw; 
 	}
 	posCount++;
 	if (moveLids){
@@ -178,9 +223,11 @@ bool CChargingActions::measure(STrackedObject *o1,STrackedObject *o2,int count,b
 		o1->x = avgPos1.x/posCount;
 		o1->y = avgPos1.y/posCount;
 		o1->z = avgPos1.z/posCount;
+		o1->yaw = avgPos1.yaw/posCount;
 		o2->x = avgPos2.x/posCount;
 		o2->y = avgPos2.y/posCount;
 		o2->z = avgPos2.z/posCount;
+		o2->yaw = avgPos2.yaw/posCount;
 		return true;
 	}
 	base_cmd.linear.x = base_cmd.angular.z = 0;

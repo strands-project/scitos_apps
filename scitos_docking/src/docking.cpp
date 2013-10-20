@@ -65,10 +65,23 @@ SSegment currentSegmentArray[MAX_PATTERNS];
 SSegment lastSegmentArray[MAX_PATTERNS];
 CTransformation *trans;
 CChargingClient chargingClient;
+bool positionUpdate = false;
 
+//position injection related
 EState state = STATE_ROTATE;
 EState lastState = STATE_IDLE;
 
+void poseCallback(const geometry_msgs::Pose::ConstPtr& msg)
+{
+	if (positionUpdate){
+		if (robot->poseSet == false){
+			float phiDiff = robot->injectPhi- tf::getYaw(msg->orientation);
+			while (phiDiff >= M_PI) phiDiff -= 2*M_PI;
+			while (phiDiff < -M_PI) phiDiff += 2*M_PI;
+			if (fabs(robot->injectX-msg->position.x) < 0.001 && fabs(robot->injectY-msg->position.y) < 0.001 && fabs(phiDiff) < 0.001) robot->poseSet = true;
+		}
+	}
+}
 
 void cameraInfoCallBack(const sensor_msgs::CameraInfo &msg)
 {
@@ -150,7 +163,7 @@ void odomCallback(const nav_msgs::Odometry &msg)
 			break;
 		case STATE_UNDOCK_ROTATE:
 			if (robot->rotateByAngle()){
-				 state = STATE_UNDOCK_ADJUST;
+				 state = STATE_UNDOCK_ADJUST_STEP1;
 				 robot->lightsOn();
 			}
 			robot->controlHead(100,0,0);
@@ -213,21 +226,35 @@ void imageCallback(const sensor_msgs::ImageConstPtr& msg)
 						robot->adjust(station,station.y);
 					}
 					break;
-				case STATE_UNDOCK_ADJUST:
-					if (robot->adjust(station,station.y,0.001)){
+				case STATE_UNDOCK_ADJUST_STEP1:
+					robot->adjust(station,station.y*1.1);
+					robot->halt();
+					state = STATE_UNDOCK_ADJUST_STEP2;
+					break;
+				case STATE_UNDOCK_ADJUST_STEP2:
+					if (robot->adjust(station,0.0,0.01)){
 						robot->halt();
 						robot->measure(NULL,NULL,maxMeasurements);
-						state = STATE_UNDOCK_MEASURE;
+						state = STATE_UNDOCK_MEASURE1;
 					}
 					break;
-				case STATE_UNDOCK_MEASURE:
+				case STATE_UNDOCK_MEASURE1:
+					own = trans->getOwnPosition(objectArray);
+					if (robot->measure(&own)){
+						robot->halt();
+						robot->measure(NULL,NULL,maxMeasurements);
+						state = STATE_UNDOCK_MEASURE2;
+					}
+					break;				
+				case STATE_UNDOCK_MEASURE2:
 					own = trans->getOwnPosition(objectArray);
 					if (robot->measure(&own)){
 						robot->halt();
 						robot->movePtu(0,0);
-						sprintf(posString,"Robot position after undock: %f %f %f",own.x,own.y,own.z);
+						sprintf(posString,"Robot position after undock: %f %f %f %f",own.x,own.y,own.z,own.yaw);
 						printf("%s\n",response);
 						success = true;
+						robot->injectPosition(-own.z,-own.x,own.yaw);
 						state = STATE_UNDOCKING_SUCCESS;
 					}
 					break;				
@@ -297,7 +324,7 @@ void imageCallback(const sensor_msgs::ImageConstPtr& msg)
 			if (state == STATE_CALIBRATE){
 				 state=STATE_CALIBRATION_FAILURE;
 				 sprintf(response,"Cannot see the ROBOT STATION tag. Calibration failed.");
-			} else if (state == STATE_UNDOCK_ADJUST || state == STATE_UNDOCK_MEASURE){
+			} else if (state == STATE_UNDOCK_ADJUST_STEP1 || state == STATE_UNDOCK_MEASURE1 || state == STATE_UNDOCK_ADJUST_STEP2|| state == STATE_UNDOCK_MEASURE2){
 				 sprintf(response,"Cannot see the ROBOT STATION tag. Undocking was not successfull.");
 				 state=STATE_UNDOCKING_FAILURE;
 			}else{
@@ -324,14 +351,9 @@ void actionServerCallback(const scitos_apps_msgs::ChargingGoalConstPtr& goal, Se
 		}
 	}
 	if (goal->Command == "test"){
-		 /*tangle = (rand()%100)/100.0;
-		 tdistance = 2.0*(rand()%100)/100;
-		 robot->rotateByAngle(tangle); 
-		 robot->moveByDistance(tdistance);
-		 ROS_DEBUG("Testing %f %f",tangle,tdistance);*/
 		 robot->lightsOn();
 		 ptupos = (int)goal->Timeout;
-		 robot->movePtu(ptupos,0);
+		 robot->movePtu(275,0);
 		 waitCycles = 0;
 		 state = STATE_TEST1;
 	}
@@ -432,6 +454,7 @@ void mainLoop()
 		if (timeOut < timer.getTime() && state != STATE_IDLE ) state = STATE_TIMEOUT;
 		if (state != STATE_IDLE) robot->moveHead();
 		ros::spinOnce();
+		if (positionUpdate && robot->poseSet == false) robot->injectPosition(); 
 		usleep(30000);
 		if (state!=lastState){
 			sprintf(status,"Charging service is %s",stateStr[state]);
@@ -470,13 +493,14 @@ int main(int argc,char* argv[])
 	initComponents();
 	success = false;
 	image_transport::Subscriber subim = it.subscribe("head_xtion/rgb/image_mono", 1, imageCallback);
-	//image_transport::Subscriber subim = it.subscribe("head_xtion/ir/image_raw", 1, imageCallback);
+	nh->param("positionUpdate",positionUpdate,false);
         imdebug = it.advertise("/charging/processedimage", 1);
 	ros::Subscriber subodo = nh->subscribe("odom", 1, odomCallback);
 	ros::Subscriber subcharger = nh->subscribe("battery_state", 1, batteryCallBack);
 	ros::Subscriber subcamera = nh->subscribe("head_xtion/rgb/camera_info", 1,cameraInfoCallBack);
 	ros::Subscriber joy_sub_ = nh->subscribe("/teleop_joystick/action_buttons", 10, joyCallback);
 	ros::Subscriber ptu_sub_ = nh->subscribe("/ptu/state", 10, ptuCallback);
+	ros::Subscriber robot_pose = nh->subscribe("/robot_pose", 1000, poseCallback);
 	server = new Server(*nh, "chargingServer", boost::bind(&actionServerCallback, _1, server), false);
 
 	server->start();
