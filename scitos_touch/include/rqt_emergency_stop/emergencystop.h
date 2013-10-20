@@ -11,6 +11,7 @@
 
 #include <boost/thread.hpp>
 
+#ifndef Q_MOC_RUN
 #include <ros/ros.h>
 #include <ros/console.h>
 #include <std_msgs/Bool.h>
@@ -18,6 +19,8 @@
 #include <scitos_msgs/EmergencyStop.h>
 #include <rqt_gui_cpp/plugin.h>
 #include <pluginlib/class_list_macros.h>
+#endif
+
 
 #include "ui_emergencystop.h"
 
