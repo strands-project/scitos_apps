@@ -16,6 +16,8 @@
 #include "CTimer.h"
 #include "CLightClient.h" 
 #include <tf/tf.h>
+#include <geometry_msgs/PoseWithCovarianceStamped.h>
+#include <geometry_msgs/PoseWithCovariance.h>
 
 #define TIMEOUT_INTERVAL 40000
 
@@ -44,6 +46,10 @@ class CChargingActions
 		float progress,progressSpeed,lastProgress, startProg;
 		void lightsOn();
 		void lightsOff();
+		void injectPosition(float x,float y,float phi); 
+		void injectPosition(); 
+		float injectX,injectY,injectPhi;
+		bool poseSet;
 	private:
 		CTimer timer;
 		ros::NodeHandle *nh;
@@ -57,6 +63,8 @@ class CChargingActions
 		float currentAngle,lastAngle;
 		float warningLevel;
 		CLightClient light;
+		ros::Publisher poseInjection;
+		std::string frame;
 };
 
 #endif
