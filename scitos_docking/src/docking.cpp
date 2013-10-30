@@ -163,6 +163,7 @@ void odomCallback(const nav_msgs::Odometry &msg)
 			break;
 		case STATE_UNDOCK_ROTATE:
 			if (robot->rotateByAngle()){
+				robot->halt();
 				 state = STATE_UNDOCK_ADJUST_STEP1;
 				 robot->lightsOn();
 			}
@@ -232,7 +233,7 @@ void imageCallback(const sensor_msgs::ImageConstPtr& msg)
 					state = STATE_UNDOCK_ADJUST_STEP2;
 					break;
 				case STATE_UNDOCK_ADJUST_STEP2:
-					if (robot->adjust(station,0.0,0.01)){
+					if (robot->adjust(station,0.0,0.05)){
 						robot->halt();
 						robot->measure(NULL,NULL,maxMeasurements);
 						state = STATE_UNDOCK_MEASURE1;

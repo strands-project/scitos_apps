@@ -182,7 +182,7 @@ STrackedObject CTransformation::getOwnPosition(STrackedObject o[])
 	for (int i=0;i<3;i++) trk[i] = o[i];
 	for (int i=0;i<3;i++) trk[i].d = distance(trk[(i+1)%3],trk[(i+2)%3]);
 	qsort(trk,3,sizeof(STrackedObject),sortByDistance);
-	for (int i = 0;i<3;i++) fprintf(stdout,"Dock position %i: %.3f %.3f %.3f %.3f\n",i,trk[i].x,trk[i].y,trk[i].z,trk[i].d);
+//	for (int i = 0;i<3;i++) fprintf(stdout,"Dock position %i: %.3f %.3f %.3f %.3f\n",i,trk[i].x,trk[i].y,trk[i].z,trk[i].d);
 //	for (int i=0;i<3;i++) fprintf(stdout,"%.3f ",trk[i].d);
 	//fprintf(stdout,"%.3f \n",sqrt(trk[1].d*trk[1].d+trk[2].d*trk[2].d));
 	D3transform[0] =  calibrate3D(trk[0],trk[2],trk[1],0.12,0.09);
@@ -192,7 +192,7 @@ STrackedObject CTransformation::getOwnPosition(STrackedObject o[])
 	trk[3].y -= ownOffset.y;
 	trk[3].z -= ownOffset.z;
 	trk[3].yaw = atan2(trk[2].x-trk[0].x,trk[2].y-trk[0].y);
-	fprintf(stdout,"Robot: %.3f %.3f %.3f %.3f\n",trk[3].x,trk[3].y,trk[3].z,trk[3].yaw*180.0/M_PI);
+//	fprintf(stdout,"Robot: %.3f %.3f %.3f %.3f\n",trk[3].x,trk[3].y,trk[3].z,trk[3].yaw*180.0/M_PI);
 	return trk[3];
 }
 
