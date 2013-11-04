@@ -4,22 +4,22 @@
 
 void doneCb(const actionlib::SimpleClientGoalState& state,const scitos_apps_msgs::ChargingResultConstPtr& result)
 {
-  ROS_INFO("Finished in state [%s]", state.toString().c_str());
-  ROS_INFO("Answer: %s",result->Message.c_str());
+  printf("Finished in state [%s]\n", state.toString().c_str());
+  printf("Answer: %s\n",result->Message.c_str());
   ros::shutdown();
 }
 
 // Called once when the goal becomes active
 void activeCb()
 {
-  ROS_INFO("Goal just went active");
+  printf("Goal just went active\n");
 }
 
 // Called every time feedback is received for the goal
 void feedbackCb(const scitos_apps_msgs::ChargingFeedbackConstPtr& feedback)
 {
-  if (feedback->Level == 0) ROS_INFO("Charging %s, Progress: %i%%", feedback->Message.c_str(),feedback->Progress);
-  if (feedback->Level == 1) ROS_INFO("WARNING! Charging reports to be stuck in %i%% of %s", feedback->Progress,feedback->Message.c_str());
+  if (feedback->Level == 0) printf("Charging %s, Progress: %i%%\n", feedback->Message.c_str(),feedback->Progress);
+  if (feedback->Level == 1) printf("WARNING! Charging reports to be stuck in %i%% of %s\n", feedback->Progress,feedback->Message.c_str());
 }
  
  int main (int argc, char **argv)
@@ -28,15 +28,18 @@ void feedbackCb(const scitos_apps_msgs::ChargingFeedbackConstPtr& feedback)
  
    actionlib::SimpleActionClient<scitos_apps_msgs::ChargingAction> ac("chargingServer", true);
  
-   ROS_INFO("Waiting for action server to start.");
+   printf("Waiting for action server to start.\n");
    ac.waitForServer();
  
-   ROS_INFO("Action server started, sending goal.");
+   printf("Charging action server responded, sending goal.\n");
    scitos_apps_msgs::ChargingGoal goal;
    goal.Command = argv[1];
    goal.Timeout = atoi(argv[2]);
+   usleep(200000);
    ac.sendGoal(goal, &doneCb, &activeCb, &feedbackCb);
+   usleep(200000);
    ros::spin(); 
+   printf("Charging client terminating.\n");
    //exit
    return 0;
  }

@@ -4,7 +4,7 @@ project(scitos_docking)
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
-find_package(catkin REQUIRED COMPONENTS image_transport roscpp rospy std_msgs scitos_msgs scitos_apps_msgs message_generation genmsg actionlib_msgs actionlib)
+find_package(catkin REQUIRED COMPONENTS image_transport roscpp rospy std_msgs scitos_msgs scitos_apps_msgs message_generation genmsg actionlib_msgs actionlib move_base_msgs strands_datacentre)
 
 ## System dependencies are found with CMake's conventions
 # find_package(Boost REQUIRED COMPONENTS system)
@@ -132,30 +132,44 @@ include_directories(include
 # catkin_add_nosetests(test)
 
 add_library(CCircleDetect src/CCircleDetect.cpp)
+add_library(CLightClient src/CLightClient.cpp)
 add_library(CDump src/CDump.cpp)
 add_library(CTimer src/CTimer.cpp)
 add_library(CRawImage src/CRawImage.cpp)
 add_library(CTransformation src/CTransformation.cpp)
 add_library(CChargingClient src/CChargingClient.cpp)
+add_library(CPtuClient src/CPtuClient.cpp)
 add_library(CChargingActions src/CChargingActions.cpp)
 target_link_libraries(CTransformation ${GSL_LIBRARIES})
+target_link_libraries(CTransformation ${catkin_LIBRARIES})
+target_link_libraries(CChargingClient ${catkin_LIBRARIES})
+target_link_libraries(CChargingActions ${catkin_LIBRARIES} CTimer)
+
 
 add_executable(visual_charging src/docking.cpp)
 add_executable(visual_charging_client src/dockingClient.cpp)
+add_executable(simple_move_client src/testMoveClient.cpp)
+add_executable(simple_ptu_client src/testPtuClient.cpp)
 
 add_dependencies(CChargingClient scitos_msgs_gencpp scitos_apps_msgs_genccp actionlib scitos_apps_msgs actionlib_msgs scitos_apps_msgs_generate_messages_cpp)
 add_dependencies(visual_charging_client scitos_msgs_gencpp scitos_apps_msgs_genccp actionlib scitos_apps_msgs  actionlib_msgs scitos_apps_msgs_generate_messages_cpp)
-add_dependencies(visual_charging scitos_msgs_gencpp scitos_apps_msgs_genccp actionlib scitos_apps_msgs  actionlib_msgs scitos_apps_msgs_generate_messages_cpp)
+add_dependencies(visual_charging scitos_msgs_gencpp scitos_apps_msgs_genccp actionlib scitos_apps_msgs  actionlib_msgs scitos_apps_msgs_generate_messages_cpp strands_datacentre)
+add_dependencies(simple_move_client scitos_msgs_gencpp scitos_apps_msgs_genccp actionlib scitos_apps_msgs  actionlib_msgs scitos_apps_msgs_generate_messages_cpp move_base move_base_msgs)
+add_dependencies(simple_ptu_client scitos_msgs_gencpp scitos_apps_msgs_genccp actionlib scitos_apps_msgs  actionlib_msgs scitos_apps_msgs_generate_messages_cpp move_base move_base_msgs move_base_msgs_gencpp)
 
 target_link_libraries (visual_charging  CDump)
+target_link_libraries (visual_charging  CLightClient)
 target_link_libraries (visual_charging  CTimer)
 target_link_libraries (visual_charging  CCircleDetect)
 target_link_libraries (visual_charging  CRawImage)
 target_link_libraries (visual_charging  CTransformation)
 target_link_libraries (visual_charging  CChargingClient)
+target_link_libraries (CChargingActions  CLightClient)
 target_link_libraries (visual_charging  CChargingActions)
 
 target_link_libraries (visual_charging  gsl)
 target_link_libraries (visual_charging  blas)
 target_link_libraries (visual_charging  ${catkin_LIBRARIES})
 target_link_libraries (visual_charging_client  ${catkin_LIBRARIES})
+target_link_libraries (simple_move_client  ${catkin_LIBRARIES})
+target_link_libraries (simple_ptu_client  ${catkin_LIBRARIES})

@@ -13,6 +13,7 @@
 #include "CCircleDetect.h"
 #include <semaphore.h> 
 #include "ros/ros.h"
+#include "strands_datacentre/SetParam.h"
 
 typedef enum{
 	TRANSFORM_NONE,
@@ -72,6 +73,7 @@ class CTransformation
 		STrackedObject getOwnPosition(STrackedObject o[]);
 		STrackedObject ownOffset,dockOffset;
 		void updateCalibration(STrackedObject own,STrackedObject station);
+		bool saveParamInDB(char *param);
 
 	private:
 		STrackedObject  normalize(STrackedObject o);
