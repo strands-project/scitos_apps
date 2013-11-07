@@ -14,6 +14,7 @@ class PTUServer:
   def __init__(self):
     rospy.init_node('ptu_actionserver')
     self.pub = rospy.Publisher('/ptu/cmd', JointState)
+    self.log_pub = rospy.Publisher('/ptu/log', string)
     self.state=rospy.Subscriber("/ptu/state", JointState, self.head_state_cb)
 
     self.server = actionlib.SimpleActionServer('ptu_pan_tilt', PanTiltAction, self.execute, False)
@@ -93,57 +94,29 @@ class PTUServer:
 
     print 'Starting pan tilt action ',panstart, panstep, panend, tiltstart, tiltstep, tiltend
     # start position
+    self.log_pub.publish("start_sweep")
     self.ptu_command.position=[math.radians(-panstart),math.radians(-tiltstart)]
-    #self.pub.publish(self.ptu_command)
     self.ptugoal.pan = -panstart
     self.ptugoal.tilt = -tiltstart
     self.client.send_goal(self.ptugoal)
-    self.client.wait_for_result()
-    #self.reached = False
-
-    #if (self.wait_for_ptu_motion(self.pan_tilt_timeout)):
-    #    self.feedback.feedback_ptu_pose = self.ptu_command
-    #    self.server.publish_feedback(self.feedback)
-    #else:
-    #    rospy.logerror('Ptu failed to move to desired position. Exiting')
-    #    print 'Ptu failed to move to desired position. Exiting'
-    #    return
+    self.client.wait_for_result()	    
     
     for i in range(panstart, panend, panstep):
        for j in range(tiltstart, tiltend, tiltstep):
-    #      self.ptu_command.position=[math.radians(-i),math.radians(-j)]
-    #      self.pub.publish(self.ptu_command)
-    #	  self.reached = False
-
     		self.ptugoal.pan = -i
 		self.ptugoal.tilt =-j
     		self.client.send_goal(self.ptugoal)
     		self.client.wait_for_result()
-          #if (self.wait_for_ptu_motion(self.pan_tilt_timeout)):
-          #  self.feedback.feedback_ptu_pose = self.ptu_command
-          #  self.server.publish_feedback(self.feedback)
-          #else:
-          #  rospy.logerror('Ptu failed to move to desired position. Exiting')
-          #  print 'Ptu failed to move to desired position. Exiting'
-          #  return
+		# keep this position for logging
+          	self.log_pub.publish("start_position")
+		time.sleep(2) # sleep for 2 seconds here
+		self.log_pub.publish("end_position")
 
-
-
-    #self.ptu_command.position=[math.radians(0),math.radians(0)]
-    #self.pub.publish(self.ptu_command)
-    #self.reached = False
     self.ptugoal.pan = 0
     self.ptugoal.tilt =0
     self.client.send_goal(self.ptugoal)
-    self.client.wait_for_result()
-    
-    #if (self.wait_for_ptu_motion(self.pan_tilt_timeout)):
-    #    self.feedback.feedback_ptu_pose = self.ptu_command
-    #    self.server.publish_feedback(self.feedback)
-    #else:
-    #    rospy.logerror('Ptu failed to move to desired position. Exiting')
-	#print 'Ptu failed to move to desired position. Exiting'
-        #return
+    self.client.wait_for_result()  
+    self.log_pub.publish("end_sweep")
     
     result = scitos_ptu.msg.PanTiltResult()
     result.ptu_pose = self.ptu_command
