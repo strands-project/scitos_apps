@@ -1,15 +1,10 @@
 cmake_minimum_required(VERSION 2.8.3)
-project(scitos_apps_msgs)
+project(scitos_ramp_climb)
 
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
-find_package(catkin REQUIRED std_msgs message_generation genmsg actionlib_msgs)
-add_action_files(
-		DIRECTORY action 
-		FILES Charging.action
-		FILES RampClimbing.action
-)
+find_package(catkin REQUIRED COMPONENTS roscpp rospy std_msgs scitos_msgs scitos_apps_msgs message_generation genmsg actionlib_msgs actionlib)
 
 ## System dependencies are found with CMake's conventions
 # find_package(Boost REQUIRED COMPONENTS system)
@@ -17,7 +12,7 @@ add_action_files(
 
 ## Uncomment this if the package has a setup.py. This macro ensures
 ## modules and global scripts declared therein get installed
-## See http://ros.org/doc/groovy/api/catkin/html/user_guide/setup_dot_py.html
+## See http://ros.org/doc/api/catkin/html/user_guide/setup_dot_py.html
 # catkin_python_setup()
 
 #######################################
@@ -25,23 +20,23 @@ add_action_files(
 #######################################
 
 ## Generate messages in the 'msg' folder
-add_message_files(
-  FILES
-  action_buttons.msg
-)
+# add_message_files(
+#   FILES
+#   Message1.msg
+#   Message2.msg
+# )
 
-## Generate services in the 'srv' folder
-add_service_files(
-  FILES
-  Charging.srv
-)
+# Generate services in the 'srv' folder
+# add_service_files(
+ #  FILES
+  # Charging.srv
+ #)
 
 ## Generate added messages and services with any dependencies listed here
-generate_messages(
-  DEPENDENCIES
-  std_msgs
-  actionlib_msgs
-)
+ #generate_messages(
+	#	 DEPENDENCIES
+		# std_msgs 
+		 #)
 
 ###################################
 ## catkin specific configuration ##
@@ -52,9 +47,9 @@ generate_messages(
 ## CATKIN_DEPENDS: catkin_packages dependent projects also need
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
-#  INCLUDE_DIRS include
-#  LIBRARIES rumblepad_control
-#  CATKIN_DEPENDS std_msgs message_runtime
+#   INCLUDE_DIRS include
+#  LIBRARIES charging
+#  CATKIN_DEPENDS image_transport roscpp rospy std_msgs
 #  DEPENDS system_lib
 )
 
@@ -64,32 +59,32 @@ catkin_package(
 
 ## Specify additional locations of header files
 ## Your package locations should be listed before other locations
-#include_directories(include
-#  ${catkin_INCLUDE_DIRS},
-#  ${scitos_msgs_INCLUDE_DIRS}
-#)
+include_directories(include
+  ${catkin_INCLUDE_DIRS}
+)
 
 ## Declare a cpp library
-# add_library(rumblepad_control
-#   src/${PROJECT_NAME}/rumblepad_control.cpp
+# add_library(charging
+#   src/${PROJECT_NAME}/charging.cpp
 # )
 
 ## Declare a cpp executable
-#add_executable(rumble_control src/rumble_control.cpp)
+# add_executable(charging_node src/charging_node.cpp)
 
 ## Add cmake target dependencies of the executable/library
 ## as an example, message headers may need to be generated before nodes
-# add_dependencies(rumblepad_control_node rumblepad_control_generate_messages_cpp)
 
 ## Specify libraries to link a library or executable target against
-#target_link_libraries(rumble_control ${catkin_LIBRARIES} ${scitos_msgs_LIBRARIES})
+# target_link_libraries(charging_node
+#   ${catkin_LIBRARIES}
+# )
 
 #############
 ## Install ##
 #############
 
 # all install targets should use catkin DESTINATION variables
-# See http://ros.org/doc/groovy/api/catkin/html/adv_user_guide/variables.html
+# See http://ros.org/doc/api/catkin/html/adv_user_guide/variables.html
 
 ## Mark executable scripts (Python etc.) for installation
 ## in contrast to setup.py, you can choose the destination
@@ -99,7 +94,7 @@ catkin_package(
 # )
 
 ## Mark executables and/or libraries for installation
-# install(TARGETS rumblepad_control rumblepad_control_node
+# install(TARGETS charging charging_node
 #   ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
 #   LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
 #   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
@@ -124,10 +119,23 @@ catkin_package(
 #############
 
 ## Add gtest based cpp test target and link libraries
-# catkin_add_gtest(${PROJECT_NAME}-test test/test_rumblepad_control.cpp)
+# catkin_add_gtest(${PROJECT_NAME}-test test/test_charging.cpp)
 # if(TARGET ${PROJECT_NAME}-test)
 #   target_link_libraries(${PROJECT_NAME}-test ${PROJECT_NAME})
 # endif()
 
 ## Add folders to be run by python nosetests
 # catkin_add_nosetests(test)
+
+#add_library(CDump src/CDump.cpp)
+#add_library(CTimer src/CTimer.cpp)
+
+#target_link_libraries(ramp_climb ${catkin_LIBRARIES})
+add_executable(ramp_climb src/ramp_climb.cpp)
+
+add_dependencies(ramp_climb scitos_msgs_gencpp scitos_apps_msgs_genccp actionlib scitos_apps_msgs actionlib_msgs scitos_apps_msgs_generate_messages_cpp)
+
+#target_link_libraries (ramp_climb  CDump)
+#target_link_libraries (ramp_climb  CTimer)
+
+target_link_libraries (ramp_climb  ${catkin_LIBRARIES})
