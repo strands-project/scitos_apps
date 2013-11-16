@@ -51,6 +51,9 @@ void CChargingActions::injectPosition()
 	geometry_msgs::PoseWithCovarianceStamped pos;
 	ros::Time stamp;
 	pos.header.frame_id = "/map";
+	pos.header.stamp = ros::Time::now();
+	pos.header.stamp.sec-=5;
+
 	pos.pose.pose.position.x = injectX;
 	pos.pose.pose.position.y = injectY;
 	pos.pose.pose.position.z = 0;
