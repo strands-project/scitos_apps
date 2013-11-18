@@ -65,6 +65,7 @@ class CChargingActions
 		CLightClient light;
 		ros::Publisher poseInjection;
 		std::string frame;
+		ros::Time injectionTime;
 };
 
 #endif
