@@ -18,7 +18,7 @@
 #include <actionlib/server/simple_action_server.h>
 #include <sensor_msgs/Joy.h>
 #include <scitos_msgs/BatteryState.h>
-#include <scitos_apps_msgs/Charging.h>
+//#include <scitos_apps_msgs/Charging.h>
 #include "CChargingActions.h" 
 
 
@@ -34,7 +34,7 @@ char posString[3000];
 typedef actionlib::SimpleActionServer<scitos_apps_msgs::ChargingAction> Server;
 
 int maxMeasurements = 100;
-float dockingPrecision = 0.1;
+float dockingPrecision = 0.10;
 float realPrecision,tangle,tdistance;
 
 int stationSpotted = 0;
@@ -78,7 +78,8 @@ void poseCallback(const geometry_msgs::Pose::ConstPtr& msg)
 			float phiDiff = robot->injectPhi- tf::getYaw(msg->orientation);
 			while (phiDiff >= M_PI) phiDiff -= 2*M_PI;
 			while (phiDiff < -M_PI) phiDiff += 2*M_PI;
-			if (fabs(robot->injectX-msg->position.x) < 0.001 && fabs(robot->injectY-msg->position.y) < 0.001 && fabs(phiDiff) < 0.001) robot->poseSet = true;
+			//ROS_INFO("A: %f %f %f\n",msg->position.x,msg->position.y,tf::getYaw(msg->orientation));
+			if (fabs(robot->injectX-msg->position.x) < 0.01 && fabs(robot->injectY-msg->position.y) < 0.01 && fabs(phiDiff) < 0.01) robot->poseSet = true;
 		}
 	}
 }

@@ -44,6 +44,9 @@ void CChargingActions::injectPosition(float x,float y,float phi)
 	injectY = y + 0.365/2*sin(injectPhi);;//sin(alpha)*x+cos(alpha)*y;
 	ROS_INFO("Injecting %f %f %f\n",injectX,injectY,injectPhi);	
 	poseSet = false;
+	/*pose was measured ~5 seconds ago*/
+	injectionTime = ros::Time::now();
+	injectionTime.sec -= 5;
 }
  
 void CChargingActions::injectPosition() 
@@ -51,9 +54,7 @@ void CChargingActions::injectPosition()
 	geometry_msgs::PoseWithCovarianceStamped pos;
 	ros::Time stamp;
 	pos.header.frame_id = "/map";
-	pos.header.stamp = ros::Time::now();
-	pos.header.stamp.sec-=5;
-
+	pos.header.stamp = injectionTime;
 	pos.pose.pose.position.x = injectX;
 	pos.pose.pose.position.y = injectY;
 	pos.pose.pose.position.z = 0;
@@ -251,18 +252,19 @@ void CChargingActions::initCharging(bool charge,int maxMeasurements)
 
 bool CChargingActions::approach(STrackedObject station,float dist)
 {
+	float desired = 0.7;
 	static float distance;
 	if (dist != 0.0) distance = fabs(dist);
 	bool complete = false;
 	float angle = atan2(station.y,station.x); 
-	base_cmd.linear.x = fmin(fabs(station.x*cos(cos(cos(angle)))+0.2),1)*0.4;
+	base_cmd.linear.x = fmin(fabs((station.x-(desired-0.4))*cos(cos(cos(angle)))+0.2),1)*0.4;
 	base_cmd.angular.z = atan2(station.y,station.x);
-	if (station.x < 0.4){
+	if (station.x < desired){
 		complete = true; 
 		base_cmd.linear.x = base_cmd.angular.z = 0;
 		startProg = station.y;
 	}
-	progress = 100*(distance-station.x+0.4)/(distance+0.4);
+	progress = 100*(distance-station.x+desired)/(distance+desired);
 	cmd_vel.publish(base_cmd);
 	return complete;
 }

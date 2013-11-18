@@ -12,8 +12,8 @@
 
   <!-- Base teleop --> 
   <node pkg="scitos_teleop" type="teleop_base" name="teleop_base" output="screen">
-		<param name="scale_angular" value=".7" type="double"/>
-		<param name="scale_linear" value=".7" type="double"/>
+		<param name="scale_angular" value="0.7" type="double"/>
+		<param name="scale_linear" value="0.7" type="double"/>
 		<remap from="/cmd_vel" to="/cmd_vel_mux/input/joystick"/>
   </node>
 
