@@ -8,7 +8,7 @@ find_package(catkin REQUIRED std_msgs message_generation genmsg actionlib_msgs)
 add_action_files(
 		DIRECTORY action 
 		FILES Charging.action
-#		FILES RampClimbing.action
+		FILES RampClimbing.action
 )
 
 ## System dependencies are found with CMake's conventions
