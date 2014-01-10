@@ -144,6 +144,8 @@ target_link_libraries(CTransformation ${GSL_LIBRARIES})
 target_link_libraries(CTransformation ${catkin_LIBRARIES})
 target_link_libraries(CChargingClient ${catkin_LIBRARIES})
 target_link_libraries(CChargingActions ${catkin_LIBRARIES} CTimer)
+target_link_libraries(CLightClient ${catkin_LIBRARIES})
+target_link_libraries(CPtuClient ${catkin_LIBRARIES})
 
 
 add_executable(visual_charging src/docking.cpp)
