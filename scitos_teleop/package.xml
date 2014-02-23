@@ -44,6 +44,7 @@
   <build_depend>geometry_msgs</build_depend>
   <build_depend>scitos_msgs</build_depend>
   <build_depend>scitos_apps_msgs</build_depend>
+  <build_depend>joy</build_depend>
   <run_depend>scitos_apps_msgs</run_depend>
   <run_depend>rospy</run_depend>
   <run_depend>roscpp</run_depend>
@@ -51,6 +52,7 @@
   <run_depend>sensor_msgs</run_depend>
   <run_depend>geometry_msgs</run_depend>
   <run_depend>scitos_msgs</run_depend>
+  <run_depend>joy</run_depend>
 
   <!-- The export tag contains other, unspecified, tags -->
   <export>
