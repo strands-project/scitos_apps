@@ -263,8 +263,8 @@ void CTransformation::updateCalibration(STrackedObject own,STrackedObject statio
 
 bool CTransformation::saveParamInDB(char *param)
 {
-	ros::ServiceClient client = nh->serviceClient<strands_datacentre::SetParam>("/config_manager/save_param");
-	strands_datacentre::SetParam srv;
+	ros::ServiceClient client = nh->serviceClient<ros_datacentre::SetParam>("/config_manager/save_param");
+	ros_datacentre::SetParam srv;
 	ROS_INFO("Requesting update for %s", param);
 	srv.request.param = param;
 	if (client.call(srv))

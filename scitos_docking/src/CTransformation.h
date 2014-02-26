@@ -13,7 +13,7 @@
 #include "CCircleDetect.h"
 #include <semaphore.h> 
 #include "ros/ros.h"
-#include "strands_datacentre/SetParam.h"
+#include "ros_datacentre/SetParam.h"
 
 typedef enum{
 	TRANSFORM_NONE,
