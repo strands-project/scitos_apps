@@ -40,7 +40,7 @@
   <!-- Use test_depend for packages you need only for testing: -->
   <!--   <test_depend>gtest</test_depend> -->
   <buildtool_depend>catkin</buildtool_depend>
-  <build_depend>cmd_vel_mux</build_depend>
+  <build_depend>yocs_cmd_vel_mux</build_depend>
 
 
   <!-- The export tag contains other, unspecified, tags -->
