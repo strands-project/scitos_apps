@@ -1,6 +1,6 @@
 <launch>
   <node pkg="nodelet" type="nodelet" name="nodelet_manager" args="manager"/>
-  <node pkg="nodelet" type="nodelet" name="cmd_vel_mux" args="load cmd_vel_mux/CmdVelMuxNodelet nodelet_manager">
+  <node pkg="nodelet" type="nodelet" name="yocs_cmd_vel_mux" args="load yocs_cmd_vel_mux/CmdVelMuxNodelet nodelet_manager">
     <param name="yaml_cfg_file" value="$(find scitos_cmd_vel_mux)/param/mux.yaml"/>
   </node>
 </launch>
