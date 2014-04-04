@@ -180,7 +180,7 @@ void imageCallback(const sensor_msgs::ImageConstPtr& msg)
 		robot->initCharging(chargerDetected,maxMeasurements);
 		robot->movePtu(0,0);
 		if (chargerDetected) state = STATE_WAIT;
-		if (chargerDetected == false && fabs(ptuPan<0.01)) state = STATE_SEARCH; 
+		if (chargerDetected == false && fabs(ptuPan)<0.01) state = STATE_SEARCH; 
 	}
 	if (state == STATE_UNDOCK_INIT)
 	{
