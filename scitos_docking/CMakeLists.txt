@@ -4,7 +4,7 @@ project(scitos_docking)
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
-find_package(catkin REQUIRED COMPONENTS image_transport roscpp rospy std_msgs scitos_msgs scitos_apps_msgs message_generation genmsg actionlib_msgs actionlib move_base_msgs ros_datacentre)
+find_package(catkin REQUIRED COMPONENTS image_transport roscpp rospy std_msgs scitos_msgs scitos_apps_msgs message_generation genmsg actionlib_msgs actionlib move_base_msgs strands_datacentre)
 
 ## System dependencies are found with CMake's conventions
 # find_package(Boost REQUIRED COMPONENTS system)
@@ -144,8 +144,6 @@ target_link_libraries(CTransformation ${GSL_LIBRARIES})
 target_link_libraries(CTransformation ${catkin_LIBRARIES})
 target_link_libraries(CChargingClient ${catkin_LIBRARIES})
 target_link_libraries(CChargingActions ${catkin_LIBRARIES} CTimer)
-target_link_libraries(CLightClient ${catkin_LIBRARIES})
-target_link_libraries(CPtuClient ${catkin_LIBRARIES})
 
 
 add_executable(visual_charging src/docking.cpp)
@@ -153,11 +151,9 @@ add_executable(visual_charging_client src/dockingClient.cpp)
 add_executable(simple_move_client src/testMoveClient.cpp)
 add_executable(simple_ptu_client src/testPtuClient.cpp)
 
-add_dependencies(CTransformation ros_datacentre_generate_messages_cpp)
 add_dependencies(CChargingClient scitos_msgs_gencpp scitos_apps_msgs_genccp actionlib scitos_apps_msgs actionlib_msgs scitos_apps_msgs_generate_messages_cpp)
-add_dependencies(CPtuClient scitos_msgs_gencpp scitos_apps_msgs_genccp actionlib scitos_apps_msgs actionlib_msgs scitos_apps_msgs_generate_messages_cpp)
 add_dependencies(visual_charging_client scitos_msgs_gencpp scitos_apps_msgs_genccp actionlib scitos_apps_msgs  actionlib_msgs scitos_apps_msgs_generate_messages_cpp)
-add_dependencies(visual_charging scitos_msgs_gencpp scitos_apps_msgs_genccp actionlib scitos_apps_msgs  actionlib_msgs scitos_apps_msgs_generate_messages_cpp ros_datacentre_generate_messages_cpp)
+add_dependencies(visual_charging scitos_msgs_gencpp scitos_apps_msgs_genccp actionlib scitos_apps_msgs  actionlib_msgs scitos_apps_msgs_generate_messages_cpp strands_datacentre)
 add_dependencies(simple_move_client scitos_msgs_gencpp scitos_apps_msgs_genccp actionlib scitos_apps_msgs  actionlib_msgs scitos_apps_msgs_generate_messages_cpp move_base move_base_msgs)
 add_dependencies(simple_ptu_client scitos_msgs_gencpp scitos_apps_msgs_genccp actionlib scitos_apps_msgs  actionlib_msgs scitos_apps_msgs_generate_messages_cpp move_base move_base_msgs move_base_msgs_gencpp)
 
