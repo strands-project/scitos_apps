@@ -13,7 +13,7 @@
   <!-- One license tag required, multiple allowed, one license per tag -->
   <!-- Commonly used license strings: -->
   <!--   BSD, MIT, Boost Software License, GPLv2, GPLv3, LGPLv2.1, LGPLv3 -->
-  <license>WTFPL</license>
+  <license>TODO</license>
 
 
   <!-- Url tags are optional, but mutiple are allowed, one per tag -->
@@ -49,7 +49,7 @@
   <build_depend>scitos_apps_msgs</build_depend>
   <build_depend>libgsl</build_depend>
   <build_depend>libblas-dev</build_depend>
-  <build_depend>ros_datacentre</build_depend>
+  <build_depend>strands_datacentre</build_depend>
   <run_depend>message_runtime</run_depend>
   <run_depend>image_transport</run_depend>
   <run_depend>roscpp</run_depend>
