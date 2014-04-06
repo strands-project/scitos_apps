@@ -1,18 +1,14 @@
 cmake_minimum_required(VERSION 2.8.3)
-project(scitos_docking)
+project(scitos_ramp_climb)
 
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
-find_package(catkin REQUIRED COMPONENTS image_transport roscpp rospy std_msgs scitos_msgs scitos_apps_msgs message_generation genmsg actionlib_msgs actionlib move_base_msgs ros_datacentre)
+find_package(catkin REQUIRED COMPONENTS roscpp rospy std_msgs scitos_msgs scitos_apps_msgs message_generation genmsg actionlib_msgs actionlib)
 
 ## System dependencies are found with CMake's conventions
 # find_package(Boost REQUIRED COMPONENTS system)
 
-include($ENV{ROS_ROOT}/core/rosbuild/FindPkgConfig.cmake)
-pkg_check_modules(GSL REQUIRED gsl)
-include_directories(${GSL_INCLUDE_DIRS})
-link_directories(${GSL_LIBRARY_DIRS})
 
 ## Uncomment this if the package has a setup.py. This macro ensures
 ## modules and global scripts declared therein get installed
@@ -131,49 +127,15 @@ include_directories(include
 ## Add folders to be run by python nosetests
 # catkin_add_nosetests(test)
 
-add_library(CCircleDetect src/CCircleDetect.cpp)
-add_library(CLightClient src/CLightClient.cpp)
-add_library(CDump src/CDump.cpp)
-add_library(CTimer src/CTimer.cpp)
-add_library(CRawImage src/CRawImage.cpp)
-add_library(CTransformation src/CTransformation.cpp)
-add_library(CChargingClient src/CChargingClient.cpp)
-add_library(CPtuClient src/CPtuClient.cpp)
-add_library(CChargingActions src/CChargingActions.cpp)
-target_link_libraries(CTransformation ${GSL_LIBRARIES})
-target_link_libraries(CTransformation ${catkin_LIBRARIES})
-target_link_libraries(CChargingClient ${catkin_LIBRARIES})
-target_link_libraries(CChargingActions ${catkin_LIBRARIES} CTimer)
-target_link_libraries(CLightClient ${catkin_LIBRARIES})
-target_link_libraries(CPtuClient ${catkin_LIBRARIES})
+#add_library(CDump src/CDump.cpp)
+#add_library(CTimer src/CTimer.cpp)
 
+#target_link_libraries(ramp_climb ${catkin_LIBRARIES})
+add_executable(ramp_climb src/ramp_climb.cpp)
 
-add_executable(visual_charging src/docking.cpp)
-add_executable(visual_charging_client src/dockingClient.cpp)
-add_executable(simple_move_client src/testMoveClient.cpp)
-add_executable(simple_ptu_client src/testPtuClient.cpp)
+add_dependencies(ramp_climb scitos_msgs_gencpp scitos_apps_msgs_genccp actionlib scitos_apps_msgs actionlib_msgs scitos_apps_msgs_generate_messages_cpp)
 
-add_dependencies(CTransformation ros_datacentre_generate_messages_cpp)
-add_dependencies(CChargingClient scitos_msgs_gencpp scitos_apps_msgs_genccp actionlib scitos_apps_msgs actionlib_msgs scitos_apps_msgs_generate_messages_cpp)
-add_dependencies(CPtuClient scitos_msgs_gencpp scitos_apps_msgs_genccp actionlib scitos_apps_msgs actionlib_msgs scitos_apps_msgs_generate_messages_cpp)
-add_dependencies(visual_charging_client scitos_msgs_gencpp scitos_apps_msgs_genccp actionlib scitos_apps_msgs  actionlib_msgs scitos_apps_msgs_generate_messages_cpp)
-add_dependencies(visual_charging scitos_msgs_gencpp scitos_apps_msgs_genccp actionlib scitos_apps_msgs  actionlib_msgs scitos_apps_msgs_generate_messages_cpp ros_datacentre_generate_messages_cpp)
-add_dependencies(simple_move_client scitos_msgs_gencpp scitos_apps_msgs_genccp actionlib scitos_apps_msgs  actionlib_msgs scitos_apps_msgs_generate_messages_cpp move_base move_base_msgs)
-add_dependencies(simple_ptu_client scitos_msgs_gencpp scitos_apps_msgs_genccp actionlib scitos_apps_msgs  actionlib_msgs scitos_apps_msgs_generate_messages_cpp move_base move_base_msgs move_base_msgs_gencpp)
+#target_link_libraries (ramp_climb  CDump)
+#target_link_libraries (ramp_climb  CTimer)
 
-target_link_libraries (visual_charging  CDump)
-target_link_libraries (visual_charging  CLightClient)
-target_link_libraries (visual_charging  CTimer)
-target_link_libraries (visual_charging  CCircleDetect)
-target_link_libraries (visual_charging  CRawImage)
-target_link_libraries (visual_charging  CTransformation)
-target_link_libraries (visual_charging  CChargingClient)
-target_link_libraries (CChargingActions  CLightClient)
-target_link_libraries (visual_charging  CChargingActions)
-
-target_link_libraries (visual_charging  gsl)
-target_link_libraries (visual_charging  blas)
-target_link_libraries (visual_charging  ${catkin_LIBRARIES})
-target_link_libraries (visual_charging_client  ${catkin_LIBRARIES})
-target_link_libraries (simple_move_client  ${catkin_LIBRARIES})
-target_link_libraries (simple_ptu_client  ${catkin_LIBRARIES})
+target_link_libraries (ramp_climb  ${catkin_LIBRARIES})

@@ -34,8 +34,8 @@ int main(int argc, char **argv)
 	ros::init(argc, argv, "teleop_base");
 
 	ros::NodeHandle n("teleop_base");
-	n.param("scale_angular", a_scale_, 0.8);
-	n.param("scale_linear", l_scale_, 0.8);
+	n.param("scale_angular", a_scale_, 1.8);
+	n.param("scale_linear", l_scale_, 1.8);
 
 	ros::Subscriber sub = n.subscribe("/teleop_joystick/joy", 1000, controlCallback);
 	pub_cmd_vel = n.advertise<geometry_msgs::Twist>("/cmd_vel", 1000);

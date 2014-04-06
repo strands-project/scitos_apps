@@ -7,6 +7,11 @@ project(scitos_apps_msgs)
 find_package(catkin REQUIRED std_msgs message_generation genmsg actionlib_msgs)
 add_action_files(
 		DIRECTORY action 
+		FILES RampClimbing.action
+)
+
+add_action_files(
+		DIRECTORY action 
 		FILES Charging.action
 )
 
