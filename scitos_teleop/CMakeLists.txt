@@ -4,15 +4,7 @@ project(scitos_teleop)
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
-find_package(catkin REQUIRED COMPONENTS roscpp rospy std_msgs scitos_apps_msgs)
-find_package(scitos_msgs COMPONENTS scitos_msgs)
-
-if(scitos_msgs_FOUND)
-	message(STATUS "scitos_msgs found: Compiling scitos_teleop for use with robot")
-	add_definitions(-DWITH_SCITOS)
-else(scitos_msgs_FOUND)
-	message(STATUS "scitos_msgs NOT found: Compiling scitos_teleop for use with simulator")
-endif(scitos_msgs_FOUND)
+find_package(catkin REQUIRED COMPONENTS roscpp rospy std_msgs scitos_apps_msgs scitos_msgs)
 
 ## System dependencies are found with CMake's conventions
 # find_package(Boost REQUIRED COMPONENTS system)
@@ -76,8 +68,7 @@ add_executable(teleop_base src/base_teleop.cpp)
 
 ## Add cmake target dependencies of the executable/library
 ## as an example, message headers may need to be generated before nodes
-add_dependencies(rumble_control scitos_msgs_gencpp)
-add_dependencies(rumble_control scitos_apps_msgs)
+add_dependencies(rumble_control ${catkin_EXPORTED_TARGETS})
 
 ## Specify libraries to link a library or executable target against
 target_link_libraries(rumble_control ${catkin_LIBRARIES} ${scitos_msgs_LIBRARIES})
