@@ -51,7 +51,7 @@ QT4_WRAP_UI(QT_FORMS_HPP ${emerency_stop_UIS})
 
 ## Create a library and not an executable because this is going to be a plugin
 add_library(${LIB_NAME} ${emerency_stop_SRCS} ${QT_FORMS_HPP} ${QT_MOC_HPP})
-add_dependencies(${LIB_NAME} scitos_msgs_gencpp)
+add_dependencies(${LIB_NAME} ${catkin_EXPORTED_TARGETS})
 
 ## Specify libraries to link a library or executable target against
 target_link_libraries(${LIB_NAME}
