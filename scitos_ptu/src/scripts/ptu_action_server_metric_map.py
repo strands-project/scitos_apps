@@ -6,18 +6,19 @@ import actionlib
 
 from scitos_ptu.msg import *
 from sensor_msgs.msg import *
+from std_msgs.msg import String
 import math
 import time
 import flir_pantilt_d46.msg
 
 class PTUServer:
   def __init__(self):
-    rospy.init_node('ptu_actionserver')
+    rospy.init_node('ptu_actionserver_metric_map')
     self.pub = rospy.Publisher('/ptu/cmd', JointState)
-    self.log_pub = rospy.Publisher('/ptu/log', string)
+    self.log_pub = rospy.Publisher('/ptu/log', String)
     self.state=rospy.Subscriber("/ptu/state", JointState, self.head_state_cb)
 
-    self.server = actionlib.SimpleActionServer('ptu_pan_tilt', PanTiltAction, self.execute, False)
+    self.server = actionlib.SimpleActionServer('ptu_pan_tilt_metric_map', PanTiltAction, self.execute, False)
     self.server.start()
     rospy.loginfo('Ptu action server started')
  
