@@ -7,7 +7,8 @@ project(scitos_ptu)
 find_package(catkin REQUIRED COMPONENTS rospy sensor_msgs genmsg actionlib_msgs)
 
 
-add_action_files(DIRECTORY action FILES PanTilt.action)
+add_action_files(DIRECTORY action 
+  FILES PanTilt.action PtuGoto.action PtuReset.action PtuSetVel.action)
 generate_messages(DEPENDENCIES actionlib_msgs sensor_msgs)
 
 catkin_package(
