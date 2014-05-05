@@ -23,8 +23,8 @@ class PTUControl(object):
 		self.pstep = rospy.get_param('/ptu/pan_step', 0.00089759763795882463)
 		self.tstep = rospy.get_param('/ptu/tilt_step', 0.00089759763795882463)
 
-		self.pan_joint_name = rospy.get_param('/ptu/pan_joint_name')							
-		self.tilt_joint_name = rospy.get_param('/ptu/tilt_joint_name')							
+		self.pan_joint_name = rospy.get_param('/ptu/pan_joint_name','pan')							
+		self.tilt_joint_name = rospy.get_param('/ptu/tilt_joint_name','tilt')							
 
 		# setup the subscribers and publishers
 		rospy.Subscriber('state', JointState, self.cb_ptu_state)
