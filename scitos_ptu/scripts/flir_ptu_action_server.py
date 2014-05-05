@@ -83,6 +83,6 @@ class PTUControl(object):
 		return pt
 
 if __name__ == '__main__':
-	rospy.init_node('ptu46_action_server')
+	rospy.init_node('flir_ptu46_action_server')
 	PTUControl()
 	rospy.spin()
