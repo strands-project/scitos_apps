@@ -9,7 +9,7 @@ from sensor_msgs.msg import *
 from std_msgs.msg import String
 import math
 import time
-import flir_pantilt_d46.msg
+import scitos_ptu.msg
 
 class PTUServer:
   def __init__(self):
@@ -40,11 +40,11 @@ class PTUServer:
 
     self.pan_tilt_timeout = 3 # seconds
 
-    self.ptugoal = flir_pantilt_d46.msg.PtuGotoGoal()
+    self.ptugoal = scitos_ptu.msg.PtuGotoGoal()
     self.ptugoal.pan_vel = 21
     self.ptugoal.tilt_vel = 21
 
-    self.client = actionlib.SimpleActionClient("SetPTUState", flir_pantilt_d46.msg.PtuGotoAction)
+    self.client = actionlib.SimpleActionClient("SetPTUState", scitos_ptu.msg.PtuGotoAction)
     self.client.wait_for_server()
     print 'Ptu client created'
 
