@@ -14,21 +14,16 @@ import flir_pantilt_d46.msg
 class PTUServer:
   def __init__(self):
     rospy.init_node('ptu_actionserver_metric_map')
-    self.pub = rospy.Publisher('/ptu/cmd', JointState)
     self.log_pub = rospy.Publisher('/ptu/log', String)
-    self.state=rospy.Subscriber("/ptu/state", JointState, self.head_state_cb)
 
     self.server = actionlib.SimpleActionServer('ptu_pan_tilt_metric_map', PanTiltAction, self.execute, False)
+    self._as.register_preempt_callback(self.preemptCallback)
     self.server.start()
     rospy.loginfo('Ptu action server started')
  
     self.reached_epsilon = math.radians(1.0)
     self.reached = False
-
-    self.ptu_command = JointState()
-    self.ptu_command.name=["pan", "tilt"]
-    self.ptu_command.position=[0.0, 0.0]
-    self.ptu_command.velocity=[1.0,1.0]
+    self.cancelled = False
 
     self.feedback = scitos_ptu.msg.PanTiltFeedback()
 
@@ -47,24 +42,6 @@ class PTUServer:
     self.client = actionlib.SimpleActionClient("SetPTUState", flir_pantilt_d46.msg.PtuGotoAction)
     self.client.wait_for_server()
     print 'Ptu client created'
-
-  def head_state_cb(self,msg):
-    if (math.fabs(msg.position[0] - self.ptu_command.position[0]) < self.reached_epsilon) and (math.fabs(msg.position[1] - self.ptu_command.position[1]) < self.reached_epsilon):
-        self.reached = True
-    else:
-        self.reached = False
-
-  def wait_for_ptu_motion(self,timeout):
-    start_time = time.time()
-    elapsed_time = 0
-    while (not self.reached and elapsed_time < timeout):
-        time.sleep(0.1)
-        elapsed_time = time.time()-start_time
-
-    if self.reached:
-        return True
-    else:
-        return False
 
   def execute(self, goal):
     
@@ -96,14 +73,17 @@ class PTUServer:
     print 'Starting pan tilt action ',panstart, panstep, panend, tiltstart, tiltstep, tiltend
     # start position
     self.log_pub.publish("start_sweep")
-    self.ptu_command.position=[math.radians(-panstart),math.radians(-tiltstart)]
     self.ptugoal.pan = -panstart
     self.ptugoal.tilt = -tiltstart
     self.client.send_goal(self.ptugoal)
     self.client.wait_for_result()	    
     
     for i in range(panstart, panend, panstep):
+       if self.cancelled:
+                break;	 
        for j in range(tiltstart, tiltend, tiltstep):
+		if self.cancelled:
+                	break;	
     		self.ptugoal.pan = -i
 		self.ptugoal.tilt =-j
     		self.client.send_goal(self.ptugoal)
@@ -112,6 +92,8 @@ class PTUServer:
           	self.log_pub.publish("start_position")
 		time.sleep(2) # sleep for 2 seconds here
 		self.log_pub.publish("end_position")
+		self.feedback.ptu_pose.position = [self.ptugoal.pan, self.ptugoal.tilt]
+		self._as.publish_feedback(self.feedback)
 
     self.ptugoal.pan = 0
     self.ptugoal.tilt =0
@@ -121,7 +103,17 @@ class PTUServer:
     
     result = scitos_ptu.msg.PanTiltResult()
     result.ptu_pose = self.ptu_command
+    if not self.cancelled:
+	        result.success = True
+    else:
+		result.success = False
+
     self.server.set_succeeded(result)
+
+def preemptCallback(self):
+    self.cancelled = True
+    self._result.success = False
+    self._as.set_preempted(self._result)
 
 if __name__ == '__main__':
   server = PTUServer()
