@@ -17,7 +17,7 @@ class PTUServer:
     self.log_pub = rospy.Publisher('/ptu/log', String)
 
     self.server = actionlib.SimpleActionServer('ptu_pan_tilt_metric_map', PanTiltAction, self.execute, False)
-    self._as.register_preempt_callback(self.preemptCallback)
+    self.server.register_preempt_callback(self.preemptCallback)
     self.server.start()
     rospy.loginfo('Ptu action server started')
  
@@ -93,7 +93,7 @@ class PTUServer:
 		time.sleep(2) # sleep for 2 seconds here
 		self.log_pub.publish("end_position")
 		self.feedback.ptu_pose.position = [self.ptugoal.pan, self.ptugoal.tilt]
-		self._as.publish_feedback(self.feedback)
+		self.server.publish_feedback(self.feedback)
 
     self.ptugoal.pan = 0
     self.ptugoal.tilt =0
@@ -110,10 +110,9 @@ class PTUServer:
 
     self.server.set_succeeded(result)
 
-def preemptCallback(self):
+  def preemptCallback(self):
     self.cancelled = True
-    self._result.success = False
-    self._as.set_preempted(self._result)
+    self.server.set_preempted(self._result)
 
 if __name__ == '__main__':
   server = PTUServer()
