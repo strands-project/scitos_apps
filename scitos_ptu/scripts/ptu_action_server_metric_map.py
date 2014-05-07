@@ -26,6 +26,8 @@ class PTUServer:
     self.cancelled = False
 
     self.feedback = scitos_ptu.msg.PanTiltFeedback()
+    self.result = scitos_ptu.msg.PanTiltResult()
+    self.result.success = True
 
     self.max_pan = 160.0 # degrees
     self.min_pan = -160.0 # degrees
@@ -77,6 +79,7 @@ class PTUServer:
     self.ptugoal.tilt = -tiltstart
     self.client.send_goal(self.ptugoal)
     self.client.wait_for_result()	    
+    self.cancelled = False
     
     for i in range(panstart, panend, panstep):
        if self.cancelled:
@@ -92,7 +95,7 @@ class PTUServer:
           	self.log_pub.publish("start_position")
 		time.sleep(2) # sleep for 2 seconds here
 		self.log_pub.publish("end_position")
-		self.feedback.ptu_pose.position = [self.ptugoal.pan, self.ptugoal.tilt]
+		self.feedback.feedback_ptu_pose.position = [self.ptugoal.pan, self.ptugoal.tilt]
 		self.server.publish_feedback(self.feedback)
 
     self.ptugoal.pan = 0
@@ -101,18 +104,16 @@ class PTUServer:
     self.client.wait_for_result()  
     self.log_pub.publish("end_sweep")
     
-    result = scitos_ptu.msg.PanTiltResult()
-    result.ptu_pose = self.ptu_command
-    if not self.cancelled:
-	        result.success = True
+    if self.cancelled:
+		self.log_pub.publish("preempted")
+		self.result.success = False
+		self.server.set_preempted(self.result)
     else:
-		result.success = False
-
-    self.server.set_succeeded(result)
+		self.result.success = True
+		self.server.set_succeeded(self.result)
 
   def preemptCallback(self):
     self.cancelled = True
-    self.server.set_preempted(self._result)
 
 if __name__ == '__main__':
   server = PTUServer()
