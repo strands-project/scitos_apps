@@ -1,5 +1,10 @@
 <launch>
-	<param name="configFile" value="$(env HOME)/.charging.yaml" />
+  <arg name="machine" default="localhost" />
+  <arg name="user" default="" />
+
+  <machine name="$(arg machine)" address="$(arg machine)" env-loader="/opt/strands/strands_catkin_ws/devel/env.sh" user="$(arg user)" default="true"/>
+
+  <param name="configFile" value="$(env HOME)/.charging.yaml" />
 	<node pkg="scitos_docking" type="visual_charging" name="visual_charging" output="screen" >
-	</node>
+  </node>
 </launch> 
