@@ -15,7 +15,7 @@
   <include file="$(find scitos_teleop)/launch/teleop_joystick_core.launch">
     <arg name="js" value="$(arg js)"/>
     <arg name="machine"  value="$(arg machine)"/>
-    <arg name="user"  value="$(arg machine)"/>
+    <arg name="user"  value="$(arg user)"/>
   </include>
 
   <!-- Base teleop --> 
