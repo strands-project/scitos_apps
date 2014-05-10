@@ -4,6 +4,11 @@
   is set then this replaces the default. If the launch file is started with
   the argument js:=blah then blah overides both the default and the environment. -->
   <arg name="js" default="$(optenv JOYSTICK_DEVICE /dev/js1)" />
+  <arg name="machine" default="localhost" />
+  <arg name="user" default="" />
+
+  <machine name="$(arg machine)" address="$(arg machine)" env-loader="/opt/strands/strands_catkin_ws/devel/env.sh" user="$(arg user)" default="true"/>
+
 
   <!-- Joystick driver node -->
   <node pkg="joy" type="joy_node" name="joystick">
