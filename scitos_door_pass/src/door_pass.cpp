@@ -66,9 +66,29 @@ void poseCallback(const geometry_msgs::Pose::ConstPtr& msg)
 
 void scanCallback (const sensor_msgs::LaserScan::ConstPtr& scan_msg)
 {
+
+	if(debug) {
+		if(state == LEAVE) {
+			printf("LEAVE\n");
+		}
+		else if(state == APPROACH) {
+			printf("APPROACH\n");
+		}
+		else if(state == ADJUST) {
+			printf("ADJUST\n");
+		}
+		else if(state == PASS) {
+			printf("PASS\n");
+		}
+
+	}
+
+
 	if (state == APPROACH || state == ADJUST || state == PASS || state == LEAVE){
+		
 		base_cmd.linear.x = 0; 
 		base_cmd.angular.z = 0; 
+
 		if (state == APPROACH || state == DETECT || state == ADJUST){
 			SDoor door = detectDoor(scan_msg->ranges,scan_msg->angle_min,scan_msg->angle_increment,scan_msg->ranges.size(),maxDistance);
 			if (door.found){
@@ -95,11 +115,16 @@ void scanCallback (const sensor_msgs::LaserScan::ConstPtr& scan_msg)
 				}
 
 			}
+			else {
+				misdetections++;
+			}
+
 			if (state == DETECT){
 				if (door.found) passCounter++; else passCounter=0;
 				if (passCounter >  passCounterLimit) state = LEAVE;
 			}
 		}
+		
 		if (state == PASS){
 			float leftMinim,rightMinim;
 			leftMinim=rightMinim = 100;
@@ -124,13 +149,15 @@ void scanCallback (const sensor_msgs::LaserScan::ConstPtr& scan_msg)
 			base_cmd.linear.x = fmax(fmin(3*fmin(rightMinim,leftMinim),defaultSpeed),0); 
 			base_cmd.angular.z = 2*(leftMinim-rightMinim);
 			if (leftMinim > 0.1 && rightMinim >0.1){
+				if (debug) printf("HAPPY %f %f %d\n",leftMinim,rightMinim, passCounter);
 				base_cmd.angular.z =0;
 				base_cmd.linear.x = 0.2;
 				passCounter++;
 			}else{
-				passCounter = -50;
+				passCounter = -30;
 			}
 			if (passCounter > passCounterLimit) state = LEAVE;
+		
 			cmd_vel.publish(base_cmd);
 		}
 	}
@@ -143,12 +170,17 @@ void actionServerCallback(const move_base_msgs::MoveBaseGoalConstPtr& goal, Serv
 	goalY = goal->target_pose.pose.position.y;
 	misdetections = 0;
 	state = TURNING;
+
+	ros::Rate r(50); //hz
+
 	if (goalX == 0 && goalY == 0) state = APPROACH;
 	while (state == TURNING || state == DETECT || state == APPROACH || state == ADJUST || state == PASS || state == LEAVE){
+		
 		if (misdetections > maxMisdetections || state == LEAVE){
 			if (state == LEAVE) state = SUCCESS; else state = FAIL;
 		}
-		usleep(20000);
+
+		r.sleep();
 	}
 	if (state == SUCCESS) server->setSucceeded(result);
 	if (state == FAIL) server->setAborted(result);
@@ -166,6 +198,8 @@ int main(int argc, char** argv)
 	server = new Server(n, "doorPassing", boost::bind(&actionServerCallback, _1, server), false);
 	server->start();
 	scan_sub = n.subscribe("scan", 100, scanCallback);
+
+	ros::Rate r(30); //hz
 	while (ros::ok()){
 		if (server->isPreemptRequested() && state != IDLE) state = PREEMPTED;
 		if (state == STOPPING)
@@ -175,7 +209,7 @@ int main(int argc, char** argv)
 			state = IDLE;
 		} 
 		ros::spinOnce();
-		usleep(30000);
+		r.sleep();
 	}
 }
 
