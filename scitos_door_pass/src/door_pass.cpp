@@ -13,7 +13,10 @@ Server *server;
 ros::Subscriber scan_sub;
 ros::Subscriber robot_pose;
 
-float maxDistance = 3.0;		//max range taken into consideration
+float goalPositionTolerance = 0.08;
+float minRotate = 0.3;
+float defaultMaxDistance = 3.0;
+float maxDistance = defaultMaxDistance;		//max range taken into consideration
 float defaultSpeed = 0.15;		//default forward speed of the robot
 float baseRadius = 0.31;
 int passCounterLimit = 10;		//measurements 
@@ -42,26 +45,74 @@ geometry_msgs::Twist base_cmd;
 float goalX;
 float goalY;
 
+float boundRotation(const float & _rot) {
+	if(fabs(_rot) < minRotate) {
+		if(_rot > 0) {
+			return minRotate;
+		}
+		else {
+			return -minRotate;	
+		}
+	}
+	else {
+		return _rot;
+	}
+
+}
+
 void poseCallback(const geometry_msgs::Pose::ConstPtr& msg)
 {
+
+	if (state == TURNING || state == APPROACH || state == ADJUST || state == PASS || state == LEAVE) {
+		float rX,rY;
+		rX=rY=0;
+
+		// difference in x y between current and target
+		rX = goalX - msg->position.x;
+		rY = goalY - msg->position.y;
+
+		
+
+		printf("goal dist (%f,%f)\n", fabs(rX), fabs(rY));
+
+		if(fabs(rX) <= goalPositionTolerance && fabs(rY) <= goalPositionTolerance) {
+			printf("within range of target, stopping");			
+			state = LEAVE;
+		}
+	}
+	
 	if (state == TURNING){
 		float rX,rY;
 		rX=rY=0;
-		rX = goalX-msg->position.x;
-		rY = goalY-msg->position.y;
+
+		// difference in x y between current and target
+		rX = goalX - msg->position.x;
+		rY = goalY - msg->position.y;
 		float currentAngle = tf::getYaw(msg->orientation);
+
 		base_cmd.linear.x = 0; 
 		currentAngle = (atan2(rY,rX)-currentAngle);
+
 		while (currentAngle >= M_PI) currentAngle-= 2*M_PI;
 		while (currentAngle < -M_PI) currentAngle += 2*M_PI;
-		base_cmd.angular.z = currentAngle*0.5;
+
+		base_cmd.angular.z = boundRotation(currentAngle*0.5);
+
+		// only check for doors between the pose and the target
+
 		maxDistance = fmin(sqrt(rX*rX+rY*rY),maxDistance);
+
+		printf("maxDistance %f\n", maxDistance);
+
 		if (fabs(currentAngle) < 0.1){
 			base_cmd.angular.z = 0;
 			state = APPROACH;
 		} 
+
 		cmd_vel.publish(base_cmd);
 	}
+	
+
 }
 
 void scanCallback (const sensor_msgs::LaserScan::ConstPtr& scan_msg)
@@ -102,7 +153,7 @@ void scanCallback (const sensor_msgs::LaserScan::ConstPtr& scan_msg)
 					}
 					if (debug) printf("\n");
 					base_cmd.linear.x = fmax(fmin(defaultSpeed,door.auxX),0); 
-					base_cmd.angular.z = door.auxY; 
+					base_cmd.angular.z = boundRotation(door.auxY);
 					cmd_vel.publish(base_cmd);
 				}
 				if (state == ADJUST){
@@ -110,7 +161,7 @@ void scanCallback (const sensor_msgs::LaserScan::ConstPtr& scan_msg)
 					if (fabs(door.doorCentreY) < 0.05) passCounter++; else passCounter=0;
 					if (passCounter >  passCounterLimit) state = PASS;
 					base_cmd.linear.x = 0;
-					base_cmd.angular.z = door.doorCentreY; 
+					base_cmd.angular.z = boundRotation(door.doorCentreY); 
 					cmd_vel.publish(base_cmd);
 				}
 
@@ -147,7 +198,7 @@ void scanCallback (const sensor_msgs::LaserScan::ConstPtr& scan_msg)
 			rightMinim-=baseRadius;
 			if (debug) printf("Obstacles %f %f \n",leftMinim,rightMinim);
 			base_cmd.linear.x = fmax(fmin(3*fmin(rightMinim,leftMinim),defaultSpeed),0); 
-			base_cmd.angular.z = 2*(leftMinim-rightMinim);
+			base_cmd.angular.z = boundRotation(2*(leftMinim-rightMinim));
 			if (leftMinim > 0.1 && rightMinim >0.1){
 				if (debug) printf("HAPPY %f %f %d\n",leftMinim,rightMinim, passCounter);
 				base_cmd.angular.z =0;
@@ -179,9 +230,14 @@ void actionServerCallback(const move_base_msgs::MoveBaseGoalConstPtr& goal, Serv
 		if (misdetections > maxMisdetections || state == LEAVE){
 			if (state == LEAVE) state = SUCCESS; else state = FAIL;
 		}
+		else if (misdetections > maxMisdetections/2) {
+			printf("Trying a different distance\n");
+			maxDistance = defaultMaxDistance;
+		}
 
 		r.sleep();
 	}
+	
 	if (state == SUCCESS) server->setSucceeded(result);
 	if (state == FAIL) server->setAborted(result);
 	if (state == PREEMPTED) server->setPreempted(result);
