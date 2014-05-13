@@ -21,9 +21,10 @@ class PTUServer:
     self.server.start()
     rospy.loginfo('Ptu action server started')
  
-    self.reached_epsilon = math.radians(1.0)
-    self.reached = False
-    self.cancelled = False
+    self.aborted = False
+    self.preempted = False
+    self.preempt_timeout = 0.3 # seconds
+    self.pan_tilt_timeout = 3 # seconds
 
     self.feedback = scitos_ptu.msg.PanTiltFeedback()
     self.result = scitos_ptu.msg.PanTiltResult()
@@ -33,9 +34,9 @@ class PTUServer:
     self.min_pan = -160.0 # degrees
 
     self.max_tilt = 30.0 # degrees
-    self.min_tilt = -30.0 # degrees
+    self.min_tilt = -30.0 # degrees	
+    self.preempt_lock = threading.Lock()
 
-    self.pan_tilt_timeout = 3 # seconds
 
     self.ptugoal = flir_pantilt_d46.msg.PtuGotoGoal()
     self.ptugoal.pan_vel = 21
@@ -79,18 +80,17 @@ class PTUServer:
     self.ptugoal.tilt = -tiltstart
     self.client.send_goal(self.ptugoal)
     self.client.wait_for_result()	    
-    self.cancelled = False
+    self.preempted = False
     
     for i in range(panstart, panend, panstep):
-       if self.cancelled:
+       if _get_preempt_status() or self.aborted:
                 break;	 
        for j in range(tiltstart, tiltend, tiltstep):
-		if self.cancelled:
+		if _get_preempt_status() or self.aborted:
                 	break;	
     		self.ptugoal.pan = -i
 		self.ptugoal.tilt =-j
-    		self.client.send_goal(self.ptugoal)
-    		self.client.wait_for_result()
+    		_sendPTUGoal(self.ptugoal)
 		# keep this position for logging
           	self.log_pub.publish("start_position")
 		time.sleep(2) # sleep for 2 seconds here
@@ -100,20 +100,50 @@ class PTUServer:
 
     self.ptugoal.pan = 0
     self.ptugoal.tilt =0
-    self.client.send_goal(self.ptugoal)
-    self.client.wait_for_result()  
+    _sendPTUGoal(self.ptugoal)
     self.log_pub.publish("end_sweep")
     
     if self.cancelled:
 		self.log_pub.publish("preempted")
 		self.result.success = False
 		self.server.set_preempted(self.result)
+    elif self.aborted:
+		self.log_pub.publish("aborted")
+		self.result.success = False
+		self.server.set_aborted(self.result)
     else:
 		self.result.success = True
 		self.server.set_succeeded(self.result)
 
+  def _sendPTUGoal(ptu_goal):
+	time_waited = 0
+	self.client.send_goal(self.ptugoal)
+	self.client.wait_for_result(self.preempt_timeout)
+	status= self.client.get_state()
+	while not status == GoalStatus.SUCCEEDED and not time_waited > self.pan_tilt_timeout and not _get_preempt_status():
+		time_waited += self.preempt_timeout
+		self.client.wait_for_result(self.preempt_timeout)
+		status= self.client.get_state()
+
+	if _get_preempt_status():
+		# this action server has been preempted; preempt the other one as well
+		self.client.cancel_goal()
+ 	elif time_waited > self.pan_tilt_timeout or status != GoalStatus.SUCCEEDED:
+		# didn't manage to reach the PTU position
+		self.client.cancel_goal()
+		self.aborted = True		
+
+   def _get_preempt_status(self):
+	self.preempt_lock.acquire()
+	preempted = self.cancelled
+	self.preempt_lock.release()
+	return preempted	
+
   def preemptCallback(self):
-    self.cancelled = True
+    self.preempt_lock.acquire()
+    self.preempted = True
+    self.preempt_lock.release()
+    
 
 if __name__ == '__main__':
   server = PTUServer()
