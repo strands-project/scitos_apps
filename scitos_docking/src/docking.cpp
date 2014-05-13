@@ -18,6 +18,7 @@
 #include <actionlib/server/simple_action_server.h>
 #include <sensor_msgs/Joy.h>
 #include <scitos_msgs/BatteryState.h>
+#include <move_base_msgs/MoveBaseAction.h>
 //#include <scitos_apps_msgs/Charging.h>
 #include "CChargingActions.h" 
 
@@ -32,6 +33,7 @@ scitos_apps_msgs::ChargingResult result;
 char response[3000];
 char posString[3000];
 typedef actionlib::SimpleActionServer<scitos_apps_msgs::ChargingAction> Server;
+typedef actionlib::SimpleActionServer<move_base_msgs::MoveBaseAction> DockingServer;
 
 int maxMeasurements = 100;
 float dockingPrecision = 0.10;
@@ -50,6 +52,8 @@ CChargingActions *robot;
 
 ros::NodeHandle *nh;
 Server *server;
+DockingServer *dockingServer;
+DockingServer *undockingServer;
 
 image_transport::Publisher imdebug;
 
@@ -336,6 +340,92 @@ void imageCallback(const sensor_msgs::ImageConstPtr& msg)
 	}
 }
 
+void dockingServerCallback(const move_base_msgs::MoveBaseGoalConstPtr& goal, DockingServer* as)
+{
+	initComponents();
+	timer.reset();
+	timer.start();
+	timeOut = 120000;
+	move_base_msgs::MoveBaseResult result;
+	if (calibrated==false){
+		sprintf(response,"Cannot approach the charging station because the docking is not calibrated.\nRead the readme file on how to perform calibration procedure.");
+		state = STATE_REJECTED;
+	}else{
+		state = STATE_INIT;
+		robot->progress = 10;
+		robot->lightsOn();
+	}
+	if (state == STATE_REJECTED){
+		dockingServer->setAborted(result);
+		robot->lightsOff();
+		return;
+	}
+	while (state != STATE_IDLE && state != STATE_ABORTED && state != STATE_TIMEOUT && state != STATE_PREEMPTED){
+		usleep(200000);
+	}
+	if (state == STATE_PREEMPTED){
+		dockingServer->setPreempted(result);
+		state = STATE_IDLE;
+		robot->lightsOff();
+		return;
+	}else if (state == STATE_ABORTED){
+		dockingServer->setAborted(result);
+		robot->lightsOff();
+		return;
+	}else if (success)
+	{
+		robot->progress = 100;
+		dockingServer->setSucceeded(result);
+		success = false;
+	}else{
+		dockingServer->setAborted(result);
+	}
+	robot->lightsOff();
+}
+
+
+void undockingServerCallback(const move_base_msgs::MoveBaseGoalConstPtr& goal, DockingServer* as)
+{	
+	initComponents();
+	timer.reset();
+	timer.start();
+	timeOut = 120000;
+	move_base_msgs::MoveBaseResult result;
+	if (chargerDetected == false){
+		state = STATE_REJECTED;
+		sprintf(response,"Cannot undock because not on the charging station.");
+	}else{
+		robot->wait(100);
+		state = STATE_UNDOCK_INIT;
+	}
+	if (state == STATE_REJECTED){
+		undockingServer->setAborted(result);
+		robot->lightsOff();
+		return;
+	}
+	while (state != STATE_IDLE && state != STATE_ABORTED && state != STATE_TIMEOUT && state != STATE_PREEMPTED){
+		usleep(200000);
+	}
+	if (state == STATE_PREEMPTED){
+		undockingServer->setPreempted(result);
+		state = STATE_IDLE;
+		robot->lightsOff();
+		return;
+	}else if (state == STATE_ABORTED){
+		undockingServer->setAborted(result);
+		robot->lightsOff();
+		return;
+	}else if (success)
+	{
+		robot->progress = 100;
+		undockingServer->setSucceeded(result);
+		success = false;
+	}else{
+		undockingServer->setAborted(result);
+	}
+	robot->lightsOff();
+}
+
 void actionServerCallback(const scitos_apps_msgs::ChargingGoalConstPtr& goal, Server* as)
 {
 	initComponents();
@@ -375,7 +465,6 @@ void actionServerCallback(const scitos_apps_msgs::ChargingGoalConstPtr& goal, Se
 	}
 	if (state == STATE_REJECTED){
 		result.Message = response;
-		//ROS_WARN("ZMRDO");
 		server->setAborted(result);
 		robot->lightsOff();
 		return;
@@ -383,7 +472,6 @@ void actionServerCallback(const scitos_apps_msgs::ChargingGoalConstPtr& goal, Se
 	while (state != STATE_IDLE && state != STATE_ABORTED && state != STATE_TIMEOUT && state != STATE_PREEMPTED){
 		usleep(200000);
 		server->publishFeedback(feedback);
-		//ROS_DEBUG("ROBOT %s Progress: %.0f %.2f Time: %i/%i",stateStr[state],robot->progress,robot->progressSpeed,timer.getTime(),timeOut);
 	}
 	result.Message = response;
 	if (state == STATE_PREEMPTED){
@@ -415,7 +503,7 @@ void ptuCallback(const sensor_msgs::JointState::ConstPtr &msg)
 
 void joyCallback(const scitos_apps_msgs::action_buttons::ConstPtr &msg)
 {
-	if (msg->X && state == STATE_IDLE && server->isActive() == false){
+	if (msg->X && state == STATE_IDLE && server->isActive() == false && undockingServer->isActive() == false && dockingServer->isActive()==false){
 		if (chargerDetected){
 			robot->wait(100);
 			state = STATE_UNDOCK_INIT;
@@ -462,18 +550,18 @@ void mainLoop()
 			sprintf(status,"Charging service is %s",stateStr[state]);
 			feedback.Progress = (int)robot->progress;
 			feedback.Message = stateStr[state];
-			server->publishFeedback(feedback);
+			if (server->isActive()) server->publishFeedback(feedback);
 		}
-		if (server->isActive()){
+		if (server->isActive()||undockingServer->isActive()||dockingServer->isActive()){
 			feedback.Message = stateStr[state];
 			feedback.Progress = (int)robot->progress;
 			if (robot->actionStuck()) feedback.Level = 1; else feedback.Level = 0;
 		}
-		if (server->isPreemptRequested() && state != STATE_IDLE){
+		if ((server->isPreemptRequested() || undockingServer->isPreemptRequested())|| dockingServer->isPreemptRequested()&& state != STATE_IDLE){
 			state = STATE_PREEMPTED;
 			robot->halt();
 			ros::spinOnce();
-			if (server->isActive()) result.Message = "Current action preempted by external request.";
+			if (server->isActive()||undockingServer->isActive()||dockingServer->isActive()) result.Message = "Current action preempted by external request.";
 		}
 		state_cleanup();
 		lastState = state;
@@ -504,8 +592,12 @@ int main(int argc,char* argv[])
 	ros::Subscriber ptu_sub_ = nh->subscribe("/ptu/state", 10, ptuCallback);
 	ros::Subscriber robot_pose = nh->subscribe("/robot_pose", 1000, poseCallback);
 	server = new Server(*nh, "chargingServer", boost::bind(&actionServerCallback, _1, server), false);
+	dockingServer = new DockingServer(*nh, "docking", boost::bind(&dockingServerCallback, _1, dockingServer), false);
+	undockingServer = new DockingServer(*nh, "undocking", boost::bind(&undockingServerCallback, _1, undockingServer), false);
 
 	server->start();
+	dockingServer->start();
+	undockingServer->start();
 	ROS_DEBUG("Server running");
 	while (ros::ok()) mainLoop();
 	delete image;
