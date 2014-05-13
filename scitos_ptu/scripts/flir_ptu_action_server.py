@@ -13,6 +13,7 @@ class PTUControl(object):
 	pan_vel  = 0
 	tilt_vel = 0
 	state_lock = threading.Lock()
+	preempt_lock = threading.Lock()
 
 	def __init__(self):
 		# setup some parameters
@@ -22,6 +23,7 @@ class PTUControl(object):
 		self.psmax = rospy.get_param('/ptu/max_pan_speed' , 140.0)
 		self.pstep = rospy.get_param('/ptu/pan_step', 0.00089759763795882463)
 		self.tstep = rospy.get_param('/ptu/tilt_step', 0.00089759763795882463)
+		self.preempted = False
 
 		self.pan_joint_name = rospy.get_param('/ptu/pan_joint_name','pan')							
 		self.tilt_joint_name = rospy.get_param('/ptu/tilt_joint_name','tilt')							
@@ -44,16 +46,25 @@ class PTUControl(object):
 		if not tilt_vel:
 			tilt_vel = self.tsmax
 
+		self.preempted = False
+
 		self._goto(pan, tilt, pan_vel, tilt_vel)
 
 		result = scitos_ptu.msg.PtuGotoResult()
 		result.state.position = self._get_state()
-		self.as_goto.set_succeeded(result)
+		if not _get_preempt_status():
+			self.as_reset.set_succeeded(result)
+		else:
+			self.as_reset.set_preempted(result)
 		
 	def cb_reset(self, msg):
+		self.preempted = False
 		self._goto(0,0, self.psmax, self.tsmax)
 		result = scitos_ptu.msg.PtuResetResult()
-		self.as_reset.set_succeeded(result)
+		if not _get_preempt_status():
+			self.as_reset.set_succeeded(result)
+		else:
+			self.as_reset.set_preempted(result)
 
 	def _goto(self, pan, tilt, pan_vel, tilt_vel):
 		rospy.loginfo('going to (%s, %s)' % (pan, tilt))
@@ -66,6 +77,8 @@ class PTUControl(object):
 		# wait for it to get there
 		wait_rate = rospy.Rate(10)
 		while not self._at_goal((pan, tilt)) and not rospy.is_shutdown():
+			if _get_preempt_status():
+				break
 			wait_rate.sleep()
 
 	def _at_goal(self, goal):
@@ -81,6 +94,17 @@ class PTUControl(object):
 		pt = np.degrees((self.pan, self.tilt))
 		self.state_lock.release()
 		return pt
+
+	def _get_preempt_status(self):
+		self.preempt_lock.acquire()
+		preempted = self.preempted
+		self.preempt_lock.release()
+		return preempted
+
+  	def preemptCallback(self):
+		self.preempt_lock.acquire()
+		self.preempted = True
+		self.preempt_lock.release()
 
 if __name__ == '__main__':
 	rospy.init_node('flir_ptu46_action_server')
