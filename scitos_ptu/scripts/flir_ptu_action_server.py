@@ -33,9 +33,11 @@ class PTUControl(object):
 		self.ptu_pub = rospy.Publisher('cmd', JointState)
 		self.as_goto = actionlib.SimpleActionServer('SetPTUState', \
 		     scitos_ptu.msg.PtuGotoAction, execute_cb=self.cb_goto,auto_start=False)
+		self.as_goto.register_preempt_callback(self.preemptCallback)
 		self.as_goto.start()
 		self.as_reset  = actionlib.SimpleActionServer('ResetPtu', \
 			 scitos_ptu.msg.PtuResetAction, execute_cb=self.cb_reset,auto_start=False)
+		self.as_reset.register_preempt_callback(self.preemptCallback)		
 		self.as_reset.start()
 	
 	def cb_goto(self, msg):
@@ -52,16 +54,17 @@ class PTUControl(object):
 
 		result = scitos_ptu.msg.PtuGotoResult()
 		result.state.position = self._get_state()
-		if not _get_preempt_status():
-			self.as_reset.set_succeeded(result)
+		print 'returning result'
+		if not self._get_preempt_status():
+			self.as_goto.set_succeeded(result)
 		else:
-			self.as_reset.set_preempted(result)
+			self.as_goto.set_preempted(result)
 		
 	def cb_reset(self, msg):
 		self.preempted = False
 		self._goto(0,0, self.psmax, self.tsmax)
 		result = scitos_ptu.msg.PtuResetResult()
-		if not _get_preempt_status():
+		if not self._get_preempt_status():
 			self.as_reset.set_succeeded(result)
 		else:
 			self.as_reset.set_preempted(result)
@@ -77,7 +80,7 @@ class PTUControl(object):
 		# wait for it to get there
 		wait_rate = rospy.Rate(10)
 		while not self._at_goal((pan, tilt)) and not rospy.is_shutdown():
-			if _get_preempt_status():
+			if self._get_preempt_status():
 				break
 			wait_rate.sleep()
 
