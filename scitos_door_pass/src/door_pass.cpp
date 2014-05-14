@@ -172,7 +172,7 @@ void scanCallback (const sensor_msgs::LaserScan::ConstPtr& scan_msg)
 			if (door.found){
 				misdetections=0;
 				if (state == APPROACH){
-					if (debug) printf("Moving to %f %f ",door.auxX,door.auxY);
+					if (debug) printf("Moving to %f %f %d",door.auxX,door.auxY, passCounter);
 					if (door.auxX < 0.05) passCounter++; else passCounter=0;
 					if (passCounter >  passCounterLimit){
 						state = ADJUST;
@@ -194,12 +194,22 @@ void scanCallback (const sensor_msgs::LaserScan::ConstPtr& scan_msg)
 
 			}
 			else {
+				if (debug) printf("Missed door");
 				misdetections++;
 			}
 
 			if (state == DETECT){
-				if (door.found) passCounter++; else passCounter=0;
-				if (passCounter >  passCounterLimit) state = LEAVE;
+				if (door.found) {
+					passCounter++; 
+				}
+				else {
+					passCounter=0;
+				}
+				
+				if (passCounter >  passCounterLimit) {
+					if (debug) printf("Leaving from DETECT");					
+					state = LEAVE;
+				}
 			}
 		}
 		
