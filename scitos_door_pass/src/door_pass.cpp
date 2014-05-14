@@ -13,8 +13,8 @@ Server *server;
 ros::Subscriber scan_sub;
 ros::Subscriber robot_pose;
 
-float goalPositionTolerance = 0.08;
-float minRotate = 0.3;
+float goalPositionTolerance = 0.09;
+float minRotate = 0.3; //minimum amount to rotate -- 0.3 was needed at BHAM to prevent getting stuck on carpet
 float defaultMaxDistance = 3.0;
 float maxDistance = defaultMaxDistance;		//max range taken into consideration
 float defaultSpeed = 0.15;		//default forward speed of the robot
@@ -24,6 +24,11 @@ int passCounter = 0;			//measurements
 int maxMisdetections = 50;		//decides when door not detected
 int misdetections = 0;
 bool debug = true;
+
+float previousMaxDistance = 0; 
+int increasingGoalDistance = 0; //pose updates
+int increasingGoalDistanceThreshold = 15; //pose updates
+bool longRangeMode = false;
 
 typedef enum{
 	IDLE,
@@ -71,47 +76,57 @@ void poseCallback(const geometry_msgs::Pose::ConstPtr& msg)
 		rX = goalX - msg->position.x;
 		rY = goalY - msg->position.y;
 
-		
+		// only check for doors between the pose and the target		
+		maxDistance = fmin(sqrt(rX*rX+rY*rY), maxDistance);
 
-		printf("goal dist (%f,%f)\n", fabs(rX), fabs(rY));
+		if (debug) printf("max distance to goal %f\n", maxDistance);
 
-		if(fabs(rX) <= goalPositionTolerance && fabs(rY) <= goalPositionTolerance) {
+		// if we're close enough to the goal, regardless of other counts
+		if(maxDistance <= goalPositionTolerance) {
 			printf("within range of target, stopping");			
 			state = LEAVE;
 		}
+		
+
+		// if we're not turning we should be getting closer to the goal
+		if(state != TURNING) {
+
+			// are we getting closer to the goal?
+			float goalDifference = previousMaxDistance - maxDistance;
+			previousMaxDistance = maxDistance;
+			
+			if(goalDifference > 0) {
+				if(++increasingGoalDistance > increasingGoalDistanceThreshold) {
+					printf("heading away from goal, failing");			
+					state = FAIL;
+				}
+			}
+			else {
+				increasingGoalDistance = 0;
+			}
+
+		}
+		else { //if (state == TURNING){
+			float currentAngle = tf::getYaw(msg->orientation);
+
+			base_cmd.linear.x = 0; 
+			currentAngle = (atan2(rY,rX)-currentAngle);
+
+			while (currentAngle >= M_PI) currentAngle-= 2*M_PI;
+			while (currentAngle < -M_PI) currentAngle += 2*M_PI;
+
+			base_cmd.angular.z = boundRotation(currentAngle*0.5);
+
+
+
+			if (fabs(currentAngle) < 0.1){
+				base_cmd.angular.z = 0;
+				state = APPROACH;
+			} 
+
+			cmd_vel.publish(base_cmd);
+		}
 	}
-	
-	if (state == TURNING){
-		float rX,rY;
-		rX=rY=0;
-
-		// difference in x y between current and target
-		rX = goalX - msg->position.x;
-		rY = goalY - msg->position.y;
-		float currentAngle = tf::getYaw(msg->orientation);
-
-		base_cmd.linear.x = 0; 
-		currentAngle = (atan2(rY,rX)-currentAngle);
-
-		while (currentAngle >= M_PI) currentAngle-= 2*M_PI;
-		while (currentAngle < -M_PI) currentAngle += 2*M_PI;
-
-		base_cmd.angular.z = boundRotation(currentAngle*0.5);
-
-		// only check for doors between the pose and the target
-
-		maxDistance = fmin(sqrt(rX*rX+rY*rY),maxDistance);
-
-		printf("maxDistance %f\n", maxDistance);
-
-		if (fabs(currentAngle) < 0.1){
-			base_cmd.angular.z = 0;
-			state = APPROACH;
-		} 
-
-		cmd_vel.publish(base_cmd);
-	}
-	
 
 }
 
@@ -141,7 +156,19 @@ void scanCallback (const sensor_msgs::LaserScan::ConstPtr& scan_msg)
 		base_cmd.angular.z = 0; 
 
 		if (state == APPROACH || state == DETECT || state == ADJUST){
-			SDoor door = detectDoor(scan_msg->ranges,scan_msg->angle_min,scan_msg->angle_increment,scan_msg->ranges.size(),maxDistance);
+
+
+			// sometimes this helps get through when a bit stuck... 
+			if (misdetections > maxMisdetections/2) {
+				if (debug) printf("Extending range to try to find lost door\n");
+				longRangeMode = true;
+			} 
+
+
+			// how far away should we look for doors? -- default to distance to goal
+			float detectDistance = longRangeMode ? defaultMaxDistance : maxDistance;
+			SDoor door = detectDoor(scan_msg->ranges,scan_msg->angle_min,scan_msg->angle_increment,scan_msg->ranges.size(),detectDistance);
+
 			if (door.found){
 				misdetections=0;
 				if (state == APPROACH){
@@ -219,7 +246,14 @@ void actionServerCallback(const move_base_msgs::MoveBaseGoalConstPtr& goal, Serv
 	move_base_msgs::MoveBaseResult result;
 	goalX = goal->target_pose.pose.position.x;
 	goalY = goal->target_pose.pose.position.y;
+	
+	// reset variables
 	misdetections = 0;
+	maxDistance = defaultMaxDistance;
+	previousMaxDistance = defaultMaxDistance;
+	increasingGoalDistance = 0;
+	longRangeMode = false;
+
 	state = TURNING;
 
 	ros::Rate r(50); //hz
@@ -228,11 +262,12 @@ void actionServerCallback(const move_base_msgs::MoveBaseGoalConstPtr& goal, Serv
 	while (state == TURNING || state == DETECT || state == APPROACH || state == ADJUST || state == PASS || state == LEAVE){
 		
 		if (misdetections > maxMisdetections || state == LEAVE){
-			if (state == LEAVE) state = SUCCESS; else state = FAIL;
-		}
-		else if (misdetections > maxMisdetections/2) {
-			printf("Trying a different distance\n");
-			maxDistance = defaultMaxDistance;
+			if (state == LEAVE) {
+				state = SUCCESS;
+			}
+			else {
+				state = FAIL;
+			}
 		}
 
 		r.sleep();
