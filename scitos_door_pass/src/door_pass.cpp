@@ -92,10 +92,12 @@ void poseCallback(const geometry_msgs::Pose::ConstPtr& msg)
 		if(state != TURNING) {
 
 			// are we getting closer to the goal?
-			float goalDifference = previousMaxDistance - maxDistance;
+			// if we are then previousMaxDistance should be greater than maxDistance
+			float reductionInGoalDistance = previousMaxDistance - maxDistance;
 			previousMaxDistance = maxDistance;
 			
-			if(goalDifference > 0) {
+			// if goal different is smaller than 0 this means that the most recent distance the goal was greater than the previous one
+			if(reductionInGoalDistance < 0) {
 				if(++increasingGoalDistance > increasingGoalDistanceThreshold) {
 					printf("\n\nheading away from goal, failing\n\n");			
 					state = FAIL;
@@ -273,7 +275,7 @@ void actionServerCallback(const move_base_msgs::MoveBaseGoalConstPtr& goal, Serv
 	ros::Rate r(50); //hz
 
 	if (goalX == 0 && goalY == 0) state = APPROACH;
-	
+
 	while (state == TURNING || state == DETECT || state == APPROACH || state == ADJUST || state == PASS || state == LEAVE){
 		
 		if (misdetections > maxMisdetections || state == LEAVE){
@@ -291,7 +293,7 @@ void actionServerCallback(const move_base_msgs::MoveBaseGoalConstPtr& goal, Serv
 	}
 	
 
-	if (debug) printf("Out of loop: %d\n", state);
+	// if (debug) printf("Out of loop: %d\n", state);
 
 	
 	if (state == FAIL) {
