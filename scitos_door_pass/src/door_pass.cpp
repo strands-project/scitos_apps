@@ -28,6 +28,7 @@ bool debug = true;
 float previousMaxDistance = 0; 
 int increasingGoalDistance = 0; //pose updates
 int increasingGoalDistanceThreshold = 15; //pose updates
+bool longRangeMode = false;
 
 typedef enum{
 	IDLE,
@@ -155,7 +156,19 @@ void scanCallback (const sensor_msgs::LaserScan::ConstPtr& scan_msg)
 		base_cmd.angular.z = 0; 
 
 		if (state == APPROACH || state == DETECT || state == ADJUST){
-			SDoor door = detectDoor(scan_msg->ranges,scan_msg->angle_min,scan_msg->angle_increment,scan_msg->ranges.size(),maxDistance);
+
+
+			// sometimes this helps get through when a bit stuck... 
+			if (misdetections > maxMisdetections/2) {
+				printf("Extending range to try to find lost door\n");
+				longRangeMode = true;
+			} 
+
+
+			// how far away should we look for doors? -- default to distance to goal
+			float detectDistance = longRangeMode ? defaultMaxDistance : maxDistance;
+			SDoor door = detectDoor(scan_msg->ranges,scan_msg->angle_min,scan_msg->angle_increment,scan_msg->ranges.size(),detectDistance);
+
 			if (door.found){
 				misdetections=0;
 				if (state == APPROACH){
@@ -237,12 +250,11 @@ void actionServerCallback(const move_base_msgs::MoveBaseGoalConstPtr& goal, Serv
 	// reset variables
 	misdetections = 0;
 	maxDistance = defaultMaxDistance;
-	previousMaxDistance = maxDistance;
+	previousMaxDistance = defaultMaxDistance;
 	increasingGoalDistance = 0;
-
+	longRangeMode = false;
 
 	state = TURNING;
-
 
 	ros::Rate r(50); //hz
 
@@ -256,10 +268,6 @@ void actionServerCallback(const move_base_msgs::MoveBaseGoalConstPtr& goal, Serv
 			else {
 				state = FAIL;
 			}
-		}
-		else if (misdetections > maxMisdetections/2) {
-			printf("Trying a different distance\n");
-			maxDistance = defaultMaxDistance;
 		}
 
 		r.sleep();
