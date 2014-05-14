@@ -79,10 +79,10 @@ class PTUServer:
     # start position
     self.log_pub.publish("start_sweep")
     self.ptugoal.pan = -panstart
-    self.ptugoal.tilt = -tiltstart
-    self.client.send_goal(self.ptugoal)
-    self.client.wait_for_result()	    
+    self.ptugoal.tilt = -tiltstart	    
     self.preempted = False
+    self.client.send_goal(self.ptugoal)
+    self.client.wait_for_result()
     
     for i in range(panstart, panend, panstep):
        if self._get_preempt_status() or self.aborted:
