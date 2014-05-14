@@ -7,7 +7,7 @@ int32 tilt_step
 int32 tilt_end
 ---
 #result
-sensor_msgs/JointState ptu_pose
+bool success
 ---
 #feedback
 sensor_msgs/JointState feedback_ptu_pose
