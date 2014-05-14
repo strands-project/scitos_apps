@@ -83,7 +83,7 @@ void poseCallback(const geometry_msgs::Pose::ConstPtr& msg)
 
 		// if we're close enough to the goal, regardless of other counts
 		if(maxDistance <= goalPositionTolerance) {
-			printf("within range of target, stopping");			
+			printf("\n\nwithin range of target, stopping\n\n");			
 			state = LEAVE;
 		}
 		
@@ -97,7 +97,7 @@ void poseCallback(const geometry_msgs::Pose::ConstPtr& msg)
 			
 			if(goalDifference > 0) {
 				if(++increasingGoalDistance > increasingGoalDistanceThreshold) {
-					printf("heading away from goal, failing");			
+					printf("\n\nheading away from goal, failing\n\n");			
 					state = FAIL;
 				}
 			}
@@ -170,11 +170,14 @@ void scanCallback (const sensor_msgs::LaserScan::ConstPtr& scan_msg)
 			SDoor door = detectDoor(scan_msg->ranges,scan_msg->angle_min,scan_msg->angle_increment,scan_msg->ranges.size(),detectDistance);
 
 			if (door.found){
+
 				misdetections=0;
+				
 				if (state == APPROACH){
 					if (debug) printf("Moving to %f %f %d",door.auxX,door.auxY, passCounter);
 					if (door.auxX < 0.05) passCounter++; else passCounter=0;
 					if (passCounter >  passCounterLimit){
+						if (debug) printf("Switching to ADJUST\n");	
 						state = ADJUST;
 						passCounter =0;
 					}
@@ -191,11 +194,10 @@ void scanCallback (const sensor_msgs::LaserScan::ConstPtr& scan_msg)
 					base_cmd.angular.z = boundRotation(door.doorCentreY); 
 					cmd_vel.publish(base_cmd);
 				}
-
 			}
 			else {
-				if (debug) printf("Missed door");
 				misdetections++;
+				if (debug) printf("Missed door: %d\n", misdetections);	
 			}
 
 			if (state == DETECT){
@@ -207,7 +209,7 @@ void scanCallback (const sensor_msgs::LaserScan::ConstPtr& scan_msg)
 				}
 				
 				if (passCounter >  passCounterLimit) {
-					if (debug) printf("Leaving from DETECT");					
+					if (debug) printf("Leaving from DETECT\n");					
 					state = LEAVE;
 				}
 			}
@@ -244,8 +246,10 @@ void scanCallback (const sensor_msgs::LaserScan::ConstPtr& scan_msg)
 			}else{
 				passCounter = -30;
 			}
-			if (passCounter > passCounterLimit) state = LEAVE;
-		
+			if (passCounter > passCounterLimit) {
+				if (debug) printf("Leaving from PASS\n");					
+				state = LEAVE;
+			}
 			cmd_vel.publish(base_cmd);
 		}
 	}
@@ -269,13 +273,16 @@ void actionServerCallback(const move_base_msgs::MoveBaseGoalConstPtr& goal, Serv
 	ros::Rate r(50); //hz
 
 	if (goalX == 0 && goalY == 0) state = APPROACH;
+	
 	while (state == TURNING || state == DETECT || state == APPROACH || state == ADJUST || state == PASS || state == LEAVE){
 		
 		if (misdetections > maxMisdetections || state == LEAVE){
 			if (state == LEAVE) {
+				if (debug) printf("Leaving on SUCCESS\n");
 				state = SUCCESS;
 			}
 			else {
+				if (debug) printf("Failing due to misdetections\n");
 				state = FAIL;
 			}
 		}
@@ -283,9 +290,19 @@ void actionServerCallback(const move_base_msgs::MoveBaseGoalConstPtr& goal, Serv
 		r.sleep();
 	}
 	
-	if (state == SUCCESS) server->setSucceeded(result);
-	if (state == FAIL) server->setAborted(result);
-	if (state == PREEMPTED) server->setPreempted(result);
+
+	if (debug) printf("Out of loop: %d\n", state);
+
+	
+	if (state == FAIL) {
+		server->setAborted(result);
+	}
+	else if (state == PREEMPTED) {
+		server->setPreempted(result);
+	}
+	else { //(state == SUCCESS) ?
+		server->setSucceeded(result);
+	}
 	state = STOPPING;
 }
 
