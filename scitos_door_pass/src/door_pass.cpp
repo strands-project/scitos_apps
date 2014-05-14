@@ -79,7 +79,7 @@ void poseCallback(const geometry_msgs::Pose::ConstPtr& msg)
 		// only check for doors between the pose and the target		
 		maxDistance = fmin(sqrt(rX*rX+rY*rY), maxDistance);
 
-		printf("max distance to goal %f\n", maxDistance);
+		if (debug) printf("max distance to goal %f\n", maxDistance);
 
 		// if we're close enough to the goal, regardless of other counts
 		if(maxDistance <= goalPositionTolerance) {
@@ -160,7 +160,7 @@ void scanCallback (const sensor_msgs::LaserScan::ConstPtr& scan_msg)
 
 			// sometimes this helps get through when a bit stuck... 
 			if (misdetections > maxMisdetections/2) {
-				printf("Extending range to try to find lost door\n");
+				if (debug) printf("Extending range to try to find lost door\n");
 				longRangeMode = true;
 			} 
 
