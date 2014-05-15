@@ -81,6 +81,7 @@ class PTUServer:
     self.ptugoal.pan = -panstart
     self.ptugoal.tilt = -tiltstart	    
     self.preempted = False
+    self.aborted = False
     self.client.send_goal(self.ptugoal)
     self.client.wait_for_result()
     
