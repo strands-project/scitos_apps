@@ -26,7 +26,7 @@ class PTUServer:
     self.aborted = False
     self.preempted = False
     self.preempt_timeout = 0.3 # seconds
-    self.pan_tilt_timeout = 3 # seconds
+    self.pan_tilt_timeout = 10 # seconds
 
     self.feedback = scitos_ptu.msg.PanTiltFeedback()
     self.result = scitos_ptu.msg.PanTiltResult()
