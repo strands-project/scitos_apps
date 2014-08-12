@@ -4,7 +4,7 @@ project(scitos_docking)
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
-find_package(catkin REQUIRED COMPONENTS image_transport roscpp rospy std_msgs scitos_msgs scitos_apps_msgs message_generation genmsg actionlib_msgs actionlib move_base_msgs ros_datacentre)
+find_package(catkin REQUIRED COMPONENTS image_transport roscpp rospy std_msgs scitos_msgs scitos_apps_msgs message_generation genmsg actionlib_msgs actionlib move_base_msgs mongodb_store)
 
 ## System dependencies are found with CMake's conventions
 # find_package(Boost REQUIRED COMPONENTS system)
