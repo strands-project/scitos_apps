@@ -5,7 +5,7 @@ SDoor detectDoor(std::vector<float> d,float angle_min,float angle_increment,size
 
 	int rayThreshold = 20;
 	float edgeThreshold = 0.5;		//min range step to detect an edge 
-	float minDoorWidth = 0.65;		//minimal doorWidth 
+	float minDoorWidth = 0.60;		//minimal doorWidth 
 	float maxDoorWidth = 0.85;		//maximal doorWidth
 	bool debug = true;
 	float auxiliaryDistance = 0.3;		//used to make the door position more precise
