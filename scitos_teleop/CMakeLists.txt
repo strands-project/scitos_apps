@@ -4,7 +4,7 @@ project(scitos_teleop)
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
-find_package(catkin REQUIRED COMPONENTS roscpp rospy std_msgs scitos_apps_msgs scitos_msgs)
+find_package(catkin REQUIRED COMPONENTS message_generation roscpp rospy std_msgs scitos_msgs)
 
 ## System dependencies are found with CMake's conventions
 # find_package(Boost REQUIRED COMPONENTS system)
@@ -20,6 +20,10 @@ find_package(catkin REQUIRED COMPONENTS roscpp rospy std_msgs scitos_apps_msgs s
 #######################################
 
 ## Generate messages in the 'msg' folder
+add_message_files(
+  FILES
+  action_buttons.msg
+)
 
 ## Generate services in the 'srv' folder
 # add_service_files(
@@ -29,6 +33,10 @@ find_package(catkin REQUIRED COMPONENTS roscpp rospy std_msgs scitos_apps_msgs s
 # )
 
 ## Generate added messages and services with any dependencies listed here
+generate_messages(
+  DEPENDENCIES
+  std_msgs
+)
 
 
 ###################################
@@ -68,7 +76,8 @@ add_executable(teleop_base src/base_teleop.cpp)
 
 ## Add cmake target dependencies of the executable/library
 ## as an example, message headers may need to be generated before nodes
-add_dependencies(rumble_control ${catkin_EXPORTED_TARGETS})
+add_dependencies(rumble_control ${PROJECT_NAME}_generate_messages_cpp ${catkin_EXPORTED_TARGETS})
+add_dependencies(teleop_base ${catkin_EXPORTED_TARGETS})
 
 ## Specify libraries to link a library or executable target against
 target_link_libraries(rumble_control ${catkin_LIBRARIES} ${scitos_msgs_LIBRARIES})

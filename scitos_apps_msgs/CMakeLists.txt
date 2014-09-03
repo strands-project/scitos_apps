@@ -29,10 +29,10 @@ add_action_files(
 #######################################
 
 ## Generate messages in the 'msg' folder
-add_message_files(
-  FILES
-  action_buttons.msg
-)
+#add_message_files(
+  #FILES
+  #action_buttons.msg
+#)
 
 ## Generate services in the 'srv' folder
 add_service_files(

@@ -2,7 +2,7 @@
 #include <sensor_msgs/Joy.h>
 #include <ros/console.h>
 
-#include "scitos_apps_msgs/action_buttons.h"
+#include "scitos_teleop/action_buttons.h"
 
 #include <scitos_msgs/EnableMotors.h>
 #include <scitos_msgs/ResetMotorStop.h>
@@ -33,7 +33,7 @@ void controlCallback(const sensor_msgs::Joy::ConstPtr& msg)
     sent_error = false;
 
     //Publish action buttons
-    scitos_apps_msgs::action_buttons button_msg;
+    scitos_teleop::action_buttons button_msg;
     if(msg->buttons[0] != last_buttons[0] || msg->buttons[1] != last_buttons[1] || msg->buttons[2] != last_buttons[2] || msg->buttons[3] != last_buttons[3]) {
         button_msg.A = msg->buttons[0];
         button_msg.B = msg->buttons[1];
@@ -98,7 +98,7 @@ int main(int argc, char **argv)
 
     ros::Subscriber sub = n.subscribe("/joy", 1000, controlCallback);
     pub_joy = n.advertise<sensor_msgs::Joy>("joy", 1000);
-    pub_buttons = n.advertise<scitos_apps_msgs::action_buttons>("action_buttons", 1000);
+    pub_buttons = n.advertise<scitos_teleop::action_buttons>("action_buttons", 1000);
     enable_client = n.serviceClient<scitos_msgs::EnableMotors>("/enable_motors");
     reset_client = n.serviceClient<scitos_msgs::ResetMotorStop>("/reset_motorstop");
     emergency_client = n.serviceClient<scitos_msgs::EmergencyStop>("/emergency_stop");

@@ -14,7 +14,7 @@
 #include <geometry_msgs/Twist.h>
 #include <nav_msgs/Odometry.h>
 #include <scitos_apps_msgs/ChargingAction.h>
-#include <scitos_apps_msgs/action_buttons.h>
+#include <scitos_teleop/action_buttons.h>
 #include <actionlib/server/simple_action_server.h>
 #include <sensor_msgs/Joy.h>
 #include <scitos_msgs/BatteryState.h>
@@ -501,7 +501,7 @@ void ptuCallback(const sensor_msgs::JointState::ConstPtr &msg)
 	}
 }
 
-void joyCallback(const scitos_apps_msgs::action_buttons::ConstPtr &msg)
+void joyCallback(const scitos_teleop::action_buttons::ConstPtr &msg)
 {
 	if (msg->X && state == STATE_IDLE && server->isActive() == false && undockingServer->isActive() == false && dockingServer->isActive()==false){
 		if (chargerDetected){
