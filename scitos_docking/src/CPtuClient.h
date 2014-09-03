@@ -8,7 +8,7 @@
 #include <stdlib.h>
 #include <actionlib/client/simple_action_client.h>
 #include "ros/ros.h"
-#include <scitos_apps_msgs/ChargingAction.h>
+#include <scitos_docking/ChargingAction.h>
 
 #define TIMEOUT_INTERVAL 40000
 
@@ -20,9 +20,9 @@ class CPtuClient
 		void moveTo(float angle); //in DEG
 
 	private:
-		static void doneCb(const actionlib::SimpleClientGoalState& state,const scitos_apps_msgs::ChargingResultConstPtr& result);
+		static void doneCb(const actionlib::SimpleClientGoalState& state,const scitos_docking::ChargingResultConstPtr& result);
 		static void activeCb();
-		static void feedbackCb(const scitos_apps_msgs::ChargingFeedbackConstPtr& feedback);
+		static void feedbackCb(const scitos_docking::ChargingFeedbackConstPtr& feedback);
 };
 
 #endif

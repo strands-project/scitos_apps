@@ -4,7 +4,7 @@ project(scitos_docking)
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
-find_package(catkin REQUIRED COMPONENTS image_transport roscpp rospy std_msgs scitos_msgs scitos_teleop scitos_apps_msgs message_generation genmsg actionlib_msgs actionlib move_base_msgs mongodb_store)
+find_package(catkin REQUIRED COMPONENTS actionlib actionlib_msgs image_transport roscpp rospy std_msgs scitos_msgs scitos_teleop message_generation genmsg actionlib_msgs actionlib move_base_msgs mongodb_store message_generation )
 
 ## System dependencies are found with CMake's conventions
 # find_package(Boost REQUIRED COMPONENTS system)
@@ -31,16 +31,22 @@ link_directories(${GSL_LIBRARY_DIRS})
 # )
 
 # Generate services in the 'srv' folder
-# add_service_files(
- #  FILES
-  # Charging.srv
- #)
+add_service_files(
+   FILES
+   Charging.srv
+ )
+
+add_action_files(
+		DIRECTORY action 
+		FILES Charging.action
+)
 
 ## Generate added messages and services with any dependencies listed here
- #generate_messages(
-	#	 DEPENDENCIES
-		# std_msgs 
-		 #)
+generate_messages(
+        DEPENDENCIES
+        std_msgs 
+        actionlib_msgs
+)
 
 ###################################
 ## catkin specific configuration ##
@@ -153,13 +159,13 @@ add_executable(visual_charging_client src/dockingClient.cpp)
 add_executable(simple_move_client src/testMoveClient.cpp)
 add_executable(simple_ptu_client src/testPtuClient.cpp)
 
-add_dependencies(CTransformation ${catkin_EXPORTED_TARGETS})
-add_dependencies(CChargingClient ${catkin_EXPORTED_TARGETS})
-add_dependencies(CPtuClient ${catkin_EXPORTED_TARGETS})
-add_dependencies(visual_charging_client ${catkin_EXPORTED_TARGETS})
-add_dependencies(visual_charging ${catkin_EXPORTED_TARGETS})
-add_dependencies(simple_move_client ${catkin_EXPORTED_TARGETS})
-add_dependencies(simple_ptu_client ${catkin_EXPORTED_TARGETS})
+add_dependencies(CTransformation ${PROJECT_NAME}_generate_messages_cpp ${catkin_EXPORTED_TARGETS})
+add_dependencies(CChargingClient ${PROJECT_NAME}_generate_messages_cpp ${catkin_EXPORTED_TARGETS})
+add_dependencies(CPtuClient ${PROJECT_NAME}_generate_messages_cpp ${catkin_EXPORTED_TARGETS})
+add_dependencies(visual_charging_client ${PROJECT_NAME}_generate_messages_cpp ${catkin_EXPORTED_TARGETS})
+add_dependencies(visual_charging ${PROJECT_NAME}_generate_messages_cpp ${catkin_EXPORTED_TARGETS})
+add_dependencies(simple_move_client ${PROJECT_NAME}_generate_messages_cpp ${catkin_EXPORTED_TARGETS})
+add_dependencies(simple_ptu_client ${PROJECT_NAME}_generate_messages_cpp ${catkin_EXPORTED_TARGETS})
 
 target_link_libraries (visual_charging  CDump)
 target_link_libraries (visual_charging  CLightClient)

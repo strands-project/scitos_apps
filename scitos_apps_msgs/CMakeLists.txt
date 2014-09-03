@@ -10,11 +10,6 @@ add_action_files(
 		FILES RampClimbing.action
 )
 
-add_action_files(
-		DIRECTORY action 
-		FILES Charging.action
-)
-
 ## System dependencies are found with CMake's conventions
 # find_package(Boost REQUIRED COMPONENTS system)
 
@@ -35,10 +30,10 @@ add_action_files(
 #)
 
 ## Generate services in the 'srv' folder
-add_service_files(
-  FILES
-  Charging.srv
-)
+#add_service_files(
+  #FILES
+  #Charging.srv
+#)
 
 ## Generate added messages and services with any dependencies listed here
 generate_messages(
