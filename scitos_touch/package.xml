@@ -1,12 +1,12 @@
 <?xml version="1.0"?>
 <package>
   <name>scitos_touch</name>
-  <version>0.0.0</version>
-  <description>The scitos_touch package</description>
+  <version>0.1.0</version>
+  <description>Package containing nodes to meant to run on the touch screen of a Scitos A5 robot.</description>
 
   <maintainer email="cdondrup@lincoln.ac.uk">Christian Dondrup</maintainer>
 
-  <license>TODO</license>
+  <license>MIT</license>
 
   <author email="cdondrup@lincoln.ac.uk">Christian Dondrup</author> -->
 
