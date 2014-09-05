@@ -31,6 +31,11 @@ install(PROGRAMS
   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
 
+install(PROGRAMS
+  scripts/create_udev_rules
+  DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+)
+
 install(TARGETS rumble_control teleop_base
   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
@@ -43,7 +48,7 @@ install(DIRECTORY doc
   DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
 )
 
-install(FILES udev/73-scitos-teleop-persistent-joystick.rules
-  DESTINATION /etc/udev/rules.d
+install(DIRECTORY udev 
+  DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
 )
 
