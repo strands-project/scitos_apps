@@ -4,7 +4,13 @@ project(scitos_touch)
 set(LIB_NAME rqt_emergency_stop)
 
 ## Find catkin macros and libraries
-find_package(catkin REQUIRED COMPONENTS roscpp rospy scitos_msgs rqt_gui rqt_gui_cpp)
+find_package(catkin REQUIRED COMPONENTS 
+    scitos_msgs 
+    std_msgs
+    roscpp 
+    rospy 
+    rqt_gui 
+    rqt_gui_cpp)
 
 ## Include Qt
 find_package(Qt4 REQUIRED COMPONENTS QtCore QtGui)
