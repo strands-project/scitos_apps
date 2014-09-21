@@ -4,7 +4,12 @@ project(scitos_ptu)
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
-find_package(catkin REQUIRED COMPONENTS rospy sensor_msgs genmsg actionlib_msgs)
+find_package(catkin REQUIRED COMPONENTS 
+    actionlib
+    actionlib_msgs
+    rospy 
+    sensor_msgs 
+    )
 
 
 add_action_files(DIRECTORY action 
