@@ -1,9 +1,22 @@
 cmake_minimum_required(VERSION 2.8.3)
 project(scitos_teleop)
 
-find_package(catkin REQUIRED COMPONENTS roscpp rospy std_msgs sensor_msgs scitos_apps_msgs scitos_msgs)
+find_package(catkin REQUIRED COMPONENTS message_generation roscpp rospy std_msgs sensor_msgs scitos_msgs)
 #catkin_python_setup()
-catkin_package()
+
+add_message_files(
+  FILES
+  action_buttons.msg
+)
+
+generate_messages(
+  DEPENDENCIES
+  std_msgs
+)
+
+catkin_package(
+  CATKIN_DEPENDS roscpp rospy std_msgs message_runtime
+)
 
 ###########
 ## Build ##
