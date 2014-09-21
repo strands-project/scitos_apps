@@ -4,7 +4,14 @@ project(scitos_dashboard)
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
-find_package(catkin REQUIRED COMPONENTS diagnostic_msgs roslib rospy rqt_gui rqt_robot_dashboard scitos_msgs std_msgs)
+find_package(catkin REQUIRED COMPONENTS 
+    roslib 
+    rospy 
+    rqt_gui 
+    rqt_robot_dashboard 
+    scitos_msgs 
+    std_msgs
+    )
 
 ## System dependencies are found with CMake's conventions
 # find_package(Boost REQUIRED COMPONENTS system)

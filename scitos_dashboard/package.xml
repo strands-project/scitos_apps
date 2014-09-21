@@ -9,14 +9,12 @@
   <license>GPL</license>
 
   <buildtool_depend>catkin</buildtool_depend>
-  <build_depend>diagnostic_msgs</build_depend>
   <build_depend>roslib</build_depend>
   <build_depend>rospy</build_depend>
   <build_depend>rqt_gui</build_depend>
   <build_depend>rqt_robot_dashboard</build_depend>
   <build_depend>scitos_msgs</build_depend>
   <build_depend>std_msgs</build_depend>
-  <run_depend>diagnostic_msgs</run_depend>
   <run_depend>roslib</run_depend>
   <run_depend>rospy</run_depend>
   <run_depend>rqt_gui</run_depend>
