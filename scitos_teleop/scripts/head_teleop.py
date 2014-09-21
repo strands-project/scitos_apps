@@ -2,7 +2,7 @@
 
 import rospy
 from sensor_msgs.msg import JointState, Joy
-from scitos_apps_msgs.msg import action_buttons
+from scitos_teleop.msg import action_buttons
 
 
 class HeadTeleop():

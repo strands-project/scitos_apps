@@ -13,13 +13,13 @@
 #include <opencv/highgui.h>
 #include <geometry_msgs/Twist.h>
 #include <nav_msgs/Odometry.h>
-#include <scitos_apps_msgs/ChargingAction.h>
-#include <scitos_apps_msgs/action_buttons.h>
+#include <scitos_docking/ChargingAction.h>
+#include <scitos_teleop/action_buttons.h>
 #include <actionlib/server/simple_action_server.h>
 #include <sensor_msgs/Joy.h>
 #include <scitos_msgs/BatteryState.h>
 #include <move_base_msgs/MoveBaseAction.h>
-//#include <scitos_apps_msgs/Charging.h>
+//#include <scitos_docking/Charging.h>
 #include "CChargingActions.h" 
 
 
@@ -28,11 +28,11 @@
 float ptuPan = 0.0;
 bool success = false;
 int failedToSpotStationCount=0;
-scitos_apps_msgs::ChargingFeedback feedback;
-scitos_apps_msgs::ChargingResult result;
+scitos_docking::ChargingFeedback feedback;
+scitos_docking::ChargingResult result;
 char response[3000];
 char posString[3000];
-typedef actionlib::SimpleActionServer<scitos_apps_msgs::ChargingAction> Server;
+typedef actionlib::SimpleActionServer<scitos_docking::ChargingAction> Server;
 typedef actionlib::SimpleActionServer<move_base_msgs::MoveBaseAction> DockingServer;
 
 int maxMeasurements = 100;
@@ -426,7 +426,7 @@ void undockingServerCallback(const move_base_msgs::MoveBaseGoalConstPtr& goal, D
 	robot->lightsOff();
 }
 
-void actionServerCallback(const scitos_apps_msgs::ChargingGoalConstPtr& goal, Server* as)
+void actionServerCallback(const scitos_docking::ChargingGoalConstPtr& goal, Server* as)
 {
 	initComponents();
 	timer.reset();
@@ -501,7 +501,7 @@ void ptuCallback(const sensor_msgs::JointState::ConstPtr &msg)
 	}
 }
 
-void joyCallback(const scitos_apps_msgs::action_buttons::ConstPtr &msg)
+void joyCallback(const scitos_teleop::action_buttons::ConstPtr &msg)
 {
 	if (msg->X && state == STATE_IDLE && server->isActive() == false && undockingServer->isActive() == false && dockingServer->isActive()==false){
 		if (chargerDetected){

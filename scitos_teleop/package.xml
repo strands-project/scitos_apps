@@ -1,8 +1,8 @@
 <?xml version="1.0"?>
 <package>
   <name>scitos_teleop</name>
-  <version>0.1.0</version>
-  <description>The scitos teleoperation package designed to control a Scitos A5 robot with a Logitec F710 wirless gamepad.</description>
+  <version>0.0.0</version>
+  <description>The scitos teleoperation package</description>
 
   <maintainer email="cdondrup@lincoln.ac.uk">Christian Dondrup</maintainer>
 
@@ -20,8 +20,8 @@
   <build_depend>sensor_msgs</build_depend>
   <build_depend>geometry_msgs</build_depend>
   <build_depend>scitos_msgs</build_depend>
-  <build_depend>scitos_apps_msgs</build_depend>
-  <run_depend>scitos_apps_msgs</run_depend>
+  <build_depend>message_generation</build_depend>
+  <run_depend>message_runtime</run_depend>
   <run_depend>rospy</run_depend>
   <run_depend>roscpp</run_depend>
   <run_depend>std_msgs</run_depend>

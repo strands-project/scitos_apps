@@ -13,10 +13,16 @@ include_directories(
   ${catkin_INCLUDE_DIRS}
 )
 
+## Declare a cpp library
+# add_library(rumblepad_control
+#   src/${PROJECT_NAME}/rumblepad_control.cpp
+# )
+
+## Declare a cpp executable
 add_executable(rumble_control src/rumble_control.cpp)
 add_executable(teleop_base src/base_teleop.cpp)
 
-add_dependencies(rumble_control ${catkin_EXPORTED_TARGETS})
+add_dependencies(rumble_control ${PROJECT_NAME}_generate_messages_cpp ${catkin_EXPORTED_TARGETS})
 add_dependencies(teleop_base ${catkin_EXPORTED_TARGETS})
 
 target_link_libraries(rumble_control ${catkin_LIBRARIES})
