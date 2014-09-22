@@ -2,8 +2,8 @@
 Changelog for package scitos_docking
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.0.3 (2014-09-22)
+------------------
 * Hopefully the last missing dependencies...
 * Contributors: Christian Dondrup
 
