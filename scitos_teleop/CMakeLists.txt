@@ -1,8 +1,18 @@
 cmake_minimum_required(VERSION 2.8.3)
 project(scitos_teleop)
 
-find_package(catkin REQUIRED COMPONENTS message_generation roscpp rospy std_msgs sensor_msgs scitos_msgs)
-#catkin_python_setup()
+## Find catkin macros and libraries
+## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
+## is used, also find other catkin packages
+find_package(catkin REQUIRED COMPONENTS 
+    geometry_msgs
+    message_generation 
+    roscpp 
+    rospy 
+    scitos_msgs
+    sensor_msgs
+    std_msgs
+    )
 
 add_message_files(
   FILES
@@ -70,4 +80,3 @@ install(DIRECTORY doc
 install(DIRECTORY udev 
   DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
 )
-

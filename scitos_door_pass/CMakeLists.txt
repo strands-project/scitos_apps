@@ -5,15 +5,13 @@ project(scitos_door_pass)
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
 find_package(catkin REQUIRED COMPONENTS 
+    actionlib
+    actionlib_msgs 
+    message_generation 
+    nav_msgs 
     roscpp 
     rospy 
     std_msgs 
-    nav_msgs 
-    scitos_msgs 
-    message_generation 
-    genmsg 
-    actionlib_msgs 
-    actionlib
     )
 set ( CMAKE_CXX_FLAGS "-ggdb")
 
