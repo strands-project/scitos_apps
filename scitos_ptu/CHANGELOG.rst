@@ -2,8 +2,8 @@
 Changelog for package scitos_ptu
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.0.1 (2014-09-22)
+------------------
 * [scitos_ptu] release preparations.
 * Merge branch 'hydro-devel' into dependencies
   Conflicts:

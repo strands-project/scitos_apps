@@ -2,8 +2,8 @@
 Changelog for package scitos_docking
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.0.1 (2014-09-22)
+------------------
 * [scitos_ptu] release preparations.
 * [scitos_docking] Realease preparation
   * Moved header files to include

@@ -2,8 +2,8 @@
 Changelog for package scitos_dashboard
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.0.1 (2014-09-22)
+------------------
 * [scitos_dashboard] Added description and author to package xml
 * [scitos_dashboard] Added install targets and setup.py
 * [scitos_dashboard] diagnostics_msgs not used.

@@ -2,8 +2,8 @@
 Changelog for package scitos_teleop
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.0.1 (2014-09-22)
+------------------
 * Merging somehow removed the std_msgs.
 * Merge branch 'hydro-devel' into dependencies
   Conflicts:
