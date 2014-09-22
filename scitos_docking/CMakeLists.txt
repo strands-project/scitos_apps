@@ -16,7 +16,8 @@ find_package(catkin REQUIRED COMPONENTS
     sensor_msgs
     scitos_msgs 
     scitos_teleop 
-    std_msgs 
+    std_msgs
+    tf 
     )
 
 include($ENV{ROS_ROOT}/core/rosbuild/FindPkgConfig.cmake)
