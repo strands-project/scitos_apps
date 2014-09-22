@@ -1,4 +1,4 @@
-#include "CChargingClient.h"
+#include "scitos_docking/CChargingClient.h"
 
 void CChargingClient::doneCb(const actionlib::SimpleClientGoalState& state,const scitos_docking::ChargingResultConstPtr& result)
 {

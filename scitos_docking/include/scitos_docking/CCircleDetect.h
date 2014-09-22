@@ -7,7 +7,7 @@
 #ifndef __CCIRCLEDETECT_H__
 #define __CCIRCLEDETECT_H__
 
-#include "CRawImage.h"
+#include "scitos_docking/CRawImage.h"
 #include <math.h>
 #define MAX_SEGMENTS 10000
 #define COLOR_PRECISION 32

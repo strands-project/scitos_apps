@@ -2,9 +2,10 @@
 <package>
   <name>scitos_dashboard</name>
   <version>0.0.0</version>
-  <description>The scitos_dashboard package</description>
+  <description>The scitos_dashboard package providing and rqt interface for the scitos robot.</description>
 
   <maintainer email="cburbridge@gmail.com">chris burbridge</maintainer>
+  <author email="cburbridge@gmail.com">chris burbridge</author>
 
   <license>GPL</license>
 

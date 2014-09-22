@@ -12,7 +12,7 @@
 #include <stdarg.h>
 #include <string.h>
 
-#include "CDump.h"
+#include "scitos_docking/CDump.h"
 
 CDump * dump=NULL; 
 

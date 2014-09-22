@@ -10,7 +10,7 @@
 #include <stdio.h>
 #include <math.h>
 #include <unistd.h>
-#include "CCircleDetect.h"
+#include "scitos_docking/CCircleDetect.h"
 #include <semaphore.h> 
 #include "ros/ros.h"
 #include "mongodb_store/SetParam.h"
