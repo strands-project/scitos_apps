@@ -11,6 +11,7 @@ find_package(catkin REQUIRED COMPONENTS
     rospy 
     scitos_msgs
     sensor_msgs
+    std_msgs
     )
 
 add_message_files(
