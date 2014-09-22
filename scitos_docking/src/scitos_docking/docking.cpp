@@ -1,9 +1,9 @@
 #include <stdlib.h>
-#include "CDump.h"
-#include "CTimer.h"
-#include "CCircleDetect.h"
-#include "CTransformation.h"
-#include "CChargingClient.h"
+#include "scitos_docking/CDump.h"
+#include "scitos_docking/CTimer.h"
+#include "scitos_docking/CCircleDetect.h"
+#include "scitos_docking/CTransformation.h"
+#include "scitos_docking/CChargingClient.h"
 #include "ros/ros.h"
 #include "std_msgs/String.h"
 #include <image_transport/image_transport.h>
@@ -20,7 +20,7 @@
 #include <scitos_msgs/BatteryState.h>
 #include <move_base_msgs/MoveBaseAction.h>
 //#include <scitos_docking/Charging.h>
-#include "CChargingActions.h" 
+#include "scitos_docking/CChargingActions.h"
 
 
 #define MAX_PATTERNS 10 

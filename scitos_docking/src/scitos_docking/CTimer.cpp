@@ -1,4 +1,4 @@
-#include "CTimer.h"
+#include "scitos_docking/CTimer.h"
 
 CTimer::CTimer(int timeout)
 {

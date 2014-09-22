@@ -4,7 +4,7 @@
 /**
 @author Tom Krajnik
 */
-#include "CChargingState.h"
+#include "scitos_docking/CChargingState.h"
 #include <nav_msgs/Odometry.h>
 #include <sensor_msgs/image_encodings.h>
 #include <sensor_msgs/JointState.h>
@@ -12,9 +12,9 @@
 #include <sys/time.h>
 #include <stdlib.h>
 #include "ros/ros.h"
-#include "CTransformation.h"
-#include "CTimer.h"
-#include "CLightClient.h" 
+#include "scitos_docking/CTransformation.h"
+#include "scitos_docking/CTimer.h"
+#include "scitos_docking/CLightClient.h"
 #include <tf/tf.h>
 #include <geometry_msgs/PoseWithCovarianceStamped.h>
 #include <geometry_msgs/PoseWithCovariance.h>

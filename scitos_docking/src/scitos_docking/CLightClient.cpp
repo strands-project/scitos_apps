@@ -1,4 +1,4 @@
-#include "CLightClient.h"
+#include "scitos_docking/CLightClient.h"
 
 CLightClient::CLightClient()
 {
