@@ -4,15 +4,19 @@ project(scitos_docking)
 find_package(catkin REQUIRED COMPONENTS 
     actionlib 
     actionlib_msgs 
+    dynamic_reconfigure
+    geometry_msgs
     image_transport 
     message_generation 
     mongodb_store 
     move_base_msgs 
+    nav_msgs
     roscpp 
     rospy 
-    std_msgs 
+    sensor_msgs
     scitos_msgs 
     scitos_teleop 
+    std_msgs 
     )
 
 include($ENV{ROS_ROOT}/core/rosbuild/FindPkgConfig.cmake)
