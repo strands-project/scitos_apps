@@ -2,6 +2,9 @@
 Changelog for package scitos_cmd_vel_mux
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+
 0.0.1 (2014-09-22)
 ------------------
 * [scitos_cmd_vel_mux] Set version number to 0.0.0 to have a common start.
