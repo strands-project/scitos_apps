@@ -35,10 +35,11 @@ class StatusMonitor(object):
         self._data_lock.release()
 
         # Check the warn conditions
-        for c in self._conditions:
-            if c[1](self.get_field_value(c[0])):
-                self._status=c[2]
-                self._status_level=1
+        if self._status_level == 0:
+            for c in self._conditions:
+                if c[1](self.get_field_value(c[0])):
+                    self._status = c[2]
+                    self._status_level = 1
             
         
     def get_fields(self):

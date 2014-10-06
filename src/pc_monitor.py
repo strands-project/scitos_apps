@@ -58,5 +58,6 @@ class PCMonitor(object):
 
 if __name__ == '__main__':
     rospy.init_node('pc_monitor')
-    monitor = PCMonitor()
+    wlan_iface = rospy.get_param("wireless_iface", "wlan0")
+    monitor = PCMonitor(wlan_iface=wlan_iface)
     monitor.spin()
