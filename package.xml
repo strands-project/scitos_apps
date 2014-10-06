@@ -4,7 +4,7 @@
   <version>0.0.1</version>
   <description>Monitors the SCITOS embedded PC, ouputs diagnostics messages.</description>
 
-  <maintainer email="cburbridge@gmail.com">chris burbridge</maintainer>
+  <maintainer email="cburbridge@gmail.com">Chris Burbridge</maintainer>
 
   <license>GPL</license>
 
