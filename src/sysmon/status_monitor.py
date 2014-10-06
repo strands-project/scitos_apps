@@ -28,6 +28,8 @@ class StatusMonitor(object):
     def _on_timer(self):
         self._timer = Timer(1.0 / self._frequency, self._on_timer)
         self._timer.start()
+        self._status="Ok"
+        self._status_level=0
         self._data_lock.acquire()
         self.update()
         self._data_lock.release()
@@ -37,9 +39,7 @@ class StatusMonitor(object):
             if c[1](self.get_field_value(c[0])):
                 self._status=c[2]
                 self._status_level=1
-            else:
-                self._status="Ok"
-                self._status_level=0
+            
         
     def get_fields(self):
         return []
@@ -60,8 +60,8 @@ class StatusMonitor(object):
     def stop(self):
         self._timer.cancel()
 
-    def add_warn_condition(self, field_name, condition, callback):
-        self._conditions.append([field_name,condition,callback])
+    def add_warn_condition(self, field_name, condition, message):
+        self._conditions.append([field_name, condition, message])
 
     def __str__(self):
         a="-"*10 + "\n"
