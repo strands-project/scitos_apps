@@ -563,12 +563,10 @@ void mainLoop()
 		}
 		if (((server->isPreemptRequested() && server->isActive())  || (undockingServer->isActive() && undockingServer->isPreemptRequested())|| (dockingServer->isActive() && dockingServer->isPreemptRequested()))&& state != STATE_IDLE){
 			state = STATE_PREEMPTED;
-			ROS_INFO("PREEMTP");
 			robot->halt();
 			ros::spinOnce();
 			if (server->isActive()||undockingServer->isActive()||dockingServer->isActive()) result.Message = "Current action preempted by external request.";
 		}
-		ROS_INFO("State: %s",stateStr[state]);
 		state_cleanup();
 		lastState = state;
 	}
