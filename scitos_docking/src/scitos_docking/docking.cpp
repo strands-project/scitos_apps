@@ -366,10 +366,12 @@ void dockingServerCallback(const move_base_msgs::MoveBaseGoalConstPtr& goal, Doc
 	if (state == STATE_PREEMPTED){
 		dockingServer->setPreempted(result);
 		state = STATE_IDLE;
+		robot->movePtu(0,0);
 		robot->lightsOff();
 		return;
 	}else if (state == STATE_ABORTED){
 		dockingServer->setAborted(result);
+		robot->movePtu(0,0);
 		robot->lightsOff();
 		return;
 	}else if (success)
@@ -409,10 +411,12 @@ void undockingServerCallback(const move_base_msgs::MoveBaseGoalConstPtr& goal, D
 	if (state == STATE_PREEMPTED){
 		undockingServer->setPreempted(result);
 		state = STATE_IDLE;
+		robot->movePtu(0,0);
 		robot->lightsOff();
 		return;
 	}else if (state == STATE_ABORTED){
 		undockingServer->setAborted(result);
+		robot->movePtu(0,0);
 		robot->lightsOff();
 		return;
 	}else if (success)
@@ -557,7 +561,7 @@ void mainLoop()
 			feedback.Progress = (int)robot->progress;
 			if (robot->actionStuck()) feedback.Level = 1; else feedback.Level = 0;
 		}
-		if ((server->isPreemptRequested() || undockingServer->isPreemptRequested())|| dockingServer->isPreemptRequested()&& state != STATE_IDLE){
+		if (((server->isPreemptRequested() && server->isActive())  || (undockingServer->isActive() && undockingServer->isPreemptRequested())|| (dockingServer->isActive() && dockingServer->isPreemptRequested()))&& state != STATE_IDLE){
 			state = STATE_PREEMPTED;
 			robot->halt();
 			ros::spinOnce();
