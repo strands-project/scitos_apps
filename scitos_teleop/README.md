@@ -1,8 +1,14 @@
-### Setting up the workspace
-Please follow instructions given here: https://github.com/strands-project/strands_systems/blob/master/README.md
-
-### Scitos teleop
+## Scitos Teleop
 The scitos_teleop package is designed to work with a Logitech Wireless Gamepad F710.
+
+### Install udev rule for gamepad
+To copy the udev rule to `/etc/udev/rules` run 
+```
+rosrun scitos_teleop create_udev_rules
+```
+this will make the jaoypad availabe as `/dev/input/rumblepad`
+
+### Running and using the teleop node
 * Source the corresponding setup.bash: `source <your_catkin_workspace>/devel/setup.bash`
 * Launch the rumblepad control: `roslaunch scitos_teleop teleop_joystick.launch`
  * If the simulator or scitos_node is running, you should now be able to control the robot using the joypad.
@@ -20,8 +26,5 @@ The scitos_teleop package is designed to work with a Logitech Wireless Gamepad F
  
 ### Troubleshooting
 If you get a message like: ```[ERROR] [1372933726.815471480]: Couldn't open joystick /dev/.... Will retry every second.``` 
-you have to export the joystick device, e.g.: `export JOYSTICK_DEVICE=/dev/input/js1` and start the launch file again.
-* Using udev: 
- * You can also make sure that the joystick will always be found if you use the udev rule provided: Copy `scitos_apps/scitos_teleop/udev/73-persistent-joystick.rules` to `/etc/udev/rules.d/`
- * Now just export the joystick variable: `export JOYSTICK_DEVICE=/dev/input/rumblepad` or add this to your `.bashrc` and source it
- * You might have to restart the udev service or log out and back in again before this shows any effect.
+you can export the joystick device, e.g.: `export JOYSTICK_DEVICE=/dev/input/js1` and start the launch file again.
+If you installed the udev rule as mentioned above this should not happen. Try to follow the instruction for installing the udev rule again.

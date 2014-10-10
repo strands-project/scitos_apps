@@ -1,0 +1,4 @@
+<launch>
+	<node name="ptu_action_server" pkg="scitos_ptu" type="ptu_action_server_metric_map.py" output="screen" respawn="true">
+	</node>
+</launch>

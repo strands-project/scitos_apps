@@ -4,7 +4,13 @@ project(scitos_touch)
 set(LIB_NAME rqt_emergency_stop)
 
 ## Find catkin macros and libraries
-find_package(catkin REQUIRED COMPONENTS roscpp rospy scitos_msgs rqt_gui rqt_gui_cpp)
+find_package(catkin REQUIRED COMPONENTS 
+    scitos_msgs 
+    std_msgs
+    roscpp 
+    rospy 
+    rqt_gui 
+    rqt_gui_cpp)
 
 ## Include Qt
 find_package(Qt4 REQUIRED COMPONENTS QtCore QtGui)
@@ -51,7 +57,7 @@ QT4_WRAP_UI(QT_FORMS_HPP ${emerency_stop_UIS})
 
 ## Create a library and not an executable because this is going to be a plugin
 add_library(${LIB_NAME} ${emerency_stop_SRCS} ${QT_FORMS_HPP} ${QT_MOC_HPP})
-add_dependencies(${LIB_NAME} scitos_msgs_gencpp)
+add_dependencies(${LIB_NAME} ${catkin_EXPORTED_TARGETS})
 
 ## Specify libraries to link a library or executable target against
 target_link_libraries(${LIB_NAME}

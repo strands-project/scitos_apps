@@ -1,4 +1,0 @@
-<launch>
-  <node pkg="scitos_ptu" type="mirror_head.py" name="ptu_mirror_head" output="screen">
-  </node>
-</launch>

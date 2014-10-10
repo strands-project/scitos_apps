@@ -1,7 +1,12 @@
 <launch>
+	<arg name="machine" default="localhost" />
+	<arg name="user" default="" />
+
+	<machine name="$(arg machine)" address="$(arg machine)" env-loader="/opt/strands/strands_catkin_ws/devel/env.sh" user="$(arg user)" default="true"/>
+
 	<param name="configFile" value="$(env HOME)/.charging.yaml" />
 	<param name="positionUpdate" value="true" />
 	<node pkg="scitos_docking" type="visual_charging" name="visual_charging" output="screen" >
-	<remap from="/cmd_vel" to="/cmd_vel_mux/input/navigation"/>
+		<remap from="/cmd_vel" to="/cmd_vel_mux/input/navigation"/>
 	</node>
 </launch> 

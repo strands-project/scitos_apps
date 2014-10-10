@@ -1,0 +1,6 @@
+<launch>
+	<node name="ptu_action_server" pkg="scitos_ptu" type="flir_ptu_action_server.py" output="screen">
+		<remap from="cmd" to="/ptu/cmd"/>
+		<remap from="state" to="/ptu/state"/>
+	</node>
+</launch>

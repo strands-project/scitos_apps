@@ -1,13 +1,21 @@
 <launch>
   <!-- Joystick device path.
-  Default is /dev/js1. If an environment variable JOYSTICK_DEVICE
+  Default is /dev/input/rumblepad. If an environment variable JOYSTICK_DEVICE
   is set then this replaces the default. If the launch file is started with
   the argument js:=blah then blah overides both the default and the environment. -->
-  <arg name="js" default="$(optenv JOYSTICK_DEVICE /dev/js1)" />
+
+  <arg name="js" default="$(optenv JOYSTICK_DEVICE /dev/input/rumblepad)" />
+  <arg name="machine" default="localhost" />
+  <arg name="user" default="" />
+
+  <machine name="$(arg machine)" address="$(arg machine)" env-loader="/opt/strands/strands_catkin_ws/devel/env.sh" user="$(arg user)" default="true"/>
+
 
   <!-- Core rumblepad control -->
   <include file="$(find scitos_teleop)/launch/teleop_joystick_core.launch">
     <arg name="js" value="$(arg js)"/>
+    <arg name="machine"  value="$(arg machine)"/>
+    <arg name="user"  value="$(arg user)"/>
   </include>
 
   <!-- Base teleop --> 
