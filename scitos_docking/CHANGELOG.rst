@@ -2,8 +2,8 @@
 Changelog for package scitos_docking
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.0.4 (2014-10-13)
+------------------
 * Merge branch 'hydro-devel' of https://github.com/strands-project/scitos_apps into hydro-devel
 * Removed debug messages
 * Undocking preemption bug solved.
