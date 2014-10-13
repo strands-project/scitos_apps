@@ -2,6 +2,9 @@
 Changelog for package scitos_dashboard
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+
 0.0.3 (2014-09-22)
 ------------------
 
