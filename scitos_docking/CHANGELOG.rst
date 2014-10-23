@@ -2,6 +2,12 @@
 Changelog for package scitos_docking
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* Replacing opencv2 dependency with cv_bridge to be distribution independent.
+  opencv2 does not exists under indogo anymore. cv_bridge is pulling in the correct opencv packages for both distributions.
+* Contributors: Christian Dondrup
+
 0.0.4 (2014-10-13)
 ------------------
 * Merge branch 'hydro-devel' of https://github.com/strands-project/scitos_apps into hydro-devel
