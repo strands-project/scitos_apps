@@ -2,8 +2,8 @@
 Changelog for package scitos_docking
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.0.5 (2014-10-23)
+------------------
 * Replacing opencv2 dependency with cv_bridge to be distribution independent.
   opencv2 does not exists under indogo anymore. cv_bridge is pulling in the correct opencv packages for both distributions.
 * Contributors: Christian Dondrup
