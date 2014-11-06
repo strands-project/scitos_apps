@@ -5,6 +5,13 @@
   the argument js:=blah then blah overides both the default and the environment. -->
   <arg name="js" default="$(optenv JOYSTICK_DEVICE /dev/input/rumblepad)" />
 
+  <arg name="machine" default="localhost" />
+  <arg name="user" default="" />
+
+
+  <!-- now has an IF checking for the arg "remote" -->
+  <machine name="$(arg machine)" address="$(arg machine)" env-loader="$(env ROS_ENV_LOADER)" user="$(arg user)" default="true" />
+
   <!-- Core rumblepad control -->
   <include file="$(find scitos_teleop)/launch/teleop_joystick_core.launch">
     <arg name="js" value="$(arg js)"/>
