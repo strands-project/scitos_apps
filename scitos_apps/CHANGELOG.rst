@@ -2,8 +2,8 @@
 Changelog for package scitos_apps
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.0.6 (2014-11-06)
+------------------
 * Added license
 * Created metapackage for easier install
 * Contributors: Christian Dondrup
