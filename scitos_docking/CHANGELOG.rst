@@ -2,6 +2,9 @@
 Changelog for package scitos_docking
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+
 0.0.5 (2014-10-23)
 ------------------
 * Replacing opencv2 dependency with cv_bridge to be distribution independent.
