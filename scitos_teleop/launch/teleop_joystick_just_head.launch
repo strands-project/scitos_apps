@@ -7,7 +7,7 @@
   <arg name="machine" default="localhost" />
   <arg name="user" default="" />
 
-  <machine name="$(arg machine)" address="$(arg machine)" env-loader="$(env ROS_ENV_LOADER)" user="$(arg user)" default="true"/>
+  <machine name="$(arg machine)" address="$(arg machine)" env-loader="$(optenv ROS_ENV_LOADER )" user="$(arg user)" default="true"/>
 
   <!-- Core rumblepad control -->
   <include file="$(find scitos_teleop)/launch/teleop_joystick_core.launch">

@@ -3,7 +3,7 @@
   <arg name="user" default="" />
 
   <!-- now has an IF checking for the arg "remote" -->
-  <machine name="$(arg machine)" address="$(arg machine)" env-loader="$(env ROS_ENV_LOADER)" user="$(arg user)" default="true" />
+  <machine name="$(arg machine)" address="$(arg machine)" env-loader="$(optenv ROS_ENV_LOADER )" user="$(arg user)" default="true" />
 
   <param name="configFile" value="$(env HOME)/.charging.yaml" />
 	<node pkg="scitos_docking" type="visual_charging" name="visual_charging" output="screen" >
