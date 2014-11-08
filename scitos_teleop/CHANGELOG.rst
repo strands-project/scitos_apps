@@ -2,8 +2,8 @@
 Changelog for package scitos_teleop
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.0.7 (2014-11-08)
+------------------
 * final and tested version of loader
 * machine tags for cmd_vel_mux and teleop
 * Contributors: Jaime Pulido Fentanes
