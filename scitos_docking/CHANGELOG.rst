@@ -2,6 +2,12 @@
 Changelog for package scitos_docking
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* final and tested version of loader
+* Latest Versions of charging launch machine tags
+* Contributors: Jaime Pulido Fentanes
+
 0.0.6 (2014-11-06)
 ------------------
 
