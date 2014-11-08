@@ -10,7 +10,7 @@
 
 
 	<!-- now has an IF checking for the arg "remote" -->
-	<machine name="$(arg machine)" address="$(arg machine)" env-loader="$(env ROS_ENV_LOADER)" user="$(arg user)" default="true" />
+	<machine name="$(arg machine)" address="$(arg machine)" env-loader="$(optenv ROS_ENV_LOADER )" user="$(arg user)" default="true" />
 
 
 	<!-- Joystick driver node -->
