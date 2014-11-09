@@ -2,6 +2,9 @@
 Changelog for package scitos_cmd_vel_mux
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+
 0.0.7 (2014-11-08)
 ------------------
 * final and tested version of loader
