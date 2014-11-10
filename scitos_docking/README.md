@@ -34,6 +34,5 @@ The robot should move its eyelids to indicate progress of the calibration proces
 #### To use:
 
  * Just point the robot approximatelly in the direction of the charging station and call the node via actionlib as above, substituting `charge` for calibrate.
-
  * To leave the charging station, use `undock` instead.
-
+ * Set the `lightEBC` parameter to the name of an EBC port you have attached a light to, e.g. `Port0_12V_Enabled`.
