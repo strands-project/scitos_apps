@@ -2,8 +2,8 @@
 Changelog for package scitos_docking
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.0.9 (2014-11-11)
+------------------
 * Make turning on/off the light's EBC configurable.
 * Contributors: lucasb-eyer
 
