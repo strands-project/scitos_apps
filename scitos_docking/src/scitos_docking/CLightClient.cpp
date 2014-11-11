@@ -12,11 +12,17 @@ CLightClient::~CLightClient()
 
 void CLightClient::set(bool what)
 {
+	// Some robots never saw the light. They feel empty inside...
+	if(ebcport.empty()) {
+		status = what;
+		return;
+	}
+
 	dynamic_reconfigure::ReconfigureRequest srv_req;
 	dynamic_reconfigure::ReconfigureResponse srv_resp;
 	dynamic_reconfigure::BoolParameter param;
 	dynamic_reconfigure::Config conf;
-	param.name = "Port0_12V_Enabled";
+	param.name = ebcport;
 	param.value = status = what;
 	conf.bools.push_back(param);
 	srv_req.config = conf;

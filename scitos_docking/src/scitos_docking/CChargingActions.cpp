@@ -23,6 +23,8 @@ CChargingActions::CChargingActions(ros::NodeHandle *n)
 	warningLevel = .2;
 	poseSet = true;
 	injectX = injectY = injectPhi = 0;
+
+	nh->getParam("lightEBC", light.ebcport);
 }
 
 CChargingActions::~CChargingActions()
