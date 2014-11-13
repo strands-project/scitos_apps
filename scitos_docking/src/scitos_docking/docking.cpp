@@ -26,6 +26,7 @@
 #define MAX_PATTERNS 10 
 
 float ptuPan = 0.0;
+float ptuTilt = -15.0;
 bool success = false;
 int failedToSpotStationCount=0;
 scitos_docking::ChargingFeedback feedback;
@@ -161,6 +162,7 @@ void odomCallback(const nav_msgs::Odometry &msg)
 		case STATE_UNDOCK_MOVE: 
 			robot->controlHead(100,180,0);
 			if (robot->moveByDistance()){
+				robot->movePtu(-314,0);
 				rotateBy = (M_PI+0.01);
 				robot->rotateByAngle(rotateBy);
 				state = STATE_UNDOCK_ROTATE;
@@ -177,6 +179,59 @@ void odomCallback(const nav_msgs::Odometry &msg)
 	}
 }
 
+void depthCallback(const sensor_msgs::ImageConstPtr& msg)
+{
+	if (state ==  STATE_UNDOCK_MOVE && ptuTilt > -5)
+	{
+		int len = msg->height*msg->width;
+
+		//TODO assuming same params for depth and RGB
+		float vx = 1/trans->fc[0];
+		float vy = 1/trans->fc[1];
+		float cx = -trans->cc[0];
+		float cy = -trans->cc[1];
+		int width = msg->width;
+		int height = msg->height;
+		float fx = (1+cx)*vx;
+		float fy = (1+cy)*vy;
+		float lx = (width+cx)*vx;
+		float ly = (height+cy)*vy;
+
+		float x[len+1];
+		float y[len+1];
+		float z[len+1];
+		float d[len+1];
+		float di,psi,ix,iy,iz;
+		int cnt = 0;
+		di=psi=0;
+		CTimer timer;
+		timer.reset();
+		timer.start();
+		psi =  ptuTilt;
+		float minDist = 100;
+		for (float h = fy;h<ly;h+=vy)
+		{
+			for (float w = fx;w<lx;w+=vx)
+			{
+				di = (msg->data[cnt*2]+256*msg->data[cnt*2+1])/1000.0;
+				if (di > 0.05 && cnt%10 == 0 && di < 3.0){
+					ix = di*(cos(psi)-sin(psi)*h);
+					iy = -w*di;
+					iz = -di*(sin(psi)+cos(psi)*h)+1.68;
+					if (iz > 0.2 && iz < 1.9 && fabs(iy) < 0.3 && ix < minDist) minDist = ix;
+					//printf("%.3f %.3f %.3f\n",ix,iy,iz);
+				}
+				cnt++;
+			}
+		}
+		robot->setObstacleDistance(minDist); 
+		//printf("Obstacle detected at %.3f\n",minDist);
+	}else{
+		robot->setObstacleDistance(100.0); 
+	}
+}
+
+
 void imageCallback(const sensor_msgs::ImageConstPtr& msg)
 {
 	STrackedObject own,station;
@@ -188,7 +243,6 @@ void imageCallback(const sensor_msgs::ImageConstPtr& msg)
 	}
 	if (state == STATE_UNDOCK_INIT)
 	{
-		robot->movePtu(275,0);
 		if (robot->wait()){
 			robot->moveByDistance(-0.55);
 			state = STATE_UNDOCK_MOVE;
@@ -366,12 +420,10 @@ void dockingServerCallback(const move_base_msgs::MoveBaseGoalConstPtr& goal, Doc
 	if (state == STATE_PREEMPTED){
 		dockingServer->setPreempted(result);
 		state = STATE_IDLE;
-		robot->movePtu(0,0);
 		robot->lightsOff();
 		return;
 	}else if (state == STATE_ABORTED){
 		dockingServer->setAborted(result);
-		robot->movePtu(0,0);
 		robot->lightsOff();
 		return;
 	}else if (success)
@@ -382,6 +434,7 @@ void dockingServerCallback(const move_base_msgs::MoveBaseGoalConstPtr& goal, Doc
 	}else{
 		dockingServer->setAborted(result);
 	}
+	//TODOif (chargerDetected)robot->movePtu(-314,0); else robot->movePtu(0,0);
 	robot->lightsOff();
 }
 
@@ -399,6 +452,7 @@ void undockingServerCallback(const move_base_msgs::MoveBaseGoalConstPtr& goal, D
 	}else{
 		robot->wait(100);
 		state = STATE_UNDOCK_INIT;
+		robot->movePtu(-314,53);
 	}
 	if (state == STATE_REJECTED){
 		undockingServer->setAborted(result);
@@ -427,6 +481,7 @@ void undockingServerCallback(const move_base_msgs::MoveBaseGoalConstPtr& goal, D
 	}else{
 		undockingServer->setAborted(result);
 	}
+	//TODOif (chargerDetected)robot->movePtu(-314,0); else robot->movePtu(0,0);
 	robot->lightsOff();
 }
 
@@ -449,7 +504,7 @@ void actionServerCallback(const scitos_docking::ChargingGoalConstPtr& goal, Serv
 	if (goal->Command == "test"){
 		 robot->lightsOn();
 		 ptupos = (int)goal->Timeout;
-		 robot->movePtu(275,0);
+		 robot->movePtu(-314,0);
 		 waitCycles = 0;
 		 state = STATE_TEST1;
 	}
@@ -465,6 +520,7 @@ void actionServerCallback(const scitos_docking::ChargingGoalConstPtr& goal, Serv
 		}else{
 			robot->wait(100);
 			state = STATE_UNDOCK_INIT;
+			robot->movePtu(-314,53);
 		}
 	}
 	if (state == STATE_REJECTED){
@@ -495,13 +551,15 @@ void actionServerCallback(const scitos_docking::ChargingGoalConstPtr& goal, Serv
 	}else{
 		server->setAborted(result);
 	}
+	//TODOif (chargerDetected)robot->movePtu(-314,0); else robot->movePtu(0,0);
 	robot->lightsOff();
 }
 
 void ptuCallback(const sensor_msgs::JointState::ConstPtr &msg)
 {
 	for (int i = 0;i<2;i++){
-		if (msg->name[i] == "pan") ptuPan = msg->position[i];
+		if (msg->name[i] == "pan")  robot->ptuPan = ptuPan = msg->position[i];
+		if (msg->name[i] == "tilt") ptuTilt = msg->position[i];
 	}
 }
 
@@ -587,6 +645,7 @@ int main(int argc,char* argv[])
 	initComponents();
 	success = false;
 	image_transport::Subscriber subim = it.subscribe("head_xtion/rgb/image_mono", 1, imageCallback);
+	image_transport::Subscriber subdepth = it.subscribe("head_xtion/depth/image_rect", 1, depthCallback);
 	nh->param("positionUpdate",positionUpdate,false);
         imdebug = it.advertise("/charging/processedimage", 1);
 	ros::Subscriber subodo = nh->subscribe("odom", 1, odomCallback);

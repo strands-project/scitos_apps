@@ -31,6 +31,7 @@ class CChargingActions
 		void controlHead(int lids,int tilt, int pan);
 		bool rotateByAngle(float angle = .0);
 		bool moveByDistance(float distance = .0);
+		void setObstacleDistance(float value);
 		bool search();
 		bool measure(STrackedObject *o1,STrackedObject *o2=NULL,int count = 0,bool ml=true);
 		bool wait(int count = 0);
@@ -50,7 +51,9 @@ class CChargingActions
 		void injectPosition(); 
 		float injectX,injectY,injectPhi;
 		bool poseSet;
+		float ptuPan;
 	private:
+		float obstacleDistance;
 		CTimer timer;
 		ros::NodeHandle *nh;
 		ros::Publisher cmd_vel;
