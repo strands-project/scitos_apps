@@ -58,6 +58,7 @@ DockingServer *undockingServer;
 
 image_transport::Publisher imdebug;
 
+int onBattery = 0;
 int maxFailures=60;
 TLogModule module = LOG_MODULE_MAIN;
 int numSaved = 0;
@@ -71,6 +72,7 @@ SSegment lastSegmentArray[MAX_PATTERNS];
 CTransformation *trans;
 CChargingClient chargingClient;
 bool positionUpdate = false;
+bool headRestart = false;
 
 //position injection related
 EState state = STATE_ROTATE;
@@ -97,6 +99,35 @@ void cameraInfoCallBack(const sensor_msgs::CameraInfo &msg)
 void batteryCallBack(const scitos_msgs::BatteryState &msg)
 {
 	chargerDetected = msg.charging;
+	if (state ==  STATE_HEAD_OFF){
+		if (robot->headOff()) state = STATE_DOCKING_SUCCESS;
+	}
+	if (state ==  STATE_HEAD_ON){
+		if (robot->headOn()){
+			robot->wait(100);
+			state = STATE_UNDOCK_INIT;
+		}
+	}
+
+/*	if (onBattery == 1000 && state == STATE_IDLE && headRestart == false)
+	{
+		state = STATE_HEAD_RESTART;
+		headRestart = true;
+		robot->headSwitch(false);
+	}
+	if (headRestart == true)
+	{
+		if (onBattery == 1200) robot->headSwitch(true);
+		if (onBattery == 1500){
+			headRestart = false;
+			if (state == STATE_HEAD_RESTART) state = STATE_IDLE;
+		}
+		onBattery++;
+	}
+	if (state == STATE_IDLE)
+	{
+		if (chargerDetected) onBattery++; else onBattery=0;
+	}*/
 }
 
 int initComponents()
@@ -241,6 +272,10 @@ void imageCallback(const sensor_msgs::ImageConstPtr& msg)
 		if (chargerDetected) state = STATE_WAIT;
 		if (chargerDetected == false && fabs(ptuPan)<0.01) state = STATE_SEARCH; 
 	}
+	if (state == STATE_CALIBRATE_INIT)
+	{
+		if (robot->wait()) state = STATE_CALIBRATE;
+	}
 	if (state == STATE_UNDOCK_INIT)
 	{
 		if (robot->wait()){
@@ -367,7 +402,8 @@ void imageCallback(const sensor_msgs::ImageConstPtr& msg)
 					own = trans->getOwnPosition(objectArray);
 					if (robot->wait(&own,station,chargerDetected)){
 						if (chargerDetected){
-							 state = STATE_DOCKING_SUCCESS;
+							 state = STATE_HEAD_OFF;
+							 robot->headOff(10);
 							 success = true;
 						} else{
 							state = STATE_RETRY;
@@ -375,7 +411,7 @@ void imageCallback(const sensor_msgs::ImageConstPtr& msg)
 						realPrecision = sqrt(own.x*own.x+own.y*own.y);
 					}
 					break;
-			}
+						}
 		}else{
 			failedToSpotStationCount++;
 			if (state == STATE_SEARCH) failedToSpotStationCount=0;
@@ -401,6 +437,13 @@ void dockingServerCallback(const move_base_msgs::MoveBaseGoalConstPtr& goal, Doc
 	timer.start();
 	timeOut = 120000;
 	move_base_msgs::MoveBaseResult result;
+	/*if (state == STATE_HEAD_RESTART){
+		sprintf(response,"Sorry, have to wake up the head first. Try again in 30 seconds.\n");
+		state = STATE_REJECTED;
+		as->setAborted(result);
+		robot->lightsOff();
+		return;
+	}*/
 	if (calibrated==false){
 		sprintf(response,"Cannot approach the charging station because the docking is not calibrated.\nRead the readme file on how to perform calibration procedure.");
 		state = STATE_REJECTED;
@@ -434,7 +477,7 @@ void dockingServerCallback(const move_base_msgs::MoveBaseGoalConstPtr& goal, Doc
 	}else{
 		dockingServer->setAborted(result);
 	}
-	//TODOif (chargerDetected)robot->movePtu(-314,0); else robot->movePtu(0,0);
+	if (chargerDetected)robot->movePtu(-314,0); else robot->movePtu(0,0);
 	robot->lightsOff();
 }
 
@@ -446,12 +489,19 @@ void undockingServerCallback(const move_base_msgs::MoveBaseGoalConstPtr& goal, D
 	timer.start();
 	timeOut = 120000;
 	move_base_msgs::MoveBaseResult result;
+	/*if (state == STATE_HEAD_RESTART){
+		sprintf(response,"Sorry, have to wake up the head first. Try again in 30 seconds.\n");
+		state = STATE_REJECTED;
+		as->setAborted(result);
+		robot->lightsOff();
+		return;
+	}*/
 	if (chargerDetected == false){
 		state = STATE_REJECTED;
 		sprintf(response,"Cannot undock because not on the charging station.");
 	}else{
-		robot->wait(100);
-		state = STATE_UNDOCK_INIT;
+		robot->headOn(130);
+		state = STATE_HEAD_ON;
 		robot->movePtu(-314,53);
 	}
 	if (state == STATE_REJECTED){
@@ -481,7 +531,7 @@ void undockingServerCallback(const move_base_msgs::MoveBaseGoalConstPtr& goal, D
 	}else{
 		undockingServer->setAborted(result);
 	}
-	//TODOif (chargerDetected)robot->movePtu(-314,0); else robot->movePtu(0,0);
+	if (chargerDetected)robot->movePtu(-314,0); else robot->movePtu(0,0);
 	robot->lightsOff();
 }
 
@@ -491,6 +541,13 @@ void actionServerCallback(const scitos_docking::ChargingGoalConstPtr& goal, Serv
 	timer.reset();
 	timer.start();
 	timeOut = (int) goal->Timeout*1000;
+	/*if (state == STATE_HEAD_RESTART){
+		sprintf(response,"Sorry, have to wake up the head first. Try again in 30 seconds.\n");
+		state = STATE_REJECTED;
+		server->setAborted(result);
+		robot->lightsOff();
+		return;
+	}*/
 	if (goal->Command == "charge"){
 		if (calibrated==false){
 			sprintf(response,"Cannot approach the charging station because the docking is not calibrated.\nRead the readme file on how to perform calibration procedure.");
@@ -509,17 +566,21 @@ void actionServerCallback(const scitos_docking::ChargingGoalConstPtr& goal, Serv
 		 state = STATE_TEST1;
 	}
 	if (goal->Command == "calibrate"){
-		state = STATE_CALIBRATE;
+		state = STATE_CALIBRATE_INIT;
+		robot->movePtu(0,0);
+		robot->wait(100);
 		robot->measure(NULL,NULL,maxMeasurements);
 		robot->lightsOn();
 	}
+	if (goal->Command == "headon") robot->headOn(100);
+	if (goal->Command == "headoff") robot->headOff(100);
 	if (goal->Command == "undock"){
 		if (chargerDetected == false){
 			state = STATE_REJECTED;
 			sprintf(response,"Cannot undock because not on the charging station.");
 		}else{
-			robot->wait(100);
-			state = STATE_UNDOCK_INIT;
+			robot->headOn(130);
+			state = STATE_HEAD_ON;
 			robot->movePtu(-314,53);
 		}
 	}
@@ -551,7 +612,7 @@ void actionServerCallback(const scitos_docking::ChargingGoalConstPtr& goal, Serv
 	}else{
 		server->setAborted(result);
 	}
-	//TODOif (chargerDetected)robot->movePtu(-314,0); else robot->movePtu(0,0);
+	if (chargerDetected)robot->movePtu(-314,0); else robot->movePtu(0,0);
 	robot->lightsOff();
 }
 
@@ -567,8 +628,8 @@ void joyCallback(const scitos_teleop::action_buttons::ConstPtr &msg)
 {
 	if (msg->X && state == STATE_IDLE && server->isActive() == false && undockingServer->isActive() == false && dockingServer->isActive()==false){
 		if (chargerDetected){
-			robot->wait(100);
-			state = STATE_UNDOCK_INIT;
+			robot->headOn(130);
+			state = STATE_HEAD_ON;
 			chargingClient.initiateUndocking();
 		} else {
 			state = STATE_INIT;
@@ -604,7 +665,7 @@ void mainLoop()
 	int a = 0;
 	while (ros::ok()){
 		if (timeOut < timer.getTime() && state != STATE_IDLE ) state = STATE_TIMEOUT;
-		if (state != STATE_IDLE) robot->moveHead();
+		if (state != STATE_IDLE && state != STATE_HEAD_ON) robot->moveHead();
 		ros::spinOnce();
 		if (positionUpdate && robot->poseSet == false) robot->injectPosition(); 
 		usleep(30000);

@@ -15,6 +15,7 @@
 #include "scitos_docking/CTransformation.h"
 #include "scitos_docking/CTimer.h"
 #include "scitos_docking/CLightClient.h"
+#include "scitos_docking/CHead.h"
 #include <tf/tf.h>
 #include <geometry_msgs/PoseWithCovarianceStamped.h>
 #include <geometry_msgs/PoseWithCovariance.h>
@@ -45,6 +46,8 @@ class CChargingActions
 		bool testMove();
 		void updatePosition(const nav_msgs::Odometry &msg);
 		float progress,progressSpeed,lastProgress, startProg;
+		bool headOn(int value = 0);
+		bool headOff(int value = 0);
 		void lightsOn();
 		void lightsOff();
 		void injectPosition(float x,float y,float phi); 
@@ -66,6 +69,7 @@ class CChargingActions
 		float currentAngle,lastAngle;
 		float warningLevel;
 		CLightClient light;
+		CHead headCtrl;
 		ros::Publisher poseInjection;
 		std::string frame;
 		ros::Time injectionTime;

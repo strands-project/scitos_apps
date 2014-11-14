@@ -81,8 +81,6 @@ void CChargingActions::injectPosition()
 
 
 
-
-
 void CChargingActions::lightsOff()
 {
 	light.set(false);
@@ -198,6 +196,36 @@ bool CChargingActions::wait(int count)
 	moveHead();
 	if (posCount++ > maxCount) return true;
 	base_cmd.linear.x = base_cmd.angular.z = 0;
+	return false;
+}
+
+bool CChargingActions::headOn(int count)
+{
+ 	static int hnmaxCount;
+ 	static int hnposCount;
+	if (count > 0){
+		headCtrl.set(true);
+		hnposCount = 0;
+		hnmaxCount = count;
+	}
+	//printf("ON: %i %i\n",hnposCount,hnmaxCount);
+	if (hnposCount++ > hnmaxCount) return true;
+	return false;
+}
+
+bool CChargingActions::headOff(int count)
+{
+ 	static int hfmaxCount;
+ 	static int hfposCount;
+	if (count > 0){
+		hfposCount = 0;
+		hfmaxCount = count;
+	}
+	//printf("OFF: %i %i\n",hfposCount,hfmaxCount);
+	if (hfposCount++ > hfmaxCount){
+		headCtrl.set(false);
+		return true;
+	}
 	return false;
 }
 
