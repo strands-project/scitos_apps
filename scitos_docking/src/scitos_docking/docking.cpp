@@ -402,9 +402,15 @@ void imageCallback(const sensor_msgs::ImageConstPtr& msg)
 					own = trans->getOwnPosition(objectArray);
 					if (robot->wait(&own,station,chargerDetected)){
 						if (chargerDetected){
-							 state = STATE_HEAD_OFF;
-							 robot->headOff(10);
-							 success = true;
+							bool headOff = false;
+							nh->getParam("charging/headOff",headOff);
+							if (headOff){
+								state = STATE_HEAD_OFF;
+								robot->headOff(10);
+							}else{
+								state = STATE_DOCKING_SUCCESS;
+							}
+							success = true;
 						} else{
 							state = STATE_RETRY;
 						}
@@ -500,8 +506,15 @@ void undockingServerCallback(const move_base_msgs::MoveBaseGoalConstPtr& goal, D
 		state = STATE_REJECTED;
 		sprintf(response,"Cannot undock because not on the charging station.");
 	}else{
-		robot->headOn(130);
-		state = STATE_HEAD_ON;
+		bool headOn = true;
+		nh->getParam("/EBC/MCU_24V_Enabled",headOn);
+		if (headOn)
+		{
+			state = STATE_UNDOCK_INIT;
+		}else{
+			robot->headOn(130);
+			state = STATE_HEAD_ON;
+		}
 		robot->movePtu(-314,53);
 	}
 	if (state == STATE_REJECTED){
