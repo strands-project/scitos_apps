@@ -1,7 +1,7 @@
 <launch>
   <arg name="machine" default="localhost" />
   <arg name="user" default="" />
-  <arg name="lightEBC" default="" />
+  <arg name="lightEBC" default="Port0_12V_Enabled" />
 
   <!-- now has an IF checking for the arg "remote" -->
   <machine name="$(arg machine)" address="$(arg machine)" env-loader="$(optenv ROS_ENV_LOADER )" user="$(arg user)" default="true" />
