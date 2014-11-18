@@ -176,7 +176,10 @@ void odomCallback(const nav_msgs::Odometry &msg)
 			robot->controlHead(100,-rotateBy/M_PI*180,0);
 			break;
 		case STATE_ROTATE_BACK:
-			if (robot->rotateByAngle()) state = STATE_ADJUST;
+			if (robot->rotateByAngle()){
+				robot->lightsOn();
+				state = STATE_ADJUST;
+			}
 			robot->controlHead(100,0,0);
 			break;
 		case STATE_MOVE_TO:
@@ -346,6 +349,7 @@ void imageCallback(const sensor_msgs::ImageConstPtr& msg)
 					if (robot->measure(&own)){
 						robot->halt();
 						robot->movePtu(0,0);
+						robot->lightsOff();
 						sprintf(posString,"Robot position after undock: %f %f %f %f",own.x,own.y,own.z,own.yaw);
 						printf("%s\n",response);
 						success = true;
@@ -374,6 +378,7 @@ void imageCallback(const sensor_msgs::ImageConstPtr& msg)
 							robot->startProg = station.x;
 						} else{
 							state = STATE_ROTATE;
+							robot->lightsOff();
 							rotateBy = M_PI/2;
 							if (own.x > 0) rotateBy = -rotateBy;
 							rotateBy += sin((own.x+trans->ownOffset.x)/(own.z+trans->ownOffset.z));
@@ -402,6 +407,7 @@ void imageCallback(const sensor_msgs::ImageConstPtr& msg)
 					own = trans->getOwnPosition(objectArray);
 					if (robot->wait(&own,station,chargerDetected)){
 						if (chargerDetected){
+							robot->lightsOff();
 							bool headOff = false;
 							nh->getParam("charging/headOff",headOff);
 							if (headOff){
@@ -510,6 +516,7 @@ void undockingServerCallback(const move_base_msgs::MoveBaseGoalConstPtr& goal, D
 		nh->getParam("/EBC/MCU_24V_Enabled",headOn);
 		if (headOn)
 		{
+			robot->wait(100);
 			state = STATE_UNDOCK_INIT;
 		}else{
 			robot->headOn(130);
@@ -592,8 +599,16 @@ void actionServerCallback(const scitos_docking::ChargingGoalConstPtr& goal, Serv
 			state = STATE_REJECTED;
 			sprintf(response,"Cannot undock because not on the charging station.");
 		}else{
-			robot->headOn(130);
-			state = STATE_HEAD_ON;
+			bool headOn = true;
+			nh->getParam("/EBC/MCU_24V_Enabled",headOn);
+			if (headOn)
+			{
+				robot->wait(100);
+				state = STATE_UNDOCK_INIT;
+			}else{
+				robot->headOn(130);
+				state = STATE_HEAD_ON;
+			}
 			robot->movePtu(-314,53);
 		}
 	}
@@ -641,8 +656,17 @@ void joyCallback(const scitos_teleop::action_buttons::ConstPtr &msg)
 {
 	if (msg->X && state == STATE_IDLE && server->isActive() == false && undockingServer->isActive() == false && dockingServer->isActive()==false){
 		if (chargerDetected){
-			robot->headOn(130);
-			state = STATE_HEAD_ON;
+			bool headOn = true;
+			nh->getParam("/EBC/MCU_24V_Enabled",headOn);
+			if (headOn)
+			{
+				robot->wait(100);
+				state = STATE_UNDOCK_INIT;
+			}else{
+				robot->headOn(130);
+				state = STATE_HEAD_ON;
+			}
+			robot->movePtu(-314,53);
 			chargingClient.initiateUndocking();
 		} else {
 			state = STATE_INIT;

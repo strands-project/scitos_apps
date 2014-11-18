@@ -23,7 +23,7 @@ CChargingActions::CChargingActions(ros::NodeHandle *n)
 	warningLevel = .2;
 	poseSet = true;
 	injectX = injectY = injectPhi = 0;
-	nh->getParam("lightEBC", light.ebcport);
+	nh->param<std::string>("lightEBC", light.ebcport, "Port0_12V_Enabled");
 	obstacleDistance = 0;
 }
 
