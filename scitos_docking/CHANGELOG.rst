@@ -2,8 +2,8 @@
 Changelog for package scitos_docking
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.0.10 (2014-11-19)
+-------------------
 * Light behaviour improved, head restart optional.
 * Head swithing off when charging is now optional
 * Obstacle check when undock, head restart, PTU facing backwards when charging.
