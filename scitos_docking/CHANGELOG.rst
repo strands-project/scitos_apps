@@ -2,6 +2,14 @@
 Changelog for package scitos_docking
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* Light behaviour improved, head restart optional.
+* Head swithing off when charging is now optional
+* Obstacle check when undock, head restart, PTU facing backwards when charging.
+* Now checking for obstacles during undocking
+* Contributors: Jaime Pulido Fentanes, Tom Krajnik
+
 0.0.9 (2014-11-11)
 ------------------
 * Make turning on/off the light's EBC configurable.
