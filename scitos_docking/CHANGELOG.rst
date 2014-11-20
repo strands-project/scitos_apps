@@ -2,8 +2,8 @@
 Changelog for package scitos_docking
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.0.11 (2014-11-20)
+-------------------
 * Revert "Improvements to charging"
 * Contributors: Marc Hanheide
 
