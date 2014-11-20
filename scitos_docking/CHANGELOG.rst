@@ -2,8 +2,8 @@
 Changelog for package scitos_docking
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.0.12 (2014-11-20)
+-------------------
 * change the status message for head on and head off
 * removed Port0_12V_Enabled
 * removed Port0_12V_Enabled
