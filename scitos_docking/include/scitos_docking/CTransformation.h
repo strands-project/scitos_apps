@@ -74,8 +74,6 @@ class CTransformation
 		STrackedObject ownOffset,dockOffset;
 		void updateCalibration(STrackedObject own,STrackedObject station);
 		bool saveParamInDB(char *param);
-		float fc[2];
-		float cc[2];
 
 	private:
 		STrackedObject  normalize(STrackedObject o);
@@ -98,6 +96,8 @@ class CTransformation
 		float kc[6];
 		float kcerr[6];
 		float fcerr[2];
+		float fc[2];
+		float cc[2];
 		float error2D;
 		STrackedObject c2D[4];
 		sem_t trfparamsem;

@@ -15,7 +15,6 @@
 #include "scitos_docking/CTransformation.h"
 #include "scitos_docking/CTimer.h"
 #include "scitos_docking/CLightClient.h"
-#include "scitos_docking/CHead.h"
 #include <tf/tf.h>
 #include <geometry_msgs/PoseWithCovarianceStamped.h>
 #include <geometry_msgs/PoseWithCovariance.h>
@@ -32,7 +31,6 @@ class CChargingActions
 		void controlHead(int lids,int tilt, int pan);
 		bool rotateByAngle(float angle = .0);
 		bool moveByDistance(float distance = .0);
-		void setObstacleDistance(float value);
 		bool search();
 		bool measure(STrackedObject *o1,STrackedObject *o2=NULL,int count = 0,bool ml=true);
 		bool wait(int count = 0);
@@ -46,17 +44,13 @@ class CChargingActions
 		bool testMove();
 		void updatePosition(const nav_msgs::Odometry &msg);
 		float progress,progressSpeed,lastProgress, startProg;
-		bool headOn(int value = 0);
-		bool headOff(int value = 0);
 		void lightsOn();
 		void lightsOff();
 		void injectPosition(float x,float y,float phi); 
 		void injectPosition(); 
 		float injectX,injectY,injectPhi;
 		bool poseSet;
-		float ptuPan;
 	private:
-		float obstacleDistance;
 		CTimer timer;
 		ros::NodeHandle *nh;
 		ros::Publisher cmd_vel;
@@ -69,7 +63,6 @@ class CChargingActions
 		float currentAngle,lastAngle;
 		float warningLevel;
 		CLightClient light;
-		CHead headCtrl;
 		ros::Publisher poseInjection;
 		std::string frame;
 		ros::Time injectionTime;
