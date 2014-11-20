@@ -2,6 +2,13 @@
 Changelog for package scitos_ptu
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* Added machine and user tags
+* Fixed node name
+* Reverse sweep and icreased speed
+* Contributors: Nils Bore
+
 0.0.10 (2014-11-19)
 -------------------
 
