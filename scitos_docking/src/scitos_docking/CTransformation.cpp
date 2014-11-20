@@ -29,7 +29,7 @@ CTransformation::CTransformation(float diam, ros::NodeHandle *n)
 	trackedObjectDiameter = diam;
 	cc[0] = 320;
 	cc[1] = 240; 
-	fc[0] = fc[1] = 570;
+	fc[0] = fc[1] = 125;
 	memset(kc,0,sizeof(float)*6);
 	kc[0] = 1.0;
 	sem_init(&trfparamsem,0,1);

@@ -26,7 +26,6 @@
 #define MAX_PATTERNS 10 
 
 float ptuPan = 0.0;
-float ptuTilt = -15.0;
 bool success = false;
 int failedToSpotStationCount=0;
 scitos_docking::ChargingFeedback feedback;
@@ -58,7 +57,6 @@ DockingServer *undockingServer;
 
 image_transport::Publisher imdebug;
 
-int onBattery = 0;
 int maxFailures=60;
 TLogModule module = LOG_MODULE_MAIN;
 int numSaved = 0;
@@ -72,7 +70,6 @@ SSegment lastSegmentArray[MAX_PATTERNS];
 CTransformation *trans;
 CChargingClient chargingClient;
 bool positionUpdate = false;
-bool headRestart = false;
 
 //position injection related
 EState state = STATE_ROTATE;
@@ -99,35 +96,6 @@ void cameraInfoCallBack(const sensor_msgs::CameraInfo &msg)
 void batteryCallBack(const scitos_msgs::BatteryState &msg)
 {
 	chargerDetected = msg.charging;
-	if (state ==  STATE_HEAD_OFF){
-		if (robot->headOff()) state = STATE_DOCKING_SUCCESS;
-	}
-	if (state ==  STATE_HEAD_ON){
-		if (robot->headOn()){
-			robot->wait(100);
-			state = STATE_UNDOCK_INIT;
-		}
-	}
-
-/*	if (onBattery == 1000 && state == STATE_IDLE && headRestart == false)
-	{
-		state = STATE_HEAD_RESTART;
-		headRestart = true;
-		robot->headSwitch(false);
-	}
-	if (headRestart == true)
-	{
-		if (onBattery == 1200) robot->headSwitch(true);
-		if (onBattery == 1500){
-			headRestart = false;
-			if (state == STATE_HEAD_RESTART) state = STATE_IDLE;
-		}
-		onBattery++;
-	}
-	if (state == STATE_IDLE)
-	{
-		if (chargerDetected) onBattery++; else onBattery=0;
-	}*/
 }
 
 int initComponents()
@@ -176,10 +144,7 @@ void odomCallback(const nav_msgs::Odometry &msg)
 			robot->controlHead(100,-rotateBy/M_PI*180,0);
 			break;
 		case STATE_ROTATE_BACK:
-			if (robot->rotateByAngle()){
-				robot->lightsOn();
-				state = STATE_ADJUST;
-			}
+			if (robot->rotateByAngle()) state = STATE_ADJUST;
 			robot->controlHead(100,0,0);
 			break;
 		case STATE_MOVE_TO:
@@ -196,7 +161,6 @@ void odomCallback(const nav_msgs::Odometry &msg)
 		case STATE_UNDOCK_MOVE: 
 			robot->controlHead(100,180,0);
 			if (robot->moveByDistance()){
-				robot->movePtu(-314,0);
 				rotateBy = (M_PI+0.01);
 				robot->rotateByAngle(rotateBy);
 				state = STATE_UNDOCK_ROTATE;
@@ -213,59 +177,6 @@ void odomCallback(const nav_msgs::Odometry &msg)
 	}
 }
 
-void depthCallback(const sensor_msgs::ImageConstPtr& msg)
-{
-	if (state ==  STATE_UNDOCK_MOVE && ptuTilt > -5)
-	{
-		int len = msg->height*msg->width;
-
-		//TODO assuming same params for depth and RGB
-		float vx = 1/trans->fc[0];
-		float vy = 1/trans->fc[1];
-		float cx = -trans->cc[0];
-		float cy = -trans->cc[1];
-		int width = msg->width;
-		int height = msg->height;
-		float fx = (1+cx)*vx;
-		float fy = (1+cy)*vy;
-		float lx = (width+cx)*vx;
-		float ly = (height+cy)*vy;
-
-		float x[len+1];
-		float y[len+1];
-		float z[len+1];
-		float d[len+1];
-		float di,psi,ix,iy,iz;
-		int cnt = 0;
-		di=psi=0;
-		CTimer timer;
-		timer.reset();
-		timer.start();
-		psi =  ptuTilt;
-		float minDist = 100;
-		for (float h = fy;h<ly;h+=vy)
-		{
-			for (float w = fx;w<lx;w+=vx)
-			{
-				di = (msg->data[cnt*2]+256*msg->data[cnt*2+1])/1000.0;
-				if (di > 0.05 && cnt%10 == 0 && di < 3.0){
-					ix = di*(cos(psi)-sin(psi)*h);
-					iy = -w*di;
-					iz = -di*(sin(psi)+cos(psi)*h)+1.68;
-					if (iz > 0.2 && iz < 1.9 && fabs(iy) < 0.3 && ix < minDist) minDist = ix;
-					//printf("%.3f %.3f %.3f\n",ix,iy,iz);
-				}
-				cnt++;
-			}
-		}
-		robot->setObstacleDistance(minDist); 
-		//printf("Obstacle detected at %.3f\n",minDist);
-	}else{
-		robot->setObstacleDistance(100.0); 
-	}
-}
-
-
 void imageCallback(const sensor_msgs::ImageConstPtr& msg)
 {
 	STrackedObject own,station;
@@ -275,12 +186,9 @@ void imageCallback(const sensor_msgs::ImageConstPtr& msg)
 		if (chargerDetected) state = STATE_WAIT;
 		if (chargerDetected == false && fabs(ptuPan)<0.01) state = STATE_SEARCH; 
 	}
-	if (state == STATE_CALIBRATE_INIT)
-	{
-		if (robot->wait()) state = STATE_CALIBRATE;
-	}
 	if (state == STATE_UNDOCK_INIT)
 	{
+		robot->movePtu(275,0);
 		if (robot->wait()){
 			robot->moveByDistance(-0.55);
 			state = STATE_UNDOCK_MOVE;
@@ -349,7 +257,6 @@ void imageCallback(const sensor_msgs::ImageConstPtr& msg)
 					if (robot->measure(&own)){
 						robot->halt();
 						robot->movePtu(0,0);
-						robot->lightsOff();
 						sprintf(posString,"Robot position after undock: %f %f %f %f",own.x,own.y,own.z,own.yaw);
 						printf("%s\n",response);
 						success = true;
@@ -378,7 +285,6 @@ void imageCallback(const sensor_msgs::ImageConstPtr& msg)
 							robot->startProg = station.x;
 						} else{
 							state = STATE_ROTATE;
-							robot->lightsOff();
 							rotateBy = M_PI/2;
 							if (own.x > 0) rotateBy = -rotateBy;
 							rotateBy += sin((own.x+trans->ownOffset.x)/(own.z+trans->ownOffset.z));
@@ -407,23 +313,15 @@ void imageCallback(const sensor_msgs::ImageConstPtr& msg)
 					own = trans->getOwnPosition(objectArray);
 					if (robot->wait(&own,station,chargerDetected)){
 						if (chargerDetected){
-							robot->lightsOff();
-							bool headOff = false;
-							nh->getParam("charging/headOff",headOff);
-							if (headOff){
-								state = STATE_HEAD_OFF;
-								robot->headOff(10);
-							}else{
-								state = STATE_DOCKING_SUCCESS;
-							}
-							success = true;
+							 state = STATE_DOCKING_SUCCESS;
+							 success = true;
 						} else{
 							state = STATE_RETRY;
 						}
 						realPrecision = sqrt(own.x*own.x+own.y*own.y);
 					}
 					break;
-						}
+			}
 		}else{
 			failedToSpotStationCount++;
 			if (state == STATE_SEARCH) failedToSpotStationCount=0;
@@ -449,13 +347,6 @@ void dockingServerCallback(const move_base_msgs::MoveBaseGoalConstPtr& goal, Doc
 	timer.start();
 	timeOut = 120000;
 	move_base_msgs::MoveBaseResult result;
-	/*if (state == STATE_HEAD_RESTART){
-		sprintf(response,"Sorry, have to wake up the head first. Try again in 30 seconds.\n");
-		state = STATE_REJECTED;
-		as->setAborted(result);
-		robot->lightsOff();
-		return;
-	}*/
 	if (calibrated==false){
 		sprintf(response,"Cannot approach the charging station because the docking is not calibrated.\nRead the readme file on how to perform calibration procedure.");
 		state = STATE_REJECTED;
@@ -475,10 +366,12 @@ void dockingServerCallback(const move_base_msgs::MoveBaseGoalConstPtr& goal, Doc
 	if (state == STATE_PREEMPTED){
 		dockingServer->setPreempted(result);
 		state = STATE_IDLE;
+		robot->movePtu(0,0);
 		robot->lightsOff();
 		return;
 	}else if (state == STATE_ABORTED){
 		dockingServer->setAborted(result);
+		robot->movePtu(0,0);
 		robot->lightsOff();
 		return;
 	}else if (success)
@@ -489,7 +382,6 @@ void dockingServerCallback(const move_base_msgs::MoveBaseGoalConstPtr& goal, Doc
 	}else{
 		dockingServer->setAborted(result);
 	}
-	if (chargerDetected)robot->movePtu(-314,0); else robot->movePtu(0,0);
 	robot->lightsOff();
 }
 
@@ -501,28 +393,12 @@ void undockingServerCallback(const move_base_msgs::MoveBaseGoalConstPtr& goal, D
 	timer.start();
 	timeOut = 120000;
 	move_base_msgs::MoveBaseResult result;
-	/*if (state == STATE_HEAD_RESTART){
-		sprintf(response,"Sorry, have to wake up the head first. Try again in 30 seconds.\n");
-		state = STATE_REJECTED;
-		as->setAborted(result);
-		robot->lightsOff();
-		return;
-	}*/
 	if (chargerDetected == false){
 		state = STATE_REJECTED;
 		sprintf(response,"Cannot undock because not on the charging station.");
 	}else{
-		bool headOn = true;
-		nh->getParam("/EBC/MCU_24V_Enabled",headOn);
-		if (headOn)
-		{
-			robot->wait(100);
-			state = STATE_UNDOCK_INIT;
-		}else{
-			robot->headOn(130);
-			state = STATE_HEAD_ON;
-		}
-		robot->movePtu(-314,53);
+		robot->wait(100);
+		state = STATE_UNDOCK_INIT;
 	}
 	if (state == STATE_REJECTED){
 		undockingServer->setAborted(result);
@@ -551,7 +427,6 @@ void undockingServerCallback(const move_base_msgs::MoveBaseGoalConstPtr& goal, D
 	}else{
 		undockingServer->setAborted(result);
 	}
-	if (chargerDetected)robot->movePtu(-314,0); else robot->movePtu(0,0);
 	robot->lightsOff();
 }
 
@@ -561,13 +436,6 @@ void actionServerCallback(const scitos_docking::ChargingGoalConstPtr& goal, Serv
 	timer.reset();
 	timer.start();
 	timeOut = (int) goal->Timeout*1000;
-	/*if (state == STATE_HEAD_RESTART){
-		sprintf(response,"Sorry, have to wake up the head first. Try again in 30 seconds.\n");
-		state = STATE_REJECTED;
-		server->setAborted(result);
-		robot->lightsOff();
-		return;
-	}*/
 	if (goal->Command == "charge"){
 		if (calibrated==false){
 			sprintf(response,"Cannot approach the charging station because the docking is not calibrated.\nRead the readme file on how to perform calibration procedure.");
@@ -581,35 +449,22 @@ void actionServerCallback(const scitos_docking::ChargingGoalConstPtr& goal, Serv
 	if (goal->Command == "test"){
 		 robot->lightsOn();
 		 ptupos = (int)goal->Timeout;
-		 robot->movePtu(-314,0);
+		 robot->movePtu(275,0);
 		 waitCycles = 0;
 		 state = STATE_TEST1;
 	}
 	if (goal->Command == "calibrate"){
-		state = STATE_CALIBRATE_INIT;
-		robot->movePtu(0,0);
-		robot->wait(100);
+		state = STATE_CALIBRATE;
 		robot->measure(NULL,NULL,maxMeasurements);
 		robot->lightsOn();
 	}
-	if (goal->Command == "headon") robot->headOn(100);
-	if (goal->Command == "headoff") robot->headOff(100);
 	if (goal->Command == "undock"){
 		if (chargerDetected == false){
 			state = STATE_REJECTED;
 			sprintf(response,"Cannot undock because not on the charging station.");
 		}else{
-			bool headOn = true;
-			nh->getParam("/EBC/MCU_24V_Enabled",headOn);
-			if (headOn)
-			{
-				robot->wait(100);
-				state = STATE_UNDOCK_INIT;
-			}else{
-				robot->headOn(130);
-				state = STATE_HEAD_ON;
-			}
-			robot->movePtu(-314,53);
+			robot->wait(100);
+			state = STATE_UNDOCK_INIT;
 		}
 	}
 	if (state == STATE_REJECTED){
@@ -640,15 +495,13 @@ void actionServerCallback(const scitos_docking::ChargingGoalConstPtr& goal, Serv
 	}else{
 		server->setAborted(result);
 	}
-	if (chargerDetected)robot->movePtu(-314,0); else robot->movePtu(0,0);
 	robot->lightsOff();
 }
 
 void ptuCallback(const sensor_msgs::JointState::ConstPtr &msg)
 {
 	for (int i = 0;i<2;i++){
-		if (msg->name[i] == "pan")  robot->ptuPan = ptuPan = msg->position[i];
-		if (msg->name[i] == "tilt") ptuTilt = msg->position[i];
+		if (msg->name[i] == "pan") ptuPan = msg->position[i];
 	}
 }
 
@@ -656,17 +509,8 @@ void joyCallback(const scitos_teleop::action_buttons::ConstPtr &msg)
 {
 	if (msg->X && state == STATE_IDLE && server->isActive() == false && undockingServer->isActive() == false && dockingServer->isActive()==false){
 		if (chargerDetected){
-			bool headOn = true;
-			nh->getParam("/EBC/MCU_24V_Enabled",headOn);
-			if (headOn)
-			{
-				robot->wait(100);
-				state = STATE_UNDOCK_INIT;
-			}else{
-				robot->headOn(130);
-				state = STATE_HEAD_ON;
-			}
-			robot->movePtu(-314,53);
+			robot->wait(100);
+			state = STATE_UNDOCK_INIT;
 			chargingClient.initiateUndocking();
 		} else {
 			state = STATE_INIT;
@@ -702,7 +546,7 @@ void mainLoop()
 	int a = 0;
 	while (ros::ok()){
 		if (timeOut < timer.getTime() && state != STATE_IDLE ) state = STATE_TIMEOUT;
-		if (state != STATE_IDLE && state != STATE_HEAD_ON) robot->moveHead();
+		if (state != STATE_IDLE) robot->moveHead();
 		ros::spinOnce();
 		if (positionUpdate && robot->poseSet == false) robot->injectPosition(); 
 		usleep(30000);
@@ -743,7 +587,6 @@ int main(int argc,char* argv[])
 	initComponents();
 	success = false;
 	image_transport::Subscriber subim = it.subscribe("head_xtion/rgb/image_mono", 1, imageCallback);
-	image_transport::Subscriber subdepth = it.subscribe("head_xtion/depth/image_rect", 1, depthCallback);
 	nh->param("positionUpdate",positionUpdate,false);
         imdebug = it.advertise("/charging/processedimage", 1);
 	ros::Subscriber subodo = nh->subscribe("odom", 1, odomCallback);

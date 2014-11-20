@@ -49,15 +49,13 @@ catkin_package(
 ## Build ##
 ###########
 
-include_directories(
-  include
+include_directories(include
   ${catkin_INCLUDE_DIRS}
 )
 
 # Libraries
 add_library(CCircleDetect src/scitos_docking/CCircleDetect.cpp)
 add_library(CLightClient src/scitos_docking/CLightClient.cpp)
-add_library(CHead src/scitos_docking/CHead.cpp)
 add_library(CDump src/scitos_docking/CDump.cpp)
 add_library(CTimer src/scitos_docking/CTimer.cpp)
 add_library(CRawImage src/scitos_docking/CRawImage.cpp)
@@ -72,9 +70,8 @@ add_dependencies(CPtuClient ${PROJECT_NAME}_generate_messages_cpp ${catkin_EXPOR
 
 target_link_libraries(CTransformation ${GSL_LIBRARIES} ${catkin_LIBRARIES})
 target_link_libraries(CChargingClient ${catkin_LIBRARIES})
-target_link_libraries(CChargingActions ${catkin_LIBRARIES} CTimer CLightClient CHead)
+target_link_libraries(CChargingActions ${catkin_LIBRARIES} CTimer CLightClient)
 target_link_libraries(CLightClient ${catkin_LIBRARIES})
-target_link_libraries(CHead ${catkin_LIBRARIES})
 target_link_libraries(CPtuClient ${catkin_LIBRARIES})
 
 # Executables
@@ -91,7 +88,6 @@ add_dependencies(simple_ptu_client ${PROJECT_NAME}_generate_messages_cpp ${catki
 target_link_libraries (visual_charging 
     CDump 
     CLightClient 
-    CHead 
     CTimer 
     CCircleDetect
     CRawImage
@@ -113,7 +109,6 @@ target_link_libraries (simple_ptu_client  ${catkin_LIBRARIES})
 install(TARGETS 
         CCircleDetect 
         CLightClient 
-        CHead 
         CDump 
         CTimer 
         CRawImage 
