@@ -2,6 +2,14 @@
 Changelog for package scitos_docking
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* change the status message for head on and head off
+* removed Port0_12V_Enabled
+* removed Port0_12V_Enabled
+* Revert "Revert "Improvements to charging""
+* Contributors: Marc Hanheide
+
 0.0.11 (2014-11-20)
 -------------------
 * Revert "Improvements to charging"
