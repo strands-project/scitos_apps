@@ -23,8 +23,8 @@ CChargingActions::CChargingActions(ros::NodeHandle *n)
 	warningLevel = .2;
 	poseSet = true;
 	injectX = injectY = injectPhi = 0;
-
-	nh->getParam("lightEBC", light.ebcport);
+	nh->param<std::string>("lightEBC", light.ebcport, "Port0_12V_Enabled");
+	obstacleDistance = 0;
 }
 
 CChargingActions::~CChargingActions()
@@ -40,7 +40,7 @@ float normalizeAngle(float a,float minimal=-M_PI)
 
 void CChargingActions::injectPosition(float x,float y,float phi) 
 {
-	float alpha = -2.75;//PTU rotation
+	float alpha = -ptuPan;//PTU rotation
 	injectPhi = normalizeAngle(phi+alpha);
 	injectX = x + 0.365/2*cos(injectPhi);//cos(alpha)*x-sin(alpha)*y;
 	injectY = y + 0.365/2*sin(injectPhi);;//sin(alpha)*x+cos(alpha)*y;
@@ -78,8 +78,6 @@ void CChargingActions::injectPosition()
 	for (unsigned int i = 0; i < pos.pose.covariance.size(); i++) pos.pose.covariance[i] = covariance[i];
 	poseInjection.publish(pos);
 }
-
-
 
 
 
@@ -142,8 +140,14 @@ bool CChargingActions::rotateByAngle(float angle)
 	return fabs(normalizeAngle(desiredAngle-currentAngle)) < 0.05;
 }
 
+void CChargingActions::setObstacleDistance(float value)
+{
+	obstacleDistance = value;
+}
+
 bool CChargingActions::moveByDistance(float distance)
 {
+	bool check = true;
 	static nav_msgs::Odometry lastOdo;
 	static float desiredDistance;
 	static float speedSign;
@@ -155,7 +159,12 @@ bool CChargingActions::moveByDistance(float distance)
 	float x = (current.pose.pose.position.x-lastOdo.pose.pose.position.x);
 	float y = (current.pose.pose.position.y-lastOdo.pose.pose.position.y);
 	float travelledDistance = sqrt(x*x+y*y);
-	base_cmd.linear.x = speedSign*fmin(desiredDistance - travelledDistance,0.5);
+	base_cmd.linear.x = fmin(desiredDistance - travelledDistance,0.5);
+	if (check){
+		 if (speedSign > 0) base_cmd.linear.x = fmax(fmin(base_cmd.linear.x,obstacleDistance-0.35),0);
+		 if (speedSign < 0) base_cmd.linear.x = fmax(fmin(base_cmd.linear.x,obstacleDistance-0.45),0);
+	}
+	base_cmd.linear.x = speedSign*base_cmd.linear.x;
 	base_cmd.angular.z = 0; 
 	cmd_vel.publish(base_cmd);
 	progress = 100*travelledDistance/desiredDistance;
@@ -187,6 +196,36 @@ bool CChargingActions::wait(int count)
 	moveHead();
 	if (posCount++ > maxCount) return true;
 	base_cmd.linear.x = base_cmd.angular.z = 0;
+	return false;
+}
+
+bool CChargingActions::headOn(int count)
+{
+ 	static int hnmaxCount;
+ 	static int hnposCount;
+	if (count > 0){
+		headCtrl.set(true);
+		hnposCount = 0;
+		hnmaxCount = count;
+	}
+	//printf("ON: %i %i\n",hnposCount,hnmaxCount);
+	if (hnposCount++ > hnmaxCount) return true;
+	return false;
+}
+
+bool CChargingActions::headOff(int count)
+{
+ 	static int hfmaxCount;
+ 	static int hfposCount;
+	if (count > 0){
+		hfposCount = 0;
+		hfmaxCount = count;
+	}
+	//printf("OFF: %i %i\n",hfposCount,hfmaxCount);
+	if (hfposCount++ > hfmaxCount){
+		headCtrl.set(false);
+		return true;
+	}
 	return false;
 }
 
@@ -260,6 +299,7 @@ bool CChargingActions::approach(STrackedObject station,float dist)
 	bool complete = false;
 	float angle = atan2(station.y,station.x); 
 	base_cmd.linear.x = fmin(fabs((station.x-(desired-0.4))*cos(cos(cos(angle)))+0.2),1)*0.4;
+	base_cmd.linear.x = fmin(base_cmd.linear.x,obstacleDistance-0.25);
 	base_cmd.angular.z = atan2(station.y,station.x);
 	if (station.x < desired){
 		complete = true; 
