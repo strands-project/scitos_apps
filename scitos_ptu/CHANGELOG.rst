@@ -2,6 +2,11 @@
 Changelog for package scitos_ptu
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* Clamped pan and tilt values to limits
+* Contributors: Nils Bore
+
 0.0.12 (2014-11-20)
 -------------------
 
