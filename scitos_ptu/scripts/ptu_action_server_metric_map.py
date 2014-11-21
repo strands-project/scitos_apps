@@ -13,6 +13,14 @@ import threading
 import math
 import time
 
+
+def clampValue(val, max_val, min_val):
+	if (val>max_val):
+		val = max_val
+	if (val<min_val):
+		val = min_val
+	return val
+
 class PTUServer:
   def __init__(self):
     rospy.init_node('ptu_action_server_metric_map')
@@ -99,6 +107,11 @@ class PTUServer:
     			self.ptugoal.pan = -(-i+panstart+panend)
 
 		self.ptugoal.tilt =-j
+
+		# check limits
+		self.ptugoal.pan = clampValue(self.ptugoal.pan, -panstart, -panend)
+		self.ptugoal.tilt = clampValue(self.ptugoal.tilt, -tiltstart, -tiltend)
+
     		self._sendPTUGoal(self.ptugoal)
 		# keep this position for logging
           	self.log_pub.publish("start_position")
@@ -153,7 +166,7 @@ class PTUServer:
     self.preempt_lock.acquire()
     self.preempted = True
     self.preempt_lock.release()
-    
+
 
 if __name__ == '__main__':
   server = PTUServer()
