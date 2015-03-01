@@ -9,9 +9,9 @@
 #include <QTimer>
 #include <QStringList>
 
-#include <boost/thread.hpp>
 
 #ifndef Q_MOC_RUN
+#include <boost/thread.hpp>
 #include <ros/ros.h>
 #include <ros/console.h>
 #include <std_msgs/Bool.h>
