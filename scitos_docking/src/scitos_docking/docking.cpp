@@ -19,7 +19,6 @@
 #include <sensor_msgs/Joy.h>
 #include <scitos_msgs/BatteryState.h>
 #include <move_base_msgs/MoveBaseAction.h>
-//#include <scitos_docking/Charging.h>
 #include "scitos_docking/CChargingActions.h"
 
 
@@ -43,7 +42,7 @@ float realPrecision,tangle,tdistance;
 int stationSpotted = 0;
 bool calibrated = true;
 CTimer timer;
-int timeOut = 120;
+int timeOut = 120000;
 int  defaultImageWidth= 320;
 int  defaultImageHeight = 240;
 float circleDiameter = 0.05;
@@ -59,7 +58,7 @@ DockingServer *undockingServer;
 image_transport::Publisher imdebug;
 
 int onBattery = 0;
-int maxFailures=60;
+int maxFailures=150;
 TLogModule module = LOG_MODULE_MAIN;
 int numSaved = 0;
 CRawImage *image;
@@ -134,11 +133,11 @@ int initComponents()
 {
 	failedToSpotStationCount = 0;
 	image->getSaveNumber();
-	state = STATE_IDLE;
 	robot->progress = 10;
 	robot->progressSpeed = 2.0;
 	calibrated = trans->loadCalibration();
 	stationSpotted = 0;
+	state = STATE_IDLE;
 }
 
 void odomCallback(const nav_msgs::Odometry &msg)
@@ -316,7 +315,7 @@ void imageCallback(const sensor_msgs::ImageConstPtr& msg)
 			switch (state){
 				case STATE_SEARCH:
 					state = STATE_APPROACH;
-					if (robot->approach(station,station.x)) state = STATE_ADJUST;
+					if (robot->approach(station,station.x) && stationSpotted > 10) state = STATE_ADJUST;
 					break;
 				case STATE_APPROACH:
 					if (robot->approach(station)){
@@ -353,7 +352,7 @@ void imageCallback(const sensor_msgs::ImageConstPtr& msg)
 						sprintf(posString,"Robot position after undock: %f %f %f %f",own.x,own.y,own.z,own.yaw);
 						printf("%s\n",response);
 						success = true;
-						robot->injectPosition(-own.z,-own.x,own.yaw);
+						robot->injectPosition(own.z,own.x,own.yaw);
 						state = STATE_UNDOCKING_SUCCESS;
 					}
 					break;				
@@ -460,8 +459,8 @@ void dockingServerCallback(const move_base_msgs::MoveBaseGoalConstPtr& goal, Doc
 		sprintf(response,"Cannot approach the charging station because the docking is not calibrated.\nRead the readme file on how to perform calibration procedure.");
 		state = STATE_REJECTED;
 	}else{
-		state = STATE_INIT;
 		robot->progress = 10;
+		state = STATE_INIT;
 		robot->lightsOn();
 	}
 	if (state == STATE_REJECTED){
@@ -497,9 +496,9 @@ void dockingServerCallback(const move_base_msgs::MoveBaseGoalConstPtr& goal, Doc
 void undockingServerCallback(const move_base_msgs::MoveBaseGoalConstPtr& goal, DockingServer* as)
 {	
 	initComponents();
+	timeOut = 120000;
 	timer.reset();
 	timer.start();
-	timeOut = 120000;
 	move_base_msgs::MoveBaseResult result;
 	/*if (state == STATE_HEAD_RESTART){
 		sprintf(response,"Sorry, have to wake up the head first. Try again in 30 seconds.\n");
@@ -573,8 +572,8 @@ void actionServerCallback(const scitos_docking::ChargingGoalConstPtr& goal, Serv
 			sprintf(response,"Cannot approach the charging station because the docking is not calibrated.\nRead the readme file on how to perform calibration procedure.");
 			state = STATE_REJECTED;
 		}else{
-			state = STATE_INIT;
 			robot->progress = 10;
+			state = STATE_INIT;
 			robot->lightsOn();
 		}
 	}
@@ -708,6 +707,7 @@ void mainLoop()
 		usleep(30000);
 		if (state!=lastState){
 			sprintf(status,"Charging service is %s",stateStr[state]);
+			ROS_INFO(status);
 			feedback.Progress = (int)robot->progress;
 			feedback.Message = stateStr[state];
 			if (server->isActive()) server->publishFeedback(feedback);

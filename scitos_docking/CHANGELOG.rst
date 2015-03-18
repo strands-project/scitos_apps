@@ -2,6 +2,30 @@
 Changelog for package scitos_docking
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.0.13 (2014-11-21)
+-------------------
+
+0.0.12 (2014-11-20)
+-------------------
+* change the status message for head on and head off
+* removed Port0_12V_Enabled
+* removed Port0_12V_Enabled
+* Revert "Revert "Improvements to charging""
+* Contributors: Marc Hanheide
+
+0.0.11 (2014-11-20)
+-------------------
+* Revert "Improvements to charging"
+* Contributors: Marc Hanheide
+
+0.0.10 (2014-11-19)
+-------------------
+* Light behaviour improved, head restart optional.
+* Head swithing off when charging is now optional
+* Obstacle check when undock, head restart, PTU facing backwards when charging.
+* Now checking for obstacles during undocking
+* Contributors: Jaime Pulido Fentanes, Tom Krajnik
+
 0.0.9 (2014-11-11)
 ------------------
 * Make turning on/off the light's EBC configurable.

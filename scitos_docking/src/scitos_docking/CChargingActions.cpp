@@ -15,7 +15,7 @@ CChargingActions::CChargingActions(ros::NodeHandle *n)
 	head.name[1] ="EyeLidLeft";
 	head.name[2] ="HeadPan";
 	head.name[3] ="HeadTilt";
-        head.position.resize(4);
+	head.position.resize(4);
 	head.position[0] = head.position[1] = head.position[2] = head.position[3] = 0;
 	ptu.name.resize(2);
 	ptu.position.resize(2);
@@ -25,6 +25,9 @@ CChargingActions::CChargingActions(ros::NodeHandle *n)
 	injectX = injectY = injectPhi = 0;
 	nh->param<std::string>("lightEBC", light.ebcport, "Port0_12V_Enabled");
 	obstacleDistance = 0;
+	nh->param<double>("dockPositionX",dockPositionX,0);
+	nh->param<double>("dockPositionY",dockPositionY,0);
+	nh->param<double>("dockPositionPhi",dockPositionPhi,M_PI);
 }
 
 CChargingActions::~CChargingActions()
@@ -41,9 +44,12 @@ float normalizeAngle(float a,float minimal=-M_PI)
 void CChargingActions::injectPosition(float x,float y,float phi) 
 {
 	float alpha = -ptuPan;//PTU rotation
-	injectPhi = normalizeAngle(phi+alpha);
-	injectX = x + 0.365/2*cos(injectPhi);//cos(alpha)*x-sin(alpha)*y;
-	injectY = y + 0.365/2*sin(injectPhi);;//sin(alpha)*x+cos(alpha)*y;
+	injectPhi = normalizeAngle(phi+alpha+dockPositionPhi+M_PI);
+	float iX = x + 0.365/2*cos(injectPhi);
+	float iY = y + 0.365/2*sin(injectPhi);
+	
+	injectX = iX*cos(dockPositionPhi)-iY*sin(dockPositionPhi)+dockPositionX;
+	injectY = iX*sin(dockPositionPhi)+iY*cos(dockPositionPhi)+dockPositionY;
 	ROS_INFO("Injecting %f %f %f\n",injectX,injectY,injectPhi);	
 	poseSet = false;
 	/*pose was measured ~5 seconds ago*/
@@ -178,6 +184,8 @@ bool CChargingActions::search()
 	cmd_vel.publish(base_cmd);
 	controlHead(100,0,0);
 	progress = normalizeAngle(currentAngle-lastAngle,0)/2/M_PI*100.0;
+	progress = 20;
+	ROS_INFO("Station search: %f",progress);
 }
 
 bool CChargingActions::wait(int count)
@@ -301,6 +309,7 @@ bool CChargingActions::approach(STrackedObject station,float dist)
 	base_cmd.linear.x = fmin(fabs((station.x-(desired-0.4))*cos(cos(cos(angle)))+0.2),1)*0.4;
 	base_cmd.linear.x = fmin(base_cmd.linear.x,obstacleDistance-0.25);
 	base_cmd.angular.z = atan2(station.y,station.x);
+	ROS_INFO("Approaching %.3f %.3f",station.x,desired);
 	if (station.x < desired){
 		complete = true; 
 		base_cmd.linear.x = base_cmd.angular.z = 0;
@@ -317,6 +326,7 @@ bool CChargingActions::adjust(STrackedObject station,float in,float tol)
 	if (in != 0.0) init = fabs(in);
 	base_cmd.linear.x = 0; 
 	base_cmd.angular.z = atan2(station.y,station.x)*0.5;
+	ROS_INFO("Adjusting position: %f %f",station.y,atan2(station.y,station.x));
 	if (fabs(station.y) < tol){
 		base_cmd.angular.z = 0;
 		 return true;
