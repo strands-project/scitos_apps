@@ -72,6 +72,9 @@ class CChargingActions
 		CHead headCtrl;
 		ros::Publisher poseInjection;
 		std::string frame;
+		double dockPositionX;
+		double dockPositionY;
+		double dockPositionPhi;
 		ros::Time injectionTime;
 };
 

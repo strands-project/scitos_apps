@@ -8,6 +8,10 @@
 
   <param name="configFile" value="$(env HOME)/.charging.yaml" />
   <param name="lightEBC" value="$(arg lightEBC)" />
+  <!--param name="positionUpdate" value="true" /-->
+  <!--param name="dockPositionX" value="0.0" /-->
+  <!--param name="dockPositionY" value="0.0" /-->
+  <!--param name="dockPositionPhi" value="3.14" /-->
 	<node pkg="scitos_docking" type="visual_charging" name="visual_charging" output="screen" >
   </node>
 </launch> 

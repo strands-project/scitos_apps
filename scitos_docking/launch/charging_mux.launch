@@ -7,6 +7,9 @@
 
 	<param name="configFile" value="$(env HOME)/.charging.yaml" />
 	<param name="positionUpdate" value="true" />
+	<!--param name="dockPositionX" value="0.0" /-->
+	<!--param name="dockPositionY" value="0.0" /-->
+	<!--param name="dockPositionPhi" value="3.14" /-->
 	<param name="lightEBC" value="$(arg lightEBC)" />
 	<node pkg="scitos_docking" type="visual_charging" name="visual_charging" output="screen" >
 		<remap from="/cmd_vel" to="/cmd_vel_mux/input/navigation"/>
