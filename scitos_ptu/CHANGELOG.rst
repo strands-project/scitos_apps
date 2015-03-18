@@ -2,8 +2,8 @@
 Changelog for package scitos_ptu
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.0.15 (2015-03-18)
+-------------------
 * Action server metric map removed.
 * renamed the action server
 * Added a log topic for the ptu server
