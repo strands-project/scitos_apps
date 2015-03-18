@@ -2,6 +2,21 @@
 Changelog for package scitos_ptu
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* Action server metric map removed.
+* renamed the action server
+* Added a log topic for the ptu server
+* new ptu server that logs to the database
+* action server feedback message
+* Added feedback in the ptu action server
+* Action message with fields for various parameters
+* Moving the action file to the root of the package
+* updated the PTU action server to check that the desired position has been reacheed using the /ptu/state message
+* package dependencies
+* action server for ptu
+* Contributors: Rares Ambrus, Tom Krajnik, default, rares
+
 0.0.14 (2014-12-17)
 -------------------
 

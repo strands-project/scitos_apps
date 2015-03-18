@@ -2,6 +2,11 @@
 Changelog for package scitos_touch
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* Fixing boost parse error
+* Contributors: Nick Hawes
+
 0.0.14 (2014-12-17)
 -------------------
 
