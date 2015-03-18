@@ -707,7 +707,7 @@ void mainLoop()
 		usleep(30000);
 		if (state!=lastState){
 			sprintf(status,"Charging service is %s",stateStr[state]);
-			ROS_INFO(status);
+			ROS_INFO("Charging service is %s",stateStr[state]);
 			feedback.Progress = (int)robot->progress;
 			feedback.Message = stateStr[state];
 			if (server->isActive()) server->publishFeedback(feedback);
