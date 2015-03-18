@@ -7,11 +7,13 @@
 #include <scitos_msgs/EnableMotors.h>
 #include <scitos_msgs/ResetMotorStop.h>
 #include <scitos_msgs/EmergencyStop.h>
+#include <scitos_msgs/ResetBarrierStop.h>
 
-ros::ServiceClient enable_client, reset_client, emergency_client;
+ros::ServiceClient enable_client, reset_client, emergency_client, barrier_client;
 scitos_msgs::EnableMotors enable_srv;
 scitos_msgs::ResetMotorStop reset_srv;
 scitos_msgs::EmergencyStop emergency_srv;
+scitos_msgs::ResetBarrierStop barrier_srv;
 
 ros::Publisher pub_joy, pub_buttons;
 
@@ -70,6 +72,10 @@ void controlCallback(const sensor_msgs::Joy::ConstPtr& msg)
         {
             ROS_ERROR("Failed to call service /reset_motorstop");
         }
+        if (!barrier_client.call(barrier_srv))
+        {
+            ROS_ERROR("Failed to call service /reset_barrier_stop");
+        }
     }
     //disable motors to move robot manually
     if(msg->buttons[6]) {
@@ -102,6 +108,7 @@ int main(int argc, char **argv)
     enable_client = n.serviceClient<scitos_msgs::EnableMotors>("/enable_motors");
     reset_client = n.serviceClient<scitos_msgs::ResetMotorStop>("/reset_motorstop");
     emergency_client = n.serviceClient<scitos_msgs::EmergencyStop>("/emergency_stop");
+    barrier_client = n.serviceClient<scitos_msgs::ResetBarrierStop>("/reset_barrier_stop");
 
     ros::spin();
 

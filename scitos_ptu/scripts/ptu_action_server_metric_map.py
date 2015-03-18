@@ -13,9 +13,17 @@ import threading
 import math
 import time
 
+
+def clampValue(val, max_val, min_val):
+	if (val>max_val):
+		val = max_val
+	if (val<min_val):
+		val = min_val
+	return val
+
 class PTUServer:
   def __init__(self):
-    rospy.init_node('ptu_actionserver_metric_map')
+    rospy.init_node('ptu_action_server_metric_map')
     self.log_pub = rospy.Publisher('/ptu/log', String)
 
     self.server = actionlib.SimpleActionServer('ptu_pan_tilt_metric_map', scitos_ptu.msg.PanTiltAction, self.execute, False)
@@ -41,8 +49,8 @@ class PTUServer:
 
 
     self.ptugoal = flir_pantilt_d46.msg.PtuGotoGoal()
-    self.ptugoal.pan_vel = 21
-    self.ptugoal.tilt_vel = 21
+    self.ptugoal.pan_vel = 60
+    self.ptugoal.tilt_vel = 60
 
     self.client = actionlib.SimpleActionClient("SetPTUState", flir_pantilt_d46.msg.PtuGotoAction)
     self.client.wait_for_server()
@@ -84,15 +92,26 @@ class PTUServer:
     self.aborted = False
     self.client.send_goal(self.ptugoal)
     self.client.wait_for_result()
+    reverseSweep = False
     
-    for i in range(panstart, panend, panstep):
+    for j in range(tiltstart, tiltend+tiltstep, tiltstep):
        if self._get_preempt_status() or self.aborted:
                 break;	 
-       for j in range(tiltstart, tiltend, tiltstep):
+       for i in range(panstart, panend+panstep, panstep):
 		if self._get_preempt_status() or self.aborted:
                 	break;	
-    		self.ptugoal.pan = -i
+		# set the tilt angle considering whether we are moving the pantilt backwards
+		if not reverseSweep:
+    			self.ptugoal.pan = -i
+		else:
+    			self.ptugoal.pan = -(-i+panstart+panend)
+
 		self.ptugoal.tilt =-j
+
+		# check limits
+		self.ptugoal.pan = clampValue(self.ptugoal.pan, -panstart, -panend)
+		self.ptugoal.tilt = clampValue(self.ptugoal.tilt, -tiltstart, -tiltend)
+
     		self._sendPTUGoal(self.ptugoal)
 		# keep this position for logging
           	self.log_pub.publish("start_position")
@@ -100,6 +119,7 @@ class PTUServer:
 		self.log_pub.publish("end_position")
 		self.feedback.feedback_ptu_pose.position = [self.ptugoal.pan, self.ptugoal.tilt]
 		self.server.publish_feedback(self.feedback)
+       reverseSweep = not reverseSweep
 
     self.ptugoal.pan = 0
     self.ptugoal.tilt =0
@@ -146,7 +166,7 @@ class PTUServer:
     self.preempt_lock.acquire()
     self.preempted = True
     self.preempt_lock.release()
-    
+
 
 if __name__ == '__main__':
   server = PTUServer()

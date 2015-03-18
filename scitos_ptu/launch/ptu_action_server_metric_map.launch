@@ -1,4 +1,10 @@
 <launch>
-	<node name="ptu_action_server" pkg="scitos_ptu" type="ptu_action_server_metric_map.py" output="screen" respawn="true">
+	<arg name="machine"           default="localhost" />
+	<arg name="user"      default="" />
+
+	<machine name="$(arg machine)" address="$(arg machine)" env-loader="$(optenv ROS_ENV_LOADER )" user="$(arg user)"/>
+
+
+	<node name="ptu_action_server_metric_map" pkg="scitos_ptu" type="ptu_action_server_metric_map.py" output="screen" respawn="true">
 	</node>
 </launch>

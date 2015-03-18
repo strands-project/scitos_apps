@@ -2,6 +2,27 @@
 Changelog for package scitos_ptu
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.0.14 (2014-12-17)
+-------------------
+
+0.0.13 (2014-11-21)
+-------------------
+* Clamped pan and tilt values to limits
+* Contributors: Nils Bore
+
+0.0.12 (2014-11-20)
+-------------------
+
+0.0.11 (2014-11-20)
+-------------------
+* Added machine and user tags
+* Fixed node name
+* Reverse sweep and icreased speed
+* Contributors: Nils Bore
+
+0.0.10 (2014-11-19)
+-------------------
+
 0.0.9 (2014-11-11)
 ------------------
 
