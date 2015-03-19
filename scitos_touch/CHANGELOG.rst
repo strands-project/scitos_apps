@@ -2,6 +2,9 @@
 Changelog for package scitos_touch
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+
 0.0.15 (2015-03-18)
 -------------------
 * Fixing boost parse error

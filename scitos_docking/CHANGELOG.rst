@@ -2,6 +2,11 @@
 Changelog for package scitos_docking
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* Avoiding string-conversion-related warnings.
+* Contributors: Tom Krajnik
+
 0.0.15 (2015-03-18)
 -------------------
 * Docking station position parametrized - allows to use maps with arbitrary docking station position. Circle detection sensitivity increased - allows to dock in adverse lighting conditions. Initial stages of docking do not check if the robot behaves as expected anymore (this was included to verify if other nodes still send commands to the robot or if the robot was moving when charging was initiated) - improves interaction with higher navigation layers that seemed to activate the charging while the robot was still moving.
