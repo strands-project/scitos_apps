@@ -2,8 +2,8 @@
 Changelog for package scitos_docking
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.0.16 (2015-03-19)
+-------------------
 * Avoiding string-conversion-related warnings.
 * Contributors: Tom Krajnik
 

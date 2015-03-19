@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <package>
   <name>scitos_touch</name>
-  <version>0.0.15</version>
+  <version>0.0.16</version>
   <description>Package containing nodes to meant to run on the touch screen of a Scitos A5 robot.</description>
 
   <maintainer email="cdondrup@lincoln.ac.uk">Christian Dondrup</maintainer>
