@@ -261,7 +261,7 @@ void CTransformation::updateCalibration(STrackedObject own,STrackedObject statio
 
 }
 
-bool CTransformation::saveParamInDB(char *param)
+bool CTransformation::saveParamInDB(const char *param)
 {
 	ros::ServiceClient client = nh->serviceClient<mongodb_store::SetParam>("/config_manager/save_param");
 	mongodb_store::SetParam srv;

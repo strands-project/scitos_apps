@@ -73,7 +73,7 @@ class CTransformation
 		STrackedObject getOwnPosition(STrackedObject o[]);
 		STrackedObject ownOffset,dockOffset;
 		void updateCalibration(STrackedObject own,STrackedObject station);
-		bool saveParamInDB(char *param);
+		bool saveParamInDB(const char *param);
 		float fc[2];
 		float cc[2];
 
