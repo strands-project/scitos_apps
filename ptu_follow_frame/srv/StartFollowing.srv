@@ -1,0 +1,4 @@
+string target_frame_id
+---
+string response
+bool activated
