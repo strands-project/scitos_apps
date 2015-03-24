@@ -1,1 +1,1 @@
-KERNEL=="js?", ENV{ID_VENDOR}=="Logitech", ENV{ID_MODEL}=="Wireless_Gamepad_F710", NAME="input/rumblepad"
+KERNEL=="js?", ENV{ID_VENDOR}=="Logitech", ENV{ID_MODEL}=="Wireless_Gamepad_F710", SYMLINK+="input/rumblepad"
