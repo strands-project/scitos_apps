@@ -2,8 +2,8 @@
 Changelog for package ptu_follow_frame
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.0.17 (2015-04-01)
+-------------------
 * Add ptu_follow_frame readme.
 * New ptu_follow_frame package.
 * Contributors: Chris Burbridge

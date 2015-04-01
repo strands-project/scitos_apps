@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <package>
   <name>scitos_dashboard</name>
-  <version>0.0.16</version>
+  <version>0.0.17</version>
   <description>The scitos_dashboard package providing and rqt interface for the scitos robot.</description>
 
   <maintainer email="cburbridge@gmail.com">chris burbridge</maintainer>
