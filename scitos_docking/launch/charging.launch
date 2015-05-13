@@ -2,13 +2,14 @@
   <arg name="machine" default="localhost" />
   <arg name="user" default="" />
   <arg name="lightEBC" default="" />
+  <arg name="positionUpdate" default="false" />
 
   <!-- now has an IF checking for the arg "remote" -->
   <machine name="$(arg machine)" address="$(arg machine)" env-loader="$(optenv ROS_ENV_LOADER )" user="$(arg user)" default="true" />
 
   <param name="configFile" value="$(env HOME)/.charging.yaml" />
   <param name="lightEBC" value="$(arg lightEBC)" />
-  <!--param name="positionUpdate" value="true" /-->
+  <param name="positionUpdate" value="$(arg positionUpdate)" type="bool"/>
   <!--param name="dockPositionX" value="0.0" /-->
   <!--param name="dockPositionY" value="0.0" /-->
   <!--param name="dockPositionPhi" value="3.14" /-->
