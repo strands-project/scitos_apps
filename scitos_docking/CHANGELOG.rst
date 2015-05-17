@@ -2,8 +2,8 @@
 Changelog for package scitos_docking
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.0.18 (2015-05-17)
+-------------------
 * Adding position injection to launch file.
   Closes `#138 <https://github.com/strands-project/scitos_apps/issues/138>`_
 * Contributors: Christian Dondrup
