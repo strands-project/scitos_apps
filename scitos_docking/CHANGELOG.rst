@@ -2,6 +2,12 @@
 Changelog for package scitos_docking
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* Adding position injection to launch file.
+  Closes `#138 <https://github.com/strands-project/scitos_apps/issues/138>`_
+* Contributors: Christian Dondrup
+
 0.0.16 (2015-03-19)
 -------------------
 * Avoiding string-conversion-related warnings.
