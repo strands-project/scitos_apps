@@ -755,27 +755,19 @@ void mainLoop()
 
 
 void subscribe() {
-	ROS_INFO("subscribing to topics");
+	ROS_INFO("subscribing to camera topics");
 	image_transport::ImageTransport it(*nh);
 	subim = it.subscribe("head_xtion/rgb/image_mono", 1, imageCallback);
 	subdepth = it.subscribe("head_xtion/depth/image_rect", 1, depthCallback);
-	subodo = nh->subscribe("odom", 1, odomCallback);
-	subcharger = nh->subscribe("battery_state", 1, batteryCallBack);
 	subcamera = nh->subscribe("head_xtion/rgb/camera_info", 1,cameraInfoCallBack);
-	ptu_sub_ = nh->subscribe("/ptu/state", 10, ptuCallback);
-	robot_pose = nh->subscribe("/robot_pose", 1000, poseCallback);
 }
 
 
 void unsubscribe() {
-	ROS_INFO("unsubscribing from topics");
+	ROS_INFO("unsubscribing from camera topics");
 	subim.shutdown();
 	subdepth.shutdown();
-	subodo.shutdown();
-	subcharger.shutdown();
 	subcamera.shutdown();
-	ptu_sub_.shutdown();
-	robot_pose.shutdown();
 }
 
 
@@ -802,6 +794,10 @@ int main(int argc,char* argv[])
 	undockingServer = new DockingServer(*nh, "undocking", boost::bind(&undockingServerCallback, _1, undockingServer), false);
 
 	joy_sub_ = nh->subscribe("/teleop_joystick/action_buttons", 10, joyCallback);
+	subodo = nh->subscribe("odom", 1, odomCallback);
+	subcharger = nh->subscribe("battery_state", 1, batteryCallBack);
+	ptu_sub_ = nh->subscribe("/ptu/state", 10, ptuCallback);
+	robot_pose = nh->subscribe("/robot_pose", 1000, poseCallback);
 
 
 	server->start();
