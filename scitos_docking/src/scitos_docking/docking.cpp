@@ -787,7 +787,7 @@ int main(int argc,char* argv[])
 	nh->param("positionUpdate",positionUpdate,false);
 
 	image_transport::ImageTransport it(*nh);
-	imdebug = it.advertise("/charging/processedimage", 1);
+        imdebug = it.advertise("/charging/processedimage", 1);
 
 	server = new Server(*nh, "chargingServer", boost::bind(&actionServerCallback, _1, server), false);
 	dockingServer = new DockingServer(*nh, "docking", boost::bind(&dockingServerCallback, _1, dockingServer), false);
