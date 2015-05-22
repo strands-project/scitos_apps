@@ -77,6 +77,22 @@ bool headRestart = false;
 EState state = STATE_ROTATE;
 EState lastState = STATE_IDLE;
 
+// Subscribers
+
+image_transport::Subscriber subim; 
+image_transport::Subscriber subdepth;
+ros::Subscriber subodo;
+ros::Subscriber subcharger;
+ros::Subscriber subcamera;
+ros::Subscriber joy_sub_;
+ros::Subscriber ptu_sub_;
+ros::Subscriber robot_pose;
+
+
+void subscribe();
+void unsubscribe();
+
+
 void poseCallback(const geometry_msgs::Pose::ConstPtr& msg)
 {
 	if (positionUpdate){
@@ -444,6 +460,7 @@ void imageCallback(const sensor_msgs::ImageConstPtr& msg)
 void dockingServerCallback(const move_base_msgs::MoveBaseGoalConstPtr& goal, DockingServer* as)
 {
 	initComponents();
+	subscribe();
 	timer.reset();
 	timer.start();
 	timeOut = 120000;
@@ -466,11 +483,13 @@ void dockingServerCallback(const move_base_msgs::MoveBaseGoalConstPtr& goal, Doc
 	if (state == STATE_REJECTED){
 		dockingServer->setAborted(result);
 		robot->lightsOff();
+		unsubscribe();
 		return;
 	}
 	while (state != STATE_IDLE && state != STATE_ABORTED && state != STATE_TIMEOUT && state != STATE_PREEMPTED){
 		usleep(200000);
 	}
+	unsubscribe();
 	if (state == STATE_PREEMPTED){
 		dockingServer->setPreempted(result);
 		state = STATE_IDLE;
@@ -496,6 +515,7 @@ void dockingServerCallback(const move_base_msgs::MoveBaseGoalConstPtr& goal, Doc
 void undockingServerCallback(const move_base_msgs::MoveBaseGoalConstPtr& goal, DockingServer* as)
 {	
 	initComponents();
+	subscribe();
 	timeOut = 120000;
 	timer.reset();
 	timer.start();
@@ -526,11 +546,13 @@ void undockingServerCallback(const move_base_msgs::MoveBaseGoalConstPtr& goal, D
 	if (state == STATE_REJECTED){
 		undockingServer->setAborted(result);
 		robot->lightsOff();
+		unsubscribe();
 		return;
 	}
 	while (state != STATE_IDLE && state != STATE_ABORTED && state != STATE_TIMEOUT && state != STATE_PREEMPTED){
 		usleep(200000);
 	}
+	unsubscribe();
 	if (state == STATE_PREEMPTED){
 		undockingServer->setPreempted(result);
 		state = STATE_IDLE;
@@ -557,6 +579,7 @@ void undockingServerCallback(const move_base_msgs::MoveBaseGoalConstPtr& goal, D
 void actionServerCallback(const scitos_docking::ChargingGoalConstPtr& goal, Server* as)
 {
 	initComponents();
+	subscribe();
 	timer.reset();
 	timer.start();
 	timeOut = (int) goal->Timeout*1000;
@@ -615,6 +638,7 @@ void actionServerCallback(const scitos_docking::ChargingGoalConstPtr& goal, Serv
 		result.Message = response;
 		server->setAborted(result);
 		robot->lightsOff();
+		unsubscribe();
 		return;
 	}
 	while (state != STATE_IDLE && state != STATE_ABORTED && state != STATE_TIMEOUT && state != STATE_PREEMPTED){
@@ -622,6 +646,7 @@ void actionServerCallback(const scitos_docking::ChargingGoalConstPtr& goal, Serv
 		server->publishFeedback(feedback);
 	}
 	result.Message = response;
+	unsubscribe();
 	if (state == STATE_PREEMPTED){
 		server->setPreempted(result);
 		state = STATE_IDLE;
@@ -728,12 +753,29 @@ void mainLoop()
 	}
 }
 
+
+void subscribe() {
+	ROS_INFO("subscribing to camera topics");
+	image_transport::ImageTransport it(*nh);
+	subim = it.subscribe("head_xtion/rgb/image_mono", 1, imageCallback);
+	subdepth = it.subscribe("head_xtion/depth/image_rect", 1, depthCallback);
+	subcamera = nh->subscribe("head_xtion/rgb/camera_info", 1,cameraInfoCallBack);
+}
+
+
+void unsubscribe() {
+	ROS_INFO("unsubscribing from camera topics");
+	subim.shutdown();
+	subdepth.shutdown();
+	subcamera.shutdown();
+}
+
+
 int main(int argc,char* argv[])
 {
 	ros::init(argc, argv, "charging");
 	nh = new ros::NodeHandle;
 	robot = new CChargingActions(nh);
-	image_transport::ImageTransport it(*nh);
 
 	dump = new CDump(NULL,256,1000000);
 	image = new CRawImage(defaultImageWidth,defaultImageHeight,4);
@@ -742,19 +784,21 @@ int main(int argc,char* argv[])
 
 	initComponents();
 	success = false;
-	image_transport::Subscriber subim = it.subscribe("head_xtion/rgb/image_mono", 1, imageCallback);
-	image_transport::Subscriber subdepth = it.subscribe("head_xtion/depth/image_rect", 1, depthCallback);
 	nh->param("positionUpdate",positionUpdate,false);
+
+	image_transport::ImageTransport it(*nh);
         imdebug = it.advertise("/charging/processedimage", 1);
-	ros::Subscriber subodo = nh->subscribe("odom", 1, odomCallback);
-	ros::Subscriber subcharger = nh->subscribe("battery_state", 1, batteryCallBack);
-	ros::Subscriber subcamera = nh->subscribe("head_xtion/rgb/camera_info", 1,cameraInfoCallBack);
-	ros::Subscriber joy_sub_ = nh->subscribe("/teleop_joystick/action_buttons", 10, joyCallback);
-	ros::Subscriber ptu_sub_ = nh->subscribe("/ptu/state", 10, ptuCallback);
-	ros::Subscriber robot_pose = nh->subscribe("/robot_pose", 1000, poseCallback);
+
 	server = new Server(*nh, "chargingServer", boost::bind(&actionServerCallback, _1, server), false);
 	dockingServer = new DockingServer(*nh, "docking", boost::bind(&dockingServerCallback, _1, dockingServer), false);
 	undockingServer = new DockingServer(*nh, "undocking", boost::bind(&undockingServerCallback, _1, undockingServer), false);
+
+	joy_sub_ = nh->subscribe("/teleop_joystick/action_buttons", 10, joyCallback);
+	subodo = nh->subscribe("odom", 1, odomCallback);
+	subcharger = nh->subscribe("battery_state", 1, batteryCallBack);
+	ptu_sub_ = nh->subscribe("/ptu/state", 10, ptuCallback);
+	robot_pose = nh->subscribe("/robot_pose", 1000, poseCallback);
+
 
 	server->start();
 	dockingServer->start();
