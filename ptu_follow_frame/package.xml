@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <package>
   <name>ptu_follow_frame</name>
-  <version>0.0.18</version>
+  <version>0.0.19</version>
   <description>
    The ptu_follow_frame package provides a node that keeps the PTU targeted
    at the origin of a given frame.
