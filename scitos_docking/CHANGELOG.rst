@@ -2,6 +2,12 @@
 Changelog for package scitos_docking
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* Revert "(un)subscribe from all the topics"
+* (un)subscribe from all the topics
+* Contributors: Marc Hanheide
+
 0.0.18 (2015-05-17)
 -------------------
 * Adding position injection to launch file.
