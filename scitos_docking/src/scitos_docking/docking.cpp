@@ -55,7 +55,7 @@ Server *server;
 DockingServer *dockingServer;
 DockingServer *undockingServer;
 
-image_transport::Publisher imdebug;
+//image_transport::Publisher imdebug;
 
 int onBattery = 0;
 int maxFailures=150;
@@ -320,7 +320,7 @@ void imageCallback(const sensor_msgs::ImageConstPtr& msg)
 		}
 		//and publish the result
 		memcpy((void*)&msg->data[0],image->data,msg->step*msg->height);
-		imdebug.publish(msg);
+		//imdebug.publish(msg);
 
 		//is the ROBOT STATION label visible ?	
 		station = trans->getDock(objectArray);
@@ -787,7 +787,7 @@ int main(int argc,char* argv[])
 	nh->param("positionUpdate",positionUpdate,false);
 
 	image_transport::ImageTransport it(*nh);
-        imdebug = it.advertise("/charging/processedimage", 1);
+        //imdebug = it.advertise("/charging/processedimage", 1);
 
 	server = new Server(*nh, "chargingServer", boost::bind(&actionServerCallback, _1, server), false);
 	dockingServer = new DockingServer(*nh, "docking", boost::bind(&dockingServerCallback, _1, dockingServer), false);
