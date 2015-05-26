@@ -2,6 +2,18 @@
 Changelog for package scitos_docking
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.0.20 (2015-05-22)
+-------------------
+* Merge branch 'hydro-devel' of https://github.com/strands-project/scitos_apps into dyn_subscription
+* keep subscribed to most topics
+* Contributors: Marc Hanheide
+
+0.0.19 (2015-05-22)
+-------------------
+* Revert "(un)subscribe from all the topics"
+* (un)subscribe from all the topics
+* Contributors: Marc Hanheide
+
 0.0.18 (2015-05-17)
 -------------------
 * Adding position injection to launch file.
