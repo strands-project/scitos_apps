@@ -55,7 +55,7 @@ Server *server;
 DockingServer *dockingServer;
 DockingServer *undockingServer;
 
-image_transport::Publisher imdebug;
+//image_transport::Publisher imdebug;
 
 int onBattery = 0;
 int maxFailures=150;
@@ -304,7 +304,7 @@ void imageCallback(const sensor_msgs::ImageConstPtr& msg)
 		}
 		//and publish the result
 		memcpy((void*)&msg->data[0],image->data,msg->step*msg->height);
-		imdebug.publish(msg);
+		//imdebug.publish(msg);
 
 		//is the ROBOT STATION label visible ?	
 		station = trans->getDock(objectArray);
@@ -745,7 +745,7 @@ int main(int argc,char* argv[])
 	image_transport::Subscriber subim = it.subscribe("head_xtion/rgb/image_mono", 1, imageCallback);
 	image_transport::Subscriber subdepth = it.subscribe("head_xtion/depth/image_rect", 1, depthCallback);
 	nh->param("positionUpdate",positionUpdate,false);
-        imdebug = it.advertise("/charging/processedimage", 1);
+        //imdebug = it.advertise("/charging/processedimage", 1);
 	ros::Subscriber subodo = nh->subscribe("odom", 1, odomCallback);
 	ros::Subscriber subcharger = nh->subscribe("battery_state", 1, batteryCallBack);
 	ros::Subscriber subcamera = nh->subscribe("head_xtion/rgb/camera_info", 1,cameraInfoCallBack);
