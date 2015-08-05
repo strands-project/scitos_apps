@@ -758,7 +758,7 @@ void subscribe() {
 	ROS_INFO("subscribing to camera topics");
 	image_transport::ImageTransport it(*nh);
 	subim = it.subscribe("head_xtion/rgb/image_mono", 1, imageCallback);
-	subdepth = it.subscribe("head_xtion/depth/image_rect", 1, depthCallback);
+	subdepth = it.subscribe("head_xtion/depth/image_rect_raw", 1, depthCallback);
 	subcamera = nh->subscribe("head_xtion/rgb/camera_info", 1,cameraInfoCallBack);
 }
 
