@@ -86,6 +86,8 @@ class PTUServer:
     print 'Starting pan tilt action ',panstart, panstep, panend, tiltstart, tiltstep, tiltend
     # start position
     self.log_pub.publish("start_sweep")
+    time.sleep(1) # sleep for 1 second here
+    self.log_pub.publish("sweep_parameters " +str(panstart)+" "+str(panstep)+" "+str(panend)+" "+str(tiltstart)+" "+str(tiltstep)+" "+str(tiltend))
     self.ptugoal.pan = -panstart
     self.ptugoal.tilt = -tiltstart	    
     self.preempted = False
