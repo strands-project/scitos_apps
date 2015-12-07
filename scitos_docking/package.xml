@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <package>
   <name>scitos_docking</name>
-  <version>0.0.20</version>
+  <version>0.0.21</version>
   <description>The charging package providing a visual charging action service for the scitos robot.</description>
 
   <maintainer email="tkrajnik@lincoln.ac.uk">gestom</maintainer>

@@ -2,8 +2,8 @@
 Changelog for package scitos_docking
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.0.21 (2015-12-07)
+-------------------
 * Fixing Chaos.
   Actually adapting the topic name to the change in openni2
 * Contributors: Karl Review
