@@ -2,6 +2,12 @@
 Changelog for package ptu_follow_frame
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* Change PTU max velocity.
+  This reduces the maximum velocity the PTU is controlled with in ptu_follow_frame. The previous value of 3 rad/s causes the PTU to loose calibration when the frame to follow was far from centred.
+* Contributors: Chris Burbridge
+
 0.0.20 (2015-05-22)
 -------------------
 

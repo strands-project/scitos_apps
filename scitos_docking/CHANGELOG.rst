@@ -2,6 +2,12 @@
 Changelog for package scitos_docking
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* Fixing Chaos.
+  Actually adapting the topic name to the change in openni2
+* Contributors: Karl Review
+
 0.0.20 (2015-05-22)
 -------------------
 * Merge branch 'hydro-devel' of https://github.com/strands-project/scitos_apps into dyn_subscription
