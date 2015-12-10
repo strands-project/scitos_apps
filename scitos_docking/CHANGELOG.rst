@@ -2,6 +2,12 @@
 Changelog for package scitos_docking
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* reverting df7aea03f367933eb8171b8930cabce60349bc0a
+  as discussed in https://github.com/strands-project/scitos_apps/commit/df7aea03f367933eb8171b8930cabce60349bc0a#commitcomment-14897218 and https://github.com/strands-project/strands_systems/pull/114#issuecomment-163432083 this needs to be reverted.
+* Contributors: Marc Hanheide
+
 0.0.21 (2015-12-07)
 -------------------
 * Fixing Chaos.

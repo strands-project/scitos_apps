@@ -2,6 +2,9 @@
 Changelog for package ptu_follow_frame
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+
 0.0.21 (2015-12-07)
 -------------------
 * Change PTU max velocity.
