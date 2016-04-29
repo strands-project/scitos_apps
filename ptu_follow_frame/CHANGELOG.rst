@@ -1,5 +1,5 @@
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-Changelog for package scitos_dashboard
+Changelog for package ptu_follow_frame
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 0.0.22 (2015-12-10)
@@ -7,6 +7,9 @@ Changelog for package scitos_dashboard
 
 0.0.21 (2015-12-07)
 -------------------
+* Change PTU max velocity.
+  This reduces the maximum velocity the PTU is controlled with in ptu_follow_frame. The previous value of 3 rad/s causes the PTU to loose calibration when the frame to follow was far from centred.
+* Contributors: Chris Burbridge
 
 0.0.20 (2015-05-22)
 -------------------
@@ -16,6 +19,12 @@ Changelog for package scitos_dashboard
 
 0.0.18 (2015-05-17)
 -------------------
+
+0.0.17 (2015-04-01)
+-------------------
+* Add ptu_follow_frame readme.
+* New ptu_follow_frame package.
+* Contributors: Chris Burbridge
 
 0.0.16 (2015-03-19)
 -------------------
@@ -29,11 +38,11 @@ Changelog for package scitos_dashboard
 0.0.13 (2014-11-21)
 -------------------
 
-0.0.12 (2014-11-20)
--------------------
+0.0.12 (2014-11-20 17:11)
+-------------------------
 
-0.0.11 (2014-11-20)
--------------------
+0.0.11 (2014-11-20 09:34)
+-------------------------
 
 0.0.10 (2014-11-19)
 -------------------
@@ -56,19 +65,11 @@ Changelog for package scitos_dashboard
 0.0.4 (2014-10-13)
 ------------------
 
-0.0.3 (2014-09-22)
-------------------
+0.0.3 (2014-09-22 20:09)
+------------------------
 
-0.0.2 (2014-09-22)
-------------------
+0.0.2 (2014-09-22 18:41)
+------------------------
 
-0.0.1 (2014-09-22)
-------------------
-* [scitos_dashboard] Added description and author to package xml
-* [scitos_dashboard] Added install targets and setup.py
-* [scitos_dashboard] diagnostics_msgs not used.
-* Update README.md
-* adding documentation
-* screenshot for documentation
-* prep to move dashboard to apps
-* Contributors: Chris Burbridge, Christian Dondrup, cburbridge, cdondrup
+0.0.1 (2014-09-22 16:19)
+------------------------

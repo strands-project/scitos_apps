@@ -2,6 +2,41 @@
 Changelog for package scitos_ptu
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.0.22 (2015-12-10)
+-------------------
+
+0.0.21 (2015-12-07)
+-------------------
+* Small addition to publish sweep paramaters
+* Contributors: Rares Ambrus
+
+0.0.20 (2015-05-22)
+-------------------
+
+0.0.19 (2015-05-22)
+-------------------
+
+0.0.18 (2015-05-17)
+-------------------
+
+0.0.16 (2015-03-19)
+-------------------
+
+0.0.15 (2015-03-18)
+-------------------
+* Action server metric map removed.
+* renamed the action server
+* Added a log topic for the ptu server
+* new ptu server that logs to the database
+* action server feedback message
+* Added feedback in the ptu action server
+* Action message with fields for various parameters
+* Moving the action file to the root of the package
+* updated the PTU action server to check that the desired position has been reacheed using the /ptu/state message
+* package dependencies
+* action server for ptu
+* Contributors: Rares Ambrus, Tom Krajnik, default, rares
+
 0.0.14 (2014-12-17)
 -------------------
 
