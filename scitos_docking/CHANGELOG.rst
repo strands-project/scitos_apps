@@ -2,6 +2,12 @@
 Changelog for package scitos_docking
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* Depth image decoding fixed.
+* Position injection precision increased by resolving transform bug
+* Contributors: Christian Dondrup, Tom Krajnik
+
 0.0.22 (2015-12-10)
 -------------------
 * reverting df7aea03f367933eb8171b8930cabce60349bc0a
