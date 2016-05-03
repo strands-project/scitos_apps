@@ -45,12 +45,13 @@ void CChargingActions::injectPosition(float x,float y,float phi)
 {
 	float alpha = -ptuPan;//PTU rotation
 	injectPhi = normalizeAngle(phi+alpha+dockPositionPhi+M_PI);
-	float iX = x + 0.365/2*cos(injectPhi);
-	float iY = y + 0.365/2*sin(injectPhi);
+	float iX = x - 0.365/2*cos(injectPhi);
+	float iY = y - 0.365/2*sin(injectPhi);
 	
 	injectX = iX*cos(dockPositionPhi)-iY*sin(dockPositionPhi)+dockPositionX;
 	injectY = iX*sin(dockPositionPhi)+iY*cos(dockPositionPhi)+dockPositionY;
 	ROS_INFO("Injecting %f %f %f\n",injectX,injectY,injectPhi);	
+	ROS_INFO("Injecting %f %f %f\n",iX,iY,injectPhi);	
 	poseSet = false;
 	/*pose was measured ~5 seconds ago*/
 	injectionTime = ros::Time::now();

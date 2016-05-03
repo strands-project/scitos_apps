@@ -262,7 +262,7 @@ void depthCallback(const sensor_msgs::ImageConstPtr& msg)
 		{
 			for (float w = fx;w<lx;w+=vx)
 			{
-				di = (msg->data[cnt*2]+256*msg->data[cnt*2+1])/1000.0;
+				di = *((float*)(&msg->data[4*cnt]));
 				if (di > 0.05 && cnt%10 == 0 && di < 3.0){
 					ix = di*(cos(psi)-sin(psi)*h);
 					iy = -w*di;
