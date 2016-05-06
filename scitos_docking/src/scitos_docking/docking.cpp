@@ -287,7 +287,7 @@ void imageCallback(const sensor_msgs::ImageConstPtr& msg)
 			robot->moveHead();
 		}
 	}
-	if ((int) state < (int)STATE_RETRY){
+	if ((int) state < (int)STATE_RETRY || true){
 		if (image->bpp != msg->step/msg->width || image->width != msg->width || image->height != msg->height){
 			delete image;
 			ROS_DEBUG("Readjusting image format from %ix%i %ibpp, to %ix%i %ibpp.",image->width,image->height,image->bpp,msg->width,msg->height,msg->step/msg->width);
@@ -302,12 +302,15 @@ void imageCallback(const sensor_msgs::ImageConstPtr& msg)
 			objectArray[i].valid = false;
 			if (currentSegmentArray[i].valid)objectArray[i] = trans->transform(currentSegmentArray[i]);
 		}
-		//and publish the result
+
+		//is the ROBOT STATION label visible ?
+		detectorArray[4]->threshold = 	detectorArray[3]->threshold;
+		station = trans->getDock(objectArray,currentSegmentArray,image,detectorArray[4]);
+
+		//apublish the resulting image
 		memcpy((void*)&msg->data[0],image->data,msg->step*msg->height);
 		imdebug.publish(msg);
 
-		//is the ROBOT STATION label visible ?	
-		station = trans->getDock(objectArray);
 		if (station.valid){
 			stationSpotted++;
 			failedToSpotStationCount = 0;

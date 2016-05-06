@@ -154,15 +154,37 @@ float CTransformation::distance(STrackedObject o1,STrackedObject o2)
 	return sqrt((o1.x-o2.x)*(o1.x-o2.x)+(o1.y-o2.y)*(o1.y-o2.y)+(o1.z-o2.z)*(o1.z-o2.z));
 }
 
-STrackedObject CTransformation::getDock(STrackedObject o[])
+STrackedObject CTransformation::getDock(STrackedObject o[],SSegment s[],CRawImage *image,CCircleDetect *detector)
 {
 	STrackedObject result;
 	result.valid = false;
 	if (o[0].valid && o[1].valid && o[2].valid){ 
 		STrackedObject trk[4];
 		for (int i=0;i<3;i++) trk[i] = o[i];
+		for (int i=0;i<3;i++) trk[i].id = i;
 		for (int i=0;i<3;i++) trk[i].d = distance(trk[(i+1)%3],trk[(i+2)%3]);
 		qsort(trk,3,sizeof(STrackedObject),sortByDistance);
+		//determine station ID
+		if (s[0].size + s[1].size + s[2].size > 1500)
+		{
+			float px = s[trk[0].id].x + 1.54*(s[trk[1].id].x - s[trk[0].id].x);
+			float py = s[trk[0].id].y + 1.54*(s[trk[1].id].y - s[trk[0].id].y);
+			int pos = ((int)py)*image->width+(int)px;
+			if (pos > image->width && pos < image->size-image->width){
+				detector->queueEnd = 0;
+				detector->queueStart = 0;
+				detector->numSegments = 0;
+				//image->data[pos] = detector->threshold;
+				SSegment id;
+				detector->buffer[pos] = -2;
+				detector->examineSegment(image,&id,pos,100.0);
+				id.valid = true;
+				trk[0].id = round(20.0*id.size/(s[0].size+s[1].size+s[2].size)-0.1);
+				detector->bufferCleanup(id);
+				fprintf(stdout,"ID %i size: %i %i %i %i\n",trk[0].id,s[0].size,s[1].size,s[2].size,id.size);
+			}
+		} 
+
 		float an = atan2(trk[0].x-trk[2].x,trk[0].y-trk[2].y);
 		trk[0].roll = 180*an/M_PI;
 		trk[0].x-=dockOffset.x;
@@ -170,6 +192,7 @@ STrackedObject CTransformation::getDock(STrackedObject o[])
 		trk[0].z-=dockOffset.z;
 		result=trk[0];
 		result.valid = ((trk[0].d+trk[1].d+trk[2].d) < 1.0); //only for small station
+
 		//fprintf(stdout,"Dockbase: %.3f \n",trk[0].d+trk[1].d+trk[2].d);
 		//for (int i = 0;i<3;i++) fprintf(stdout,"Dock: %i %.3f %.3f %.3f\n",i,trk[i].x,trk[i].y,trk[i].z);
 	}

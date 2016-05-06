@@ -31,6 +31,7 @@ typedef struct{
 	float bwratio;
 	float error;
 	float esterror;
+	int id;
 	bool valid;
 }STrackedObject;
 
@@ -69,7 +70,7 @@ class CTransformation
 		bool saveCalibration();
 		bool loadCalibration();
 		float distance(STrackedObject o1,STrackedObject o2);
-		STrackedObject getDock(STrackedObject o[]);
+		STrackedObject getDock(STrackedObject o[],SSegment s[],CRawImage *image,CCircleDetect* detector);
 		STrackedObject getOwnPosition(STrackedObject o[]);
 		STrackedObject ownOffset,dockOffset;
 		void updateCalibration(STrackedObject own,STrackedObject station);
