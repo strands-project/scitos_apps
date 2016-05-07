@@ -243,12 +243,14 @@ bool CChargingActions::measure(STrackedObject *o1,STrackedObject *o2,int count,b
 	static bool moveLids;
 	static int posCount;
 	static int maxCount;
+	static int stationID[4];
 	static STrackedObject avgPos1,avgPos2,dummy;
 	if (o1==NULL) o1 = &dummy;
 	if (o2==NULL) o2 = &dummy;
 	if (count > 0){
 		moveLids = ml;
 		avgPos1.x = avgPos1.y = avgPos1.z = avgPos2.x = avgPos2.y = avgPos2.z = avgPos1.yaw = avgPos2.yaw = 0;
+		memset(stationID,0,4*sizeof(int));
 	 	posCount = -30;
 		maxCount = count;
 	}
@@ -266,6 +268,7 @@ bool CChargingActions::measure(STrackedObject *o1,STrackedObject *o2,int count,b
 		avgPos2.y += o2->y; 
 		avgPos2.yaw += o2->yaw; 
 	}
+	if (o2->id >=0 && o2->id <4) stationID[o2->id]++;
 	posCount++;
 	if (moveLids){
 		head.position[0] = fmax(100*posCount/maxCount,0);
@@ -274,6 +277,7 @@ bool CChargingActions::measure(STrackedObject *o1,STrackedObject *o2,int count,b
 		head.position[0] = head.position[1] = 100;
 	}
 	if (posCount > maxCount){
+		printf("STATION IDs: %i %i %i %i\n",stationID[0],stationID[1],stationID[2],stationID[3]); 
 		o1->x = avgPos1.x/posCount;
 		o1->y = avgPos1.y/posCount;
 		o1->z = avgPos1.z/posCount;

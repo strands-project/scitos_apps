@@ -287,7 +287,7 @@ void imageCallback(const sensor_msgs::ImageConstPtr& msg)
 			robot->moveHead();
 		}
 	}
-	if ((int) state < (int)STATE_RETRY || true){
+	if ((int) state < (int)STATE_RETRY){
 		if (image->bpp != msg->step/msg->width || image->width != msg->width || image->height != msg->height){
 			delete image;
 			ROS_DEBUG("Readjusting image format from %ix%i %ibpp, to %ix%i %ibpp.",image->width,image->height,image->bpp,msg->width,msg->height,msg->step/msg->width);
@@ -302,14 +302,11 @@ void imageCallback(const sensor_msgs::ImageConstPtr& msg)
 			objectArray[i].valid = false;
 			if (currentSegmentArray[i].valid)objectArray[i] = trans->transform(currentSegmentArray[i]);
 		}
+		detectorArray[4]->threshold = 	detectorArray[3]->threshold;	//prepare in case the dock requires identification
 
 		//is the ROBOT STATION label visible ?
-		detectorArray[4]->threshold = 	detectorArray[3]->threshold;
-		station = trans->getDock(objectArray,currentSegmentArray,image,detectorArray[4]);
+		station = trans->getDock(objectArray);
 
-		//apublish the resulting image
-		memcpy((void*)&msg->data[0],image->data,msg->step*msg->height);
-		imdebug.publish(msg);
 
 		if (station.valid){
 			stationSpotted++;
@@ -392,6 +389,7 @@ void imageCallback(const sensor_msgs::ImageConstPtr& msg)
 				case STATE_CALIBRATE:
 					trans->clearOffsets();
 					own = trans->getOwnPosition(objectArray);
+					station = trans->getDockID(objectArray,currentSegmentArray,image,detectorArray[4]);
 					if (robot->measure(&own,&station)){
 						trans->updateCalibration(own,station);
 						if(trans->saveCalibration()){
@@ -441,6 +439,10 @@ void imageCallback(const sensor_msgs::ImageConstPtr& msg)
 				 state=STATE_DOCKING_FAILURE; 
 			}
 		}
+
+		//publish the resulting image
+		memcpy((void*)&msg->data[0],image->data,msg->step*msg->height);
+		imdebug.publish(msg);
 	}
 }
 
