@@ -15,6 +15,8 @@
 #include "ros/ros.h"
 #include "mongodb_store/SetParam.h"
 
+#define MAX_STATIONS 4
+
 typedef enum{
 	TRANSFORM_NONE,
 	TRANSFORM_2D,
@@ -69,6 +71,7 @@ class CTransformation
 		ETransformType transformType;
 		bool saveCalibration();
 		bool loadCalibration();
+		bool updateStationParams(STrackedObject *own,STrackedObject *station);
 		float distance(STrackedObject o1,STrackedObject o2);
 
 		STrackedObject getDock(STrackedObject o[]);
