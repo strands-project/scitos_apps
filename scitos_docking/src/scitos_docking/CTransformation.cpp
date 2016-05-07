@@ -192,7 +192,7 @@ STrackedObject CTransformation::getDockID(STrackedObject o[],SSegment s[],CRawIm
 		for (int i=0;i<3;i++) trk[i].d = distance(trk[(i+1)%3],trk[(i+2)%3]);
 		qsort(trk,3,sizeof(STrackedObject),sortByDistance);
 		//determine station ID
-		if (s[0].size + s[1].size + s[2].size > 1500)
+		if (s[0].size + s[1].size + s[2].size > 1300)
 		{
 			float px = s[trk[0].id].x + 1.54*(s[trk[1].id].x - s[trk[0].id].x);
 			float py = s[trk[0].id].y + 1.54*(s[trk[1].id].y - s[trk[0].id].y);
