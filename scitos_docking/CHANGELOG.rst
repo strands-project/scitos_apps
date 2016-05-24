@@ -2,6 +2,16 @@
 Changelog for package scitos_docking
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* Merge pull request `#156 <https://github.com/strands-project/scitos_apps/issues/156>`_ from gestom/hydro-devel
+  Docking now supports up to 4 different stations
+* Station identification distance increased
+* Position injection when undocking
+* Incorporated in calibration
+* Docking now recognises 4 different stations. Docking is backwards compatible.
+* Contributors: Nick Hawes, Tom Krajnik
+
 0.0.23 (2016-05-03)
 -------------------
 * Depth image decoding fixed.
