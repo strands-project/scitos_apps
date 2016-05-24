@@ -52,6 +52,8 @@ class CChargingActions
 		void lightsOff();
 		void injectPosition(float x,float y,float phi); 
 		void injectPosition(); 
+		bool updateInjectionPositions(int stationID);
+
 		float injectX,injectY,injectPhi;
 		bool poseSet;
 		float ptuPan;

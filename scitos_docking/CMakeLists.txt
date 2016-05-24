@@ -1,5 +1,6 @@
 cmake_minimum_required(VERSION 2.8.3)
 project(scitos_docking)
+set(CMAKE_BUILD_TYPE Debug)
 
 find_package(catkin REQUIRED COMPONENTS 
     actionlib 

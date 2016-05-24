@@ -40,7 +40,7 @@ float dockingPrecision = 0.10;
 float realPrecision,tangle,tdistance;
 
 int stationSpotted = 0;
-bool calibrated = true;
+bool calibrated = false;
 CTimer timer;
 int timeOut = 120000;
 int  defaultImageWidth= 320;
@@ -151,7 +151,7 @@ int initComponents()
 	image->getSaveNumber();
 	robot->progress = 10;
 	robot->progressSpeed = 2.0;
-	calibrated = trans->loadCalibration();
+	if (calibrated == false) calibrated = trans->loadCalibration();
 	stationSpotted = 0;
 	state = STATE_IDLE;
 }
@@ -318,12 +318,12 @@ void imageCallback(const sensor_msgs::ImageConstPtr& msg)
 			objectArray[i].valid = false;
 			if (currentSegmentArray[i].valid)objectArray[i] = trans->transform(currentSegmentArray[i]);
 		}
-		//and publish the result
-		memcpy((void*)&msg->data[0],image->data,msg->step*msg->height);
-		imdebug.publish(msg);
+		detectorArray[4]->threshold = 	detectorArray[3]->threshold;	//prepare in case the dock requires identification
 
-		//is the ROBOT STATION label visible ?	
+		//is the ROBOT STATION label visible ?
 		station = trans->getDock(objectArray);
+
+
 		if (station.valid){
 			stationSpotted++;
 			failedToSpotStationCount = 0;
@@ -353,7 +353,9 @@ void imageCallback(const sensor_msgs::ImageConstPtr& msg)
 					break;
 				case STATE_UNDOCK_MEASURE1:
 					own = trans->getOwnPosition(objectArray);
-					if (robot->measure(&own)){
+					station = trans->getDockID(objectArray,currentSegmentArray,image,detectorArray[4]);
+					if (robot->measure(&own,&station)){
+						if (trans->updateStationParams(&own,&station)==false) ROS_WARN("Station %i is not calibrated.",station.id);
 						robot->halt();
 						robot->measure(NULL,NULL,maxMeasurements);
 						state = STATE_UNDOCK_MEASURE2;
@@ -361,14 +363,25 @@ void imageCallback(const sensor_msgs::ImageConstPtr& msg)
 					break;				
 				case STATE_UNDOCK_MEASURE2:
 					own = trans->getOwnPosition(objectArray);
-					if (robot->measure(&own)){
+					station = trans->getDockID(objectArray,currentSegmentArray,image,detectorArray[4]);
+					if (robot->measure(&own,&station)){
 						robot->halt();
 						robot->movePtu(0,0);
 						robot->lightsOff();
+						if (trans->updateStationParams(&own,&station)){
+							if (positionUpdate){
+								if (robot->updateInjectionPositions(station.id)){
+									robot->injectPosition(own.z,own.x,own.yaw);
+								}else{
+									ROS_WARN("Station %i position is unknown, aborting position injection.",station.id);
+								}
+							}
+						}else{
+							ROS_WARN("Station %i is not calibrated.",station.id);
+						}
 						sprintf(posString,"Robot position after undock: %f %f %f %f",own.x,own.y,own.z,own.yaw);
 						printf("%s\n",response);
 						success = true;
-						robot->injectPosition(own.z,own.x,own.yaw);
 						state = STATE_UNDOCKING_SUCCESS;
 					}
 					break;				
@@ -386,25 +399,32 @@ void imageCallback(const sensor_msgs::ImageConstPtr& msg)
 					break;
 				case STATE_MEASURE:
 					own = trans->getOwnPosition(objectArray);
-					if (robot->measure(&own)){
-						robot->halt();
-						if (fabs(own.x) < dockingPrecision){
-							state = STATE_DOCK;
-							robot->startProg = station.x;
-						} else{
-							state = STATE_ROTATE;
-							robot->lightsOff();
-							rotateBy = M_PI/2;
-							if (own.x > 0) rotateBy = -rotateBy;
-							rotateBy += sin((own.x+trans->ownOffset.x)/(own.z+trans->ownOffset.z));
-							robot->rotateByAngle(rotateBy);
-							robot->moveByDistance(fabs(own.x));
+					station = trans->getDockID(objectArray,currentSegmentArray,image,detectorArray[4]);
+					if (robot->measure(&own,&station)){
+						if (trans->updateStationParams(&own,&station)){
+							robot->halt();
+							if (fabs(own.x) < dockingPrecision){
+								state = STATE_DOCK;
+								robot->startProg = station.x;
+							} else{
+								state = STATE_ROTATE;
+								robot->lightsOff();
+								rotateBy = M_PI/2;
+								if (own.x > 0) rotateBy = -rotateBy;
+								rotateBy += sin((own.x+trans->ownOffset.x)/(own.z+trans->ownOffset.z));
+								robot->rotateByAngle(rotateBy);
+								robot->moveByDistance(fabs(own.x));
+							}
+						}else{
+							ROS_ERROR("Station %i was not calibrated, aborting docking.\n",station.id);
+							state = STATE_DOCKING_FAILURE;
 						}
 					}
 					break;
 				case STATE_CALIBRATE:
 					trans->clearOffsets();
 					own = trans->getOwnPosition(objectArray);
+					station = trans->getDockID(objectArray,currentSegmentArray,image,detectorArray[4]);
 					if (robot->measure(&own,&station)){
 						trans->updateCalibration(own,station);
 						if(trans->saveCalibration()){
@@ -420,6 +440,7 @@ void imageCallback(const sensor_msgs::ImageConstPtr& msg)
 					break;
 				case STATE_WAIT:
 					own = trans->getOwnPosition(objectArray);
+					station = trans->getDockID(objectArray,currentSegmentArray,image,detectorArray[4]);
 					if (robot->wait(&own,station,chargerDetected)){
 						if (chargerDetected){
 							robot->lightsOff();
@@ -454,6 +475,10 @@ void imageCallback(const sensor_msgs::ImageConstPtr& msg)
 				 state=STATE_DOCKING_FAILURE; 
 			}
 		}
+
+		//publish the resulting image
+		memcpy((void*)&msg->data[0],image->data,msg->step*msg->height);
+		imdebug.publish(msg);
 	}
 }
 

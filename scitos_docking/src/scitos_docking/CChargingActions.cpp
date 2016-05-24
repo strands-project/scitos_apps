@@ -41,6 +41,28 @@ float normalizeAngle(float a,float minimal=-M_PI)
 	return a;
 }
 
+bool CChargingActions::updateInjectionPositions(int stationID) 
+{
+	const char *dockName[] = {"","_1_","_2_","_3_"};
+	bool updated = true;
+	char varName[100];
+	if (stationID < 0 || stationID >= MAX_STATIONS)
+	{
+		ROS_ERROR("Station ID incorrect! (%i)",stationID);
+		return false;
+	}
+	
+	sprintf(varName,"dock%sPositionX",dockName[stationID]);
+	ROS_INFO("Updating injection positions from %s",varName);
+	updated = updated && nh->getParam(varName, dockPositionX);
+	sprintf(varName,"dock%sPositionY",dockName[stationID]);
+	updated = updated && nh->getParam(varName, dockPositionY);
+	sprintf(varName,"dock%sPositionPhi",dockName[stationID]);
+	updated = updated && nh->getParam(varName, dockPositionPhi);
+
+	return updated;
+}
+
 void CChargingActions::injectPosition(float x,float y,float phi) 
 {
 	float alpha = -ptuPan;//PTU rotation
@@ -50,8 +72,7 @@ void CChargingActions::injectPosition(float x,float y,float phi)
 	
 	injectX = iX*cos(dockPositionPhi)-iY*sin(dockPositionPhi)+dockPositionX;
 	injectY = iX*sin(dockPositionPhi)+iY*cos(dockPositionPhi)+dockPositionY;
-	ROS_INFO("Injecting %f %f %f\n",injectX,injectY,injectPhi);	
-	ROS_INFO("Injecting %f %f %f\n",iX,iY,injectPhi);	
+	ROS_INFO("Relative position %.3f %.3f %.3f. Dock position %.3f %.3f %.3f. Injecting %f %f %f",iX,iY,phi+alpha,dockPositionX,dockPositionY,dockPositionPhi,injectX,injectY,injectPhi);
 	poseSet = false;
 	/*pose was measured ~5 seconds ago*/
 	injectionTime = ros::Time::now();
@@ -243,12 +264,14 @@ bool CChargingActions::measure(STrackedObject *o1,STrackedObject *o2,int count,b
 	static bool moveLids;
 	static int posCount;
 	static int maxCount;
+	static int stationID[MAX_STATIONS];
 	static STrackedObject avgPos1,avgPos2,dummy;
 	if (o1==NULL) o1 = &dummy;
 	if (o2==NULL) o2 = &dummy;
 	if (count > 0){
 		moveLids = ml;
 		avgPos1.x = avgPos1.y = avgPos1.z = avgPos2.x = avgPos2.y = avgPos2.z = avgPos1.yaw = avgPos2.yaw = 0;
+		memset(stationID,0,MAX_STATIONS*sizeof(int));
 	 	posCount = -30;
 		maxCount = count;
 	}
@@ -266,6 +289,7 @@ bool CChargingActions::measure(STrackedObject *o1,STrackedObject *o2,int count,b
 		avgPos2.y += o2->y; 
 		avgPos2.yaw += o2->yaw; 
 	}
+	if (o2->id >=0 && o2->id <MAX_STATIONS) stationID[o2->id]++;
 	posCount++;
 	if (moveLids){
 		head.position[0] = fmax(100*posCount/maxCount,0);
@@ -274,6 +298,24 @@ bool CChargingActions::measure(STrackedObject *o1,STrackedObject *o2,int count,b
 		head.position[0] = head.position[1] = 100;
 	}
 	if (posCount > maxCount){
+		//station ID
+		int realStation = -1;
+		int maxStation = 0;
+		int sumStation = 0;
+		for (int i = 0;i<MAX_STATIONS;i++){
+			sumStation += stationID[i];
+			if (stationID[i] > maxStation)
+			{
+				maxStation = stationID[i];
+				realStation = i;
+			}		
+		}
+		ROS_INFO("STATION %i IDs: %i %i %i %i %i %i",realStation,stationID[0],stationID[1],stationID[2],stationID[3],sumStation,maxCount);
+		if (maxStation < 0.8*sumStation || sumStation < maxCount){
+			 realStation = -1;
+			 ROS_ERROR("STATION ID noisy, cannot determine station ID");
+		}
+		o2->id = o1->id = realStation;
 		o1->x = avgPos1.x/posCount;
 		o1->y = avgPos1.y/posCount;
 		o1->z = avgPos1.z/posCount;

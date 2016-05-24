@@ -41,12 +41,15 @@ class CCircleDetect
 
 		bool changeThreshold();
 		bool debug,draw,drawAll;
+		static int *buffer;
+		int queueStart,queueEnd,queueOldStart,numSegments;
+		int threshold; 
+
 	private:
 
 		bool track;
 		int maxFailed;
 		int numFailed;
-		int threshold; 
 
 		int minSize; 
 		int lastThreshold; 
@@ -63,14 +66,12 @@ class CCircleDetect
 		SSegment segmentArray[MAX_SEGMENTS];
 		bool lastTrackOK;
 		float outerAreaRatio,innerAreaRatio,areasRatio;
-		int queueStart,queueEnd,queueOldStart,numSegments;
 		static int width,height,len;
 		int expand[4];
 		unsigned char *ptr;
 		int sizer,sizerAll;
 		float diameterRatio;
 		bool ownBuffer;
-		static int *buffer;
 		static int *queue;
 };
 

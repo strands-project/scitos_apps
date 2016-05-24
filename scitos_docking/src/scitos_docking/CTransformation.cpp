@@ -7,6 +7,8 @@
 #include <gsl/gsl_eigen.h>
 #include <gsl/gsl_linalg.h>
 
+const char *stationNames[] = {"","station_1/","station_2/","station_3/"};
+const char *variableNames[] = {"X","Y","Z"};
 
 int sortByDistance(const void* m1,const void* m2)
 {
@@ -161,8 +163,10 @@ STrackedObject CTransformation::getDock(STrackedObject o[])
 	if (o[0].valid && o[1].valid && o[2].valid){ 
 		STrackedObject trk[4];
 		for (int i=0;i<3;i++) trk[i] = o[i];
+		for (int i=0;i<3;i++) trk[i].id = i;
 		for (int i=0;i<3;i++) trk[i].d = distance(trk[(i+1)%3],trk[(i+2)%3]);
 		qsort(trk,3,sizeof(STrackedObject),sortByDistance);
+
 		float an = atan2(trk[0].x-trk[2].x,trk[0].y-trk[2].y);
 		trk[0].roll = 180*an/M_PI;
 		trk[0].x-=dockOffset.x;
@@ -170,6 +174,54 @@ STrackedObject CTransformation::getDock(STrackedObject o[])
 		trk[0].z-=dockOffset.z;
 		result=trk[0];
 		result.valid = ((trk[0].d+trk[1].d+trk[2].d) < 1.0); //only for small station
+
+		//fprintf(stdout,"Dockbase: %.3f \n",trk[0].d+trk[1].d+trk[2].d);
+		//for (int i = 0;i<3;i++) fprintf(stdout,"Dock: %i %.3f %.3f %.3f\n",i,trk[i].x,trk[i].y,trk[i].z);
+	}
+	return result;
+}
+
+STrackedObject CTransformation::getDockID(STrackedObject o[],SSegment s[],CRawImage *image,CCircleDetect *detector)
+{
+	STrackedObject result;
+	result.valid = false;
+	if (o[0].valid && o[1].valid && o[2].valid){ 
+		STrackedObject trk[4];
+		for (int i=0;i<3;i++) trk[i] = o[i];
+		for (int i=0;i<3;i++) trk[i].id = i;
+		for (int i=0;i<3;i++) trk[i].d = distance(trk[(i+1)%3],trk[(i+2)%3]);
+		qsort(trk,3,sizeof(STrackedObject),sortByDistance);
+		//determine station ID
+		if (s[0].size + s[1].size + s[2].size > 1300)
+		{
+			float px = s[trk[0].id].x + 1.54*(s[trk[1].id].x - s[trk[0].id].x);
+			float py = s[trk[0].id].y + 1.54*(s[trk[1].id].y - s[trk[0].id].y);
+			int pos = ((int)py)*image->width+(int)px;
+			if (pos > image->width && pos < image->size-image->width){
+				detector->queueEnd = 0;
+				detector->queueStart = 0;
+				detector->numSegments = 0;
+				//image->data[pos] = detector->threshold;
+				SSegment id;
+				detector->buffer[pos] = -2;
+				detector->examineSegment(image,&id,pos,100.0);
+				id.valid = true;
+				trk[0].id = round(20.0*id.size/(s[0].size+s[1].size+s[2].size)-0.1);
+				detector->bufferCleanup(id);
+			}
+		}else{
+			ROS_WARN("Too far to determine the station ID");
+			trk[0].id = -1;
+		}
+
+		float an = atan2(trk[0].x-trk[2].x,trk[0].y-trk[2].y);
+		trk[0].roll = 180*an/M_PI;
+		trk[0].x-=dockOffset.x;
+		trk[0].y-=dockOffset.y;
+		trk[0].z-=dockOffset.z;
+		result=trk[0];
+		result.valid = ((trk[0].d+trk[1].d+trk[2].d) < 1.0); //only for small station
+
 		//fprintf(stdout,"Dockbase: %.3f \n",trk[0].d+trk[1].d+trk[2].d);
 		//for (int i = 0;i<3;i++) fprintf(stdout,"Dock: %i %.3f %.3f %.3f\n",i,trk[i].x,trk[i].y,trk[i].z);
 	}
@@ -248,17 +300,74 @@ STrackedObject CTransformation::transform3D(STrackedObject o,int num)
 	return final;
 }
 
+bool CTransformation::updateStationParams(STrackedObject *own,STrackedObject *station)
+{
+	bool calibrated = true;
+	char varName[100];
+	if (station->id < 0 || station->id >= MAX_STATIONS)
+	{
+		ROS_ERROR("Station ID incorrect! (%i) Using default parameters (station 0).",station->id);
+		station->id = 0;
+	}
+
+	STrackedObject lastOwnOffset = ownOffset;
+	STrackedObject lastDockOffset = dockOffset;
+
+	sprintf(varName,"/charging/%sownOffsetX",stationNames[station->id]);
+	ROS_INFO("Updating from %s",varName);
+	calibrated = calibrated && nh->getParam(varName, ownOffset.x);
+	sprintf(varName,"/charging/%sownOffsetY",stationNames[station->id]);
+	calibrated = calibrated && nh->getParam(varName, ownOffset.y);
+	sprintf(varName,"/charging/%sownOffsetZ",stationNames[station->id]);
+	calibrated = calibrated && nh->getParam(varName, ownOffset.z);
+
+	sprintf(varName,"/charging/%sdockOffsetX",stationNames[station->id]);
+	calibrated = calibrated && nh->getParam(varName, dockOffset.x);
+	sprintf(varName,"/charging/%sdockOffsetY",stationNames[station->id]);
+	calibrated = calibrated && nh->getParam(varName, dockOffset.y);
+	sprintf(varName,"/charging/%sdockOffsetZ",stationNames[station->id]);
+	calibrated = calibrated && nh->getParam(varName, dockOffset.z);
+	if (calibrated) {
+		ROS_INFO("Calibration parameters updated from rosParam, relative positions updated.");
+		ROS_INFO("Previous: %.3f %3.f %.3f ",own->x,own->y,own->z);
+
+		station->x += lastDockOffset.x - dockOffset.x;	
+		station->y += lastDockOffset.y - dockOffset.y;	
+		station->z += lastDockOffset.z - dockOffset.z;
+
+		own->x += lastOwnOffset.x - ownOffset.x;	
+		own->y += lastOwnOffset.y - ownOffset.y;	
+		own->z += lastOwnOffset.z - ownOffset.z;	
+		ROS_INFO("Updated: %.3f %3.f %.3f ",own->x,own->y,own->z);
+	}
+	return calibrated;
+}
+
+
 void CTransformation::updateCalibration(STrackedObject own,STrackedObject station)
 {
 	ownOffset = own;
 	dockOffset = station;
-	nh->setParam("/charging/ownOffsetX", ownOffset.x);
-	nh->setParam("/charging/ownOffsetY", ownOffset.y);
-	nh->setParam("/charging/ownOffsetZ", ownOffset.z);
-	nh->setParam("/charging/dockOffsetX", dockOffset.x);
-	nh->setParam("/charging/dockOffsetY", dockOffset.y);
-	nh->setParam("/charging/dockOffsetZ", dockOffset.z);
+	if (station.id < 0 || station.id >= MAX_STATIONS)
+	{
+		ROS_ERROR("Station ID incorrect! (%i)",station.id);
+		return;
+	}
 
+	//I know this looks ugly, but it works fine
+	char varName[100];
+	sprintf(varName,"/charging/%sownOffsetX",stationNames[station.id]);
+	nh->setParam(varName, ownOffset.x);
+	sprintf(varName,"/charging/%sownOffsetY",stationNames[station.id]);
+	nh->setParam(varName, ownOffset.y);
+	sprintf(varName,"/charging/%sownOffsetZ",stationNames[station.id]);
+	nh->setParam(varName, ownOffset.z);
+	sprintf(varName,"/charging/%sdockOffsetX",stationNames[station.id]);
+	nh->setParam(varName, dockOffset.x);
+	sprintf(varName,"/charging/%sdockOffsetY",stationNames[station.id]);
+	nh->setParam(varName, dockOffset.y);
+	sprintf(varName,"/charging/%sdockOffsetZ",stationNames[station.id]);
+	nh->setParam(varName, dockOffset.z);
 }
 
 bool CTransformation::saveParamInDB(const char *param)
@@ -293,64 +402,23 @@ bool CTransformation::loadCalibration()
 		 ROS_INFO("Calibration parameters updated from rosParam");
 		 return true;
 	}
-
-	std::string configFilename = "";
-	if (nh->getParam("configFile", configFilename) == false){
-		ROS_WARN("Config file not set, calibration parameters will not be loaded.");
-		return false;
-	}else{
-		FILE* file = fopen(configFilename.c_str(),"r");
-		if (file == NULL){
-			ROS_WARN("Calibration file %s could not be loaded and the calibration parameters are not set.",configFilename.c_str());
-			ROS_WARN("Place the robot on the charging station and run calibration");
-			return false;
-		}
-		fscanf(file,"charging:\n");
-		fscanf(file," dockOffsetX: %lf\n",&dockOffset.x);
-		fscanf(file," dockOffsetY: %lf\n",&dockOffset.y);
-		fscanf(file," dockOffsetZ: %lf\n",&dockOffset.z);
-		fscanf(file," ownOffsetX: %lf\n",&ownOffset.x);
-		fscanf(file," ownOffsetY: %lf\n",&ownOffset.y);
-		fscanf(file," ownOffsetZ: %lf\n",&ownOffset.z);
-		fclose(file);
-		ROS_WARN("Calibration parameters loaded from: %s",configFilename.c_str());
-		updateCalibration(ownOffset,dockOffset);
-	}
-	return true;
+	return false;
 }
 
 bool CTransformation::saveCalibration()
 {
 	std::string configFilename = "";
 	bool savedOK = true;
-
-	savedOK = savedOK && saveParamInDB("/charging/ownOffsetX");
-	savedOK = savedOK && saveParamInDB("/charging/ownOffsetY");
-	savedOK = savedOK && saveParamInDB("/charging/ownOffsetZ");
-	savedOK = savedOK && saveParamInDB("/charging/dockOffsetX");
-	savedOK = savedOK && saveParamInDB("/charging/dockOffsetY");
-	savedOK = savedOK && saveParamInDB("/charging/dockOffsetZ");
-	if (savedOK == false) ROS_WARN("Calibration parameters could not be saved in the datacentre.");
-	if (nh->getParam("configFile", configFilename) == false){
-		ROS_WARN("Config file not set, calibration parameters will not be saved.");
-		return false;
-	}else{
-		FILE* file = fopen(configFilename.c_str(),"w");
-		if (file == NULL){
-			ROS_WARN("Calibration file %s could not be saved.",configFilename.c_str());
-			return false;
+	char varName[100];
+	for (int s = 0;s<MAX_STATIONS;s++){
+		for (int v = 0;v<3;v++){
+			sprintf(varName,"/charging/%sownOffset%s",stationNames[s],variableNames[v]);
+			savedOK = savedOK && saveParamInDB(varName);
+			sprintf(varName,"/charging/%sdockOffset%s",stationNames[s],variableNames[v]);
+			savedOK = savedOK && saveParamInDB(varName);
 		}
-		fprintf(file,"charging:\n");
-		fprintf(file," dockOffsetX: %lf\n",dockOffset.x);
-		fprintf(file," dockOffsetY: %lf\n",dockOffset.y);
-		fprintf(file," dockOffsetZ: %lf\n",dockOffset.z);
-		fprintf(file," ownOffsetX: %lf\n",ownOffset.x);
-		fprintf(file," ownOffsetY: %lf\n",ownOffset.y);
-		fprintf(file," ownOffsetZ: %lf\n",ownOffset.z);
-		fclose(file);
-		ROS_INFO("Calibration parameters saved to: %s",configFilename.c_str());
-		return true;
 	}
+	if (savedOK == false) ROS_WARN("Calibration parameters could not be saved in the datacentre.");
 	return savedOK;
 }
 
