@@ -2,8 +2,8 @@
 Changelog for package scitos_docking
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.1.0 (2016-05-24)
+------------------
 * Merge pull request `#156 <https://github.com/strands-project/scitos_apps/issues/156>`_ from gestom/hydro-devel
   Docking now supports up to 4 different stations
 * Station identification distance increased
