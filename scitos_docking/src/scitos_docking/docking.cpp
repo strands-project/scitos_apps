@@ -39,10 +39,12 @@ int maxMeasurements = 100;
 float dockingPrecision = 0.10;
 float realPrecision,tangle,tdistance;
 
+bool terminateWaiting = false;
 int stationSpotted = 0;
 bool calibrated = false;
 CTimer timer;
 int timeOut = 120000;
+int safetyTimeOut = 20000;
 int  defaultImageWidth= 320;
 int  defaultImageHeight = 240;
 float circleDiameter = 0.05;
@@ -131,6 +133,7 @@ void batteryCallBack(const scitos_msgs::BatteryState &msg)
 
 int initComponents()
 {
+	terminateWaiting = false;
 	failedToSpotStationCount = 0;
 	image->getSaveNumber();
 	robot->progress = 10;
@@ -189,8 +192,11 @@ void odomCallback(const nav_msgs::Odometry &msg)
 			}
 			break;
 		case STATE_RETRY:
-			if (robot->moveByDistance()) state = STATE_APPROACH;
-			robot->controlHead(100,0,0);
+			if (robot->moveByDistance())
+			{
+				state = STATE_APPROACH;
+				robot->controlHead(100,0,0);
+			}
 			break;
 		case STATE_UNDOCK_MOVE: 
 			robot->controlHead(100,180,0);
@@ -425,8 +431,8 @@ void imageCallback(const sensor_msgs::ImageConstPtr& msg)
 				case STATE_WAIT:
 					own = trans->getOwnPosition(objectArray);
 					station = trans->getDockID(objectArray,currentSegmentArray,image,detectorArray[4]);
-					if (robot->wait(&own,station,chargerDetected)){
-						if (chargerDetected){
+					if (robot->wait(&own,station,chargerDetected,terminateWaiting)){
+						if (chargerDetected && terminateWaiting == false){
 							robot->lightsOff();
 							bool headOff = false;
 							nh->getParam("charging/headOff",headOff);
@@ -443,7 +449,7 @@ void imageCallback(const sensor_msgs::ImageConstPtr& msg)
 						realPrecision = sqrt(own.x*own.x+own.y*own.y);
 					}
 					break;
-						}
+			}
 		}else{
 			failedToSpotStationCount++;
 			if (state == STATE_SEARCH) failedToSpotStationCount=0;
@@ -716,6 +722,7 @@ void state_cleanup()
 		robot->halt();
 		ros::spinOnce();
 	}
+	terminateWaiting = false;
 }
 
 
@@ -724,8 +731,17 @@ void mainLoop()
 {
 	char status[1000];
 	int a = 0;
-	while (ros::ok()){
-		if (timeOut < timer.getTime() && state != STATE_IDLE ) state = STATE_TIMEOUT;
+	while (ros::ok())
+	{
+		if (timeOut < timer.getTime() && state != STATE_IDLE)
+		{
+			terminateWaiting = true;
+			if ((state != STATE_WAIT && state != STATE_DOCK && state != STATE_RETRY) || safetyTimeOut + timeOut < timer.getTime()){
+				state = STATE_MEASURE; 
+			}else{
+			
+			}
+		}
 		if (state != STATE_IDLE && state != STATE_HEAD_ON) robot->moveHead();
 		ros::spinOnce();
 		if (positionUpdate && robot->poseSet == false) robot->injectPosition(); 

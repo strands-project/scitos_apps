@@ -40,7 +40,7 @@ class CChargingActions
 		bool approach(STrackedObject station,float dist = 0.0);
 		bool adjust(STrackedObject station,float in = 0.0,float tol = 0.05);
 		bool dock(STrackedObject station);
-		bool wait(STrackedObject *own,STrackedObject station,bool chargerDetect);
+		bool wait(STrackedObject *own,STrackedObject station,bool chargerDetect,bool terminate);
 		bool halt();
 		bool actionStuck();
 		bool testMove();
