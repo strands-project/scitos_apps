@@ -714,7 +714,10 @@ void state_cleanup()
 	if (state == STATE_UNDOCKING_FAILURE) sprintf(response,"Undocking  not completed.");
 	if (state == STATE_CALIBRATION_SUCCESS) sprintf(response,"Calibration OK.");
 //	if (state == STATE_CALIBRATION_FAILURE) sprintf(response,"Calibration failed.");
-	if (state == STATE_TIMEOUT) sprintf(response,"Requested action was not completed in the requested time. Station spotted %i times.\n",stationSpotted);
+	if (state == STATE_TIMEOUT){
+		sprintf(response,"Requested action was not completed in the requested time. Station spotted %i times.\n",stationSpotted);
+		terminateWaiting = false;
+	}
 	if ((int) state >= STATE_DOCKING_SUCCESS && (int)state <= STATE_TIMEOUT){
 		robot->progress = 100;
 		state = STATE_IDLE;
@@ -722,7 +725,6 @@ void state_cleanup()
 		robot->halt();
 		ros::spinOnce();
 	}
-	terminateWaiting = false;
 }
 
 
@@ -735,12 +737,18 @@ void mainLoop()
 	{
 		if (timeOut < timer.getTime() && state != STATE_IDLE)
 		{
-			terminateWaiting = true;
-			if ((state != STATE_WAIT && state != STATE_DOCK && state != STATE_RETRY) || safetyTimeOut + timeOut < timer.getTime()){
-				state = STATE_MEASURE; 
+			if ((state == STATE_WAIT || state == STATE_DOCK || state == STATE_RETRY) && safetyTimeOut + timeOut > timer.getTime()){
+				if (terminateWaiting == false){
+					ROS_INFO("Timeout postponed by %i seconds.",safetyTimeOut/1000);
+					sprintf(status,"Timeout postponed by %i seconds.",safetyTimeOut/1000);
+					feedback.Progress = (int)robot->progress;
+					feedback.Message = status;
+					if (server->isActive()) server->publishFeedback(feedback);
+				}
 			}else{
-			
+				state = STATE_TIMEOUT; 
 			}
+			terminateWaiting = true;
 		}
 		if (state != STATE_IDLE && state != STATE_HEAD_ON) robot->moveHead();
 		ros::spinOnce();
