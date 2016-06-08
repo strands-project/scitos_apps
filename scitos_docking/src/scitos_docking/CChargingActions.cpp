@@ -395,7 +395,7 @@ bool CChargingActions::dock(STrackedObject station)
 	return complete;
 }
 
-bool CChargingActions::wait(STrackedObject *own,STrackedObject station,bool chargerDetect)
+bool CChargingActions::wait(STrackedObject *own,STrackedObject station,bool chargerDetect,bool terminate)
 {
 	if (chargerDetect){
 		measure(own,&station,-1);
@@ -411,7 +411,7 @@ bool CChargingActions::wait(STrackedObject *own,STrackedObject station,bool char
 		head.position[3] = 0;
 		base_cmd.linear.x = base_cmd.angular.z = 0;
 		cmd_vel.publish(base_cmd);
-		if (measure(own,&station)){
+		if (measure(own,&station) || terminate){
 			moveByDistance(-0.5);
 			controlHead(100,0,0);
 			float prec = sqrt(own->x*own->x+own->y*own->y+own->z*own->z);
