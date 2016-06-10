@@ -386,7 +386,7 @@ void imageCallback(const sensor_msgs::ImageConstPtr& msg)
 					break;
 				case STATE_DOCK:
 					if (useLaser == false){
-						ROS_INFO("Final approach performed by vision to position %.3f %.3f\n",station.x,station.y);
+						ROS_INFO("Final approach performed by vision to position %.3f %.3f.",station.x,station.y);
 						if (robot->dock(station)){
 							state = STATE_WAIT;
 							robot->measure(NULL,NULL,4*maxMeasurements,false);
