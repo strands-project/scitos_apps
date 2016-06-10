@@ -24,6 +24,7 @@
 
 #define MAX_PATTERNS 10 
 
+STrackedObject own,station;
 int laserScanNumber = 0;
 float ptuPan = 0.0;
 float ptuTilt = -15.0;
@@ -274,7 +275,6 @@ void depthCallback(const sensor_msgs::ImageConstPtr& msg)
 
 void imageCallback(const sensor_msgs::ImageConstPtr& msg)
 {
-	STrackedObject own,station;
 	if (state == STATE_INIT){
 		robot->initCharging(chargerDetected,maxMeasurements);
 		robot->movePtu(0,0);
@@ -809,18 +809,21 @@ void scanCallback (const sensor_msgs::LaserScan::ConstPtr& scan_msg)
 		int best = 0;
 		for (int i = 0; i <= num_ranges; i++)
 		{
-			if (s[i] < best){
+			if (s[i] > best){
 				best = s[i];
 				index = i;		
 			}
 		}
-		printf("Dock %.3f %.3f\n",x[index],y[index]);
+		x[index] -= 0.1;
+		printf("Dock %.3f %.3f %.3f %.3f\n",station.x,station.y,x[index],y[index]);
 		laserScanNumber++;
-		//station.x = x[index]; 
-		//station.y = y[index];
-	       		
+		station.x = x[index]; 
+		station.y = y[index];
+		if (robot->dockLaser(station)){
+			state = STATE_WAIT;
+			robot->measure(NULL,NULL,4*maxMeasurements,false);
+		}
 	}
-
 }
 
 int main(int argc,char* argv[])
