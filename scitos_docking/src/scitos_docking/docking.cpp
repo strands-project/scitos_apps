@@ -20,10 +20,11 @@
 #include <scitos_msgs/BatteryState.h>
 #include <move_base_msgs/MoveBaseAction.h>
 #include "scitos_docking/CChargingActions.h"
-
+#include <sensor_msgs/LaserScan.h>
 
 #define MAX_PATTERNS 10 
 
+int laserScanNumber = 0;
 float ptuPan = 0.0;
 float ptuTilt = -15.0;
 bool success = false;
@@ -777,6 +778,45 @@ void mainLoop()
 	}
 }
 
+void scanCallback (const sensor_msgs::LaserScan::ConstPtr& scan_msg)
+{
+	size_t num_ranges = scan_msg->ranges.size();
+	float x[num_ranges];
+	float y[num_ranges];
+	float d[num_ranges];
+	float s[num_ranges];
+	bool m[num_ranges];
+	float angle;
+	for (int i = 0; i <= num_ranges; i++){
+		angle = scan_msg->angle_min+i*scan_msg->angle_increment;
+		x[i] = scan_msg->ranges[i]*cos(angle);
+		y[i] = scan_msg->ranges[i]*sin(angle);
+		d[i] = sqrt(x[i]*x[i]+y[i]*y[i]);
+		m[i] = true;
+	}
+	float dx,dy;
+	for (int i = 0; i <= num_ranges; i++)
+	{
+		s[i] = 0;
+		for (int j = 0; j <= num_ranges; j++){
+			dx = x[i]-x[j];
+			dy = y[i]-y[j];
+			if (sqrt(dx*dx+dy*dy) < 0.2 && d[i]<d[j]) s[i]++; 
+		}
+	}
+	int index = -1;
+	int best = 0;
+	for (int i = 0; i <= num_ranges; i++)
+	{
+		if (s[i] < best){
+			best = s[i];
+			index = i;		
+		}
+	}
+	printf("Dock %.3f %.3f\n",x[i],y[i]);
+	laserScanNumber++;
+}
+
 int main(int argc,char* argv[])
 {
 	ros::init(argc, argv, "charging");
@@ -801,6 +841,7 @@ int main(int argc,char* argv[])
 	ros::Subscriber joy_sub_ = nh->subscribe("/teleop_joystick/action_buttons", 10, joyCallback);
 	ros::Subscriber ptu_sub_ = nh->subscribe("/ptu/state", 10, ptuCallback);
 	ros::Subscriber robot_pose = nh->subscribe("/robot_pose", 1000, poseCallback);
+	ros::Subscriber scan_sub = nh->subscribe("scan", 100, scanCallback);
 	server = new Server(*nh, "chargingServer", boost::bind(&actionServerCallback, _1, server), false);
 	dockingServer = new DockingServer(*nh, "docking", boost::bind(&dockingServerCallback, _1, dockingServer), false);
 	undockingServer = new DockingServer(*nh, "undocking", boost::bind(&undockingServerCallback, _1, undockingServer), false);
