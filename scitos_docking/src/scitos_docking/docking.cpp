@@ -820,7 +820,7 @@ void scanCallback (const sensor_msgs::LaserScan::ConstPtr& scan_msg)
 			}
 		}
 		x[index] -= 0.1;
-		ROS_INFO("Final approach performed by laser to position %.3f %.3f - vision reports %.3f %.3f\n",x[index],y[index],station.x,station.y);
+		ROS_INFO("Final approach performed by laser to position %.3f %.3f - vision reports %.3f %.3f.",x[index],y[index],station.x,station.y);
 		station.x = x[index]; 
 		station.y = y[index];
 		if (robot->dockLaser(station)){
