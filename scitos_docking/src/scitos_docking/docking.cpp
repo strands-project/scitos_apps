@@ -816,8 +816,8 @@ void scanCallback (const sensor_msgs::LaserScan::ConstPtr& scan_msg)
 		}
 		printf("Dock %.3f %.3f\n",x[index],y[index]);
 		laserScanNumber++;
-		station.x = x[index]; 
-		station.y = y[index];
+		//station.x = x[index]; 
+		//station.y = y[index];
 	       		
 	}
 
