@@ -25,7 +25,8 @@
 #define MAX_PATTERNS 10 
 
 STrackedObject own,station;
-int laserScanNumber = 0;
+bool useLaser = false;
+
 float ptuPan = 0.0;
 float ptuTilt = -15.0;
 bool success = false;
@@ -383,10 +384,13 @@ void imageCallback(const sensor_msgs::ImageConstPtr& msg)
 					}
 					break;
 				case STATE_DOCK:
-					/*if (robot->dock(station)){
-						state = STATE_WAIT;
-						robot->measure(NULL,NULL,4*maxMeasurements,false);
-					}*/
+					if (useLaser == false){
+						ROS_INFO("Final approach performed by vision to position %.3f %.3f\n",station.x,station.y);
+						if (robot->dock(station)){
+							state = STATE_WAIT;
+							robot->measure(NULL,NULL,4*maxMeasurements,false);
+						}
+					}
 					break;
 				case STATE_MEASURE:
 					own = trans->getOwnPosition(objectArray);
@@ -780,7 +784,7 @@ void mainLoop()
 
 void scanCallback (const sensor_msgs::LaserScan::ConstPtr& scan_msg)
 {
-	if (state == STATE_DOCK){
+	if (useLaser && state == STATE_DOCK){
 		size_t num_ranges = scan_msg->ranges.size();
 		float x[num_ranges];
 		float y[num_ranges];
@@ -815,8 +819,7 @@ void scanCallback (const sensor_msgs::LaserScan::ConstPtr& scan_msg)
 			}
 		}
 		x[index] -= 0.1;
-		printf("Dock %.3f %.3f %.3f %.3f\n",station.x,station.y,x[index],y[index]);
-		laserScanNumber++;
+		ROS_INFO("Final approach performed by laser to position %.3f %.3f - vision reports %.3f %.3f\n",x[index],y[index],station.x,station.y);
 		station.x = x[index]; 
 		station.y = y[index];
 		if (robot->dockLaser(station)){
@@ -843,6 +846,7 @@ int main(int argc,char* argv[])
 	image_transport::Subscriber subim = it.subscribe("head_xtion/rgb/image_mono", 1, imageCallback);
 	image_transport::Subscriber subdepth = it.subscribe("head_xtion/depth/image_rect", 1, depthCallback);
 	nh->param("positionUpdate",positionUpdate,false);
+	nh->param("useLaser",useLaser,true);
         imdebug = it.advertise("/charging/processedimage", 1);
 	ros::Subscriber subodo = nh->subscribe("odom", 1, odomCallback);
 	ros::Subscriber subcharger = nh->subscribe("battery_state", 1, batteryCallBack);
