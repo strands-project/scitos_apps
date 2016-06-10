@@ -26,6 +26,7 @@
 
 STrackedObject own,station;
 bool useLaser = false;
+double adjustRotateGain = 1.0;
 
 float ptuPan = 0.0;
 float ptuTilt = -15.0;
@@ -408,7 +409,7 @@ void imageCallback(const sensor_msgs::ImageConstPtr& msg)
 								if (own.x > 0) rotateBy = -rotateBy;
 								rotateBy += sin((own.x+trans->ownOffset.x)/(own.z+trans->ownOffset.z));
 								robot->rotateByAngle(rotateBy);
-								robot->moveByDistance(fabs(own.x));
+								robot->moveByDistance(fabs(own.x)*adjustRotateGain);
 							}
 						}else{
 							ROS_ERROR("Station %i was not calibrated, aborting docking.\n",station.id);
@@ -847,6 +848,7 @@ int main(int argc,char* argv[])
 	image_transport::Subscriber subdepth = it.subscribe("head_xtion/depth/image_rect", 1, depthCallback);
 	nh->param("positionUpdate",positionUpdate,false);
 	nh->param("useLaser",useLaser,true);
+	nh->param("adjustRotateGain",adjustRotateGain,1.0);
         imdebug = it.advertise("/charging/processedimage", 1);
 	ros::Subscriber subodo = nh->subscribe("odom", 1, odomCallback);
 	ros::Subscriber subcharger = nh->subscribe("battery_state", 1, batteryCallBack);
