@@ -2,8 +2,8 @@
 Changelog for package scitos_docking
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.1.1 (2016-11-03)
+------------------
 * Merge pull request `#157 <https://github.com/strands-project/scitos_apps/issues/157>`_ from gestom/hydro-devel
   Docking ends up in a 'safe' position
 * Docking end up far away from station in the case of a timeout
