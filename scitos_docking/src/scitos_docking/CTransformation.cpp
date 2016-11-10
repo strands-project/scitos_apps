@@ -192,28 +192,31 @@ STrackedObject CTransformation::getDockID(STrackedObject o[],SSegment s[],CRawIm
 		for (int i=0;i<3;i++) trk[i].d = distance(trk[(i+1)%3],trk[(i+2)%3]);
 		qsort(trk,3,sizeof(STrackedObject),sortByDistance);
 		//determine station ID
-		if (s[0].size + s[1].size + s[2].size > 1300)
-		{
-			float px = s[trk[0].id].x + 1.54*(s[trk[1].id].x - s[trk[0].id].x);
-			float py = s[trk[0].id].y + 1.54*(s[trk[1].id].y - s[trk[0].id].y);
-			int pos = ((int)py)*image->width+(int)px;
-			if (pos > image->width && pos < image->size-image->width){
-				detector->queueEnd = 0;
-				detector->queueStart = 0;
-				detector->numSegments = 0;
-				//image->data[pos] = detector->threshold;
-				SSegment id;
-				detector->buffer[pos] = -2;
-				detector->examineSegment(image,&id,pos,100.0);
-				id.valid = true;
-				trk[0].id = round(20.0*id.size/(s[0].size+s[1].size+s[2].size)-0.1);
-				detector->bufferCleanup(id);
+		if (detector->threshold < 0){
+			if (s[0].size + s[1].size + s[2].size > 1300)
+			{
+				float px = s[trk[0].id].x + 1.54*(s[trk[1].id].x - s[trk[0].id].x);
+				float py = s[trk[0].id].y + 1.54*(s[trk[1].id].y - s[trk[0].id].y);
+				int pos = ((int)py)*image->width+(int)px;
+				if (pos > image->width && pos < image->size-image->width){
+					detector->queueEnd = 0;
+					detector->queueStart = 0;
+					detector->numSegments = 0;
+					//image->data[pos] = detector->threshold;
+					SSegment id;
+					detector->buffer[pos] = -2;
+					detector->examineSegment(image,&id,pos,100.0);
+					id.valid = true;
+					trk[0].id = round(20.0*id.size/(s[0].size+s[1].size+s[2].size)-0.1);
+					detector->bufferCleanup(id);
+				}
+			}else{
+				ROS_WARN("Too far to determine the station ID");
+				trk[0].id = -1;
 			}
 		}else{
-			ROS_WARN("Too far to determine the station ID");
-			trk[0].id = -1;
+			trk[0].id = 0;
 		}
-
 		float an = atan2(trk[0].x-trk[2].x,trk[0].y-trk[2].y);
 		trk[0].roll = 180*an/M_PI;
 		trk[0].x-=dockOffset.x;

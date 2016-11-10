@@ -20,13 +20,9 @@
 #include <scitos_msgs/BatteryState.h>
 #include <move_base_msgs/MoveBaseAction.h>
 #include "scitos_docking/CChargingActions.h"
-#include <sensor_msgs/LaserScan.h>
+
 
 #define MAX_PATTERNS 10 
-
-STrackedObject own,station;
-bool useLaser = false;
-double adjustRotateGain = 1.0;
 
 float ptuPan = 0.0;
 float ptuTilt = -15.0;
@@ -77,11 +73,28 @@ SSegment lastSegmentArray[MAX_PATTERNS];
 CTransformation *trans;
 CChargingClient chargingClient;
 bool positionUpdate = false;
+bool multipleStations = false;
 bool headRestart = false;
 
 //position injection related
 EState state = STATE_ROTATE;
 EState lastState = STATE_IDLE;
+
+// Subscribers
+
+image_transport::Subscriber subim; 
+image_transport::Subscriber subdepth;
+ros::Subscriber subodo;
+ros::Subscriber subcharger;
+ros::Subscriber subcamera;
+ros::Subscriber joy_sub_;
+ros::Subscriber ptu_sub_;
+ros::Subscriber robot_pose;
+
+
+void subscribe();
+void unsubscribe();
+
 
 void poseCallback(const geometry_msgs::Pose::ConstPtr& msg)
 {
@@ -256,7 +269,7 @@ void depthCallback(const sensor_msgs::ImageConstPtr& msg)
 		{
 			for (float w = fx;w<lx;w+=vx)
 			{
-				di = (msg->data[cnt*2]+256*msg->data[cnt*2+1])/1000.0;
+				di = *((float*)(&msg->data[4*cnt]));
 				if (di > 0.05 && cnt%10 == 0 && di < 3.0){
 					ix = di*(cos(psi)-sin(psi)*h);
 					iy = -w*di;
@@ -277,6 +290,7 @@ void depthCallback(const sensor_msgs::ImageConstPtr& msg)
 
 void imageCallback(const sensor_msgs::ImageConstPtr& msg)
 {
+	STrackedObject own,station;
 	if (state == STATE_INIT){
 		robot->initCharging(chargerDetected,maxMeasurements);
 		robot->movePtu(0,0);
@@ -311,7 +325,11 @@ void imageCallback(const sensor_msgs::ImageConstPtr& msg)
 			objectArray[i].valid = false;
 			if (currentSegmentArray[i].valid)objectArray[i] = trans->transform(currentSegmentArray[i]);
 		}
-		detectorArray[4]->threshold = 	detectorArray[3]->threshold;	//prepare in case the dock requires identification
+		if (multipleStations){
+		 	detectorArray[4]->threshold = 	detectorArray[3]->threshold;	//prepare in case the dock requires identification
+		}else{
+			detectorArray[4]->threshold = -1;	
+		}
 
 		//is the ROBOT STATION label visible ?
 		station = trans->getDock(objectArray);
@@ -385,12 +403,9 @@ void imageCallback(const sensor_msgs::ImageConstPtr& msg)
 					}
 					break;
 				case STATE_DOCK:
-					if (useLaser == false){
-						ROS_INFO("Final approach performed by vision to position %.3f %.3f.",station.x,station.y);
-						if (robot->dock(station)){
-							state = STATE_WAIT;
-							robot->measure(NULL,NULL,4*maxMeasurements,false);
-						}
+					if (robot->dock(station)){
+						state = STATE_WAIT;
+						robot->measure(NULL,NULL,4*maxMeasurements,false);
 					}
 					break;
 				case STATE_MEASURE:
@@ -409,7 +424,7 @@ void imageCallback(const sensor_msgs::ImageConstPtr& msg)
 								if (own.x > 0) rotateBy = -rotateBy;
 								rotateBy += sin((own.x+trans->ownOffset.x)/(own.z+trans->ownOffset.z));
 								robot->rotateByAngle(rotateBy);
-								robot->moveByDistance(fabs(own.x)*adjustRotateGain);
+								robot->moveByDistance(fabs(own.x));
 							}
 						}else{
 							ROS_ERROR("Station %i was not calibrated, aborting docking.\n",station.id);
@@ -481,6 +496,7 @@ void imageCallback(const sensor_msgs::ImageConstPtr& msg)
 void dockingServerCallback(const move_base_msgs::MoveBaseGoalConstPtr& goal, DockingServer* as)
 {
 	initComponents();
+	subscribe();
 	timer.reset();
 	timer.start();
 	timeOut = 120000;
@@ -503,11 +519,13 @@ void dockingServerCallback(const move_base_msgs::MoveBaseGoalConstPtr& goal, Doc
 	if (state == STATE_REJECTED){
 		dockingServer->setAborted(result);
 		robot->lightsOff();
+		unsubscribe();
 		return;
 	}
 	while (state != STATE_IDLE && state != STATE_ABORTED && state != STATE_TIMEOUT && state != STATE_PREEMPTED){
 		usleep(200000);
 	}
+	unsubscribe();
 	if (state == STATE_PREEMPTED){
 		dockingServer->setPreempted(result);
 		state = STATE_IDLE;
@@ -533,6 +551,7 @@ void dockingServerCallback(const move_base_msgs::MoveBaseGoalConstPtr& goal, Doc
 void undockingServerCallback(const move_base_msgs::MoveBaseGoalConstPtr& goal, DockingServer* as)
 {	
 	initComponents();
+	subscribe();
 	timeOut = 120000;
 	timer.reset();
 	timer.start();
@@ -563,11 +582,13 @@ void undockingServerCallback(const move_base_msgs::MoveBaseGoalConstPtr& goal, D
 	if (state == STATE_REJECTED){
 		undockingServer->setAborted(result);
 		robot->lightsOff();
+		unsubscribe();
 		return;
 	}
 	while (state != STATE_IDLE && state != STATE_ABORTED && state != STATE_TIMEOUT && state != STATE_PREEMPTED){
 		usleep(200000);
 	}
+	unsubscribe();
 	if (state == STATE_PREEMPTED){
 		undockingServer->setPreempted(result);
 		state = STATE_IDLE;
@@ -594,6 +615,7 @@ void undockingServerCallback(const move_base_msgs::MoveBaseGoalConstPtr& goal, D
 void actionServerCallback(const scitos_docking::ChargingGoalConstPtr& goal, Server* as)
 {
 	initComponents();
+	subscribe();
 	timer.reset();
 	timer.start();
 	timeOut = (int) goal->Timeout*1000;
@@ -652,6 +674,7 @@ void actionServerCallback(const scitos_docking::ChargingGoalConstPtr& goal, Serv
 		result.Message = response;
 		server->setAborted(result);
 		robot->lightsOff();
+		unsubscribe();
 		return;
 	}
 	while (state != STATE_IDLE && state != STATE_ABORTED && state != STATE_TIMEOUT && state != STATE_PREEMPTED){
@@ -659,6 +682,7 @@ void actionServerCallback(const scitos_docking::ChargingGoalConstPtr& goal, Serv
 		server->publishFeedback(feedback);
 	}
 	result.Message = response;
+	unsubscribe();
 	if (state == STATE_PREEMPTED){
 		server->setPreempted(result);
 		state = STATE_IDLE;
@@ -783,59 +807,29 @@ void mainLoop()
 	}
 }
 
-void scanCallback (const sensor_msgs::LaserScan::ConstPtr& scan_msg)
-{
-	if (useLaser && state == STATE_DOCK){
-		size_t num_ranges = scan_msg->ranges.size();
-		float x[num_ranges];
-		float y[num_ranges];
-		float d[num_ranges];
-		float s[num_ranges];
-		bool m[num_ranges];
-		float angle;
-		for (int i = 0; i <= num_ranges; i++){
-			angle = scan_msg->angle_min+i*scan_msg->angle_increment;
-			x[i] = scan_msg->ranges[i]*cos(angle);
-			y[i] = scan_msg->ranges[i]*sin(angle);
-			d[i] = sqrt(x[i]*x[i]+y[i]*y[i]);
-			m[i] = true;
-		}
-		float dx,dy;
-		for (int i = 0; i <= num_ranges; i++)
-		{
-			s[i] = 0;
-			for (int j = 0; j <= num_ranges; j++){
-				dx = x[i]-x[j];
-				dy = y[i]-y[j];
-				if (sqrt(dx*dx+dy*dy) < 0.2 && d[i]<d[j]) s[i]++; 
-			}
-		}
-		int index = -1;
-		int best = 0;
-		for (int i = 0; i <= num_ranges; i++)
-		{
-			if (s[i] > best){
-				best = s[i];
-				index = i;		
-			}
-		}
-		x[index] -= 0.1;
-		ROS_INFO("Final approach performed by laser to position %.3f %.3f - vision reports %.3f %.3f.",x[index],y[index],station.x,station.y);
-		station.x = x[index]; 
-		station.y = y[index];
-		if (robot->dockLaser(station)){
-			state = STATE_WAIT;
-			robot->measure(NULL,NULL,4*maxMeasurements,false);
-		}
-	}
+
+void subscribe() {
+	ROS_INFO("subscribing to camera topics");
+	image_transport::ImageTransport it(*nh);
+	subim = it.subscribe("head_xtion/rgb/image_mono", 1, imageCallback);
+	subdepth = it.subscribe("head_xtion/depth/image_rect", 1, depthCallback);
+	subcamera = nh->subscribe("head_xtion/rgb/camera_info", 1,cameraInfoCallBack);
 }
+
+
+void unsubscribe() {
+	ROS_INFO("unsubscribing from camera topics");
+	subim.shutdown();
+	subdepth.shutdown();
+	subcamera.shutdown();
+}
+
 
 int main(int argc,char* argv[])
 {
 	ros::init(argc, argv, "charging");
 	nh = new ros::NodeHandle;
 	robot = new CChargingActions(nh);
-	image_transport::ImageTransport it(*nh);
 
 	dump = new CDump(NULL,256,1000000);
 	image = new CRawImage(defaultImageWidth,defaultImageHeight,4);
@@ -844,22 +838,22 @@ int main(int argc,char* argv[])
 
 	initComponents();
 	success = false;
-	image_transport::Subscriber subim = it.subscribe("head_xtion/rgb/image_mono", 1, imageCallback);
-	image_transport::Subscriber subdepth = it.subscribe("head_xtion/depth/image_rect", 1, depthCallback);
 	nh->param("positionUpdate",positionUpdate,false);
-	nh->param("useLaser",useLaser,true);
-	nh->param("adjustRotateGain",adjustRotateGain,1.0);
+	nh->param("multipleStations",multipleStations,false);
+
+	image_transport::ImageTransport it(*nh);
         imdebug = it.advertise("/charging/processedimage", 1);
-	ros::Subscriber subodo = nh->subscribe("odom", 1, odomCallback);
-	ros::Subscriber subcharger = nh->subscribe("battery_state", 1, batteryCallBack);
-	ros::Subscriber subcamera = nh->subscribe("head_xtion/rgb/camera_info", 1,cameraInfoCallBack);
-	ros::Subscriber joy_sub_ = nh->subscribe("/teleop_joystick/action_buttons", 10, joyCallback);
-	ros::Subscriber ptu_sub_ = nh->subscribe("/ptu/state", 10, ptuCallback);
-	ros::Subscriber robot_pose = nh->subscribe("/robot_pose", 1000, poseCallback);
-	ros::Subscriber scan_sub = nh->subscribe("scan", 100, scanCallback);
+
 	server = new Server(*nh, "chargingServer", boost::bind(&actionServerCallback, _1, server), false);
 	dockingServer = new DockingServer(*nh, "docking", boost::bind(&dockingServerCallback, _1, dockingServer), false);
 	undockingServer = new DockingServer(*nh, "undocking", boost::bind(&undockingServerCallback, _1, undockingServer), false);
+
+	joy_sub_ = nh->subscribe("/teleop_joystick/action_buttons", 10, joyCallback);
+	subodo = nh->subscribe("odom", 1, odomCallback);
+	subcharger = nh->subscribe("battery_state", 1, batteryCallBack);
+	ptu_sub_ = nh->subscribe("/ptu/state", 10, ptuCallback);
+	robot_pose = nh->subscribe("/robot_pose", 1000, poseCallback);
+
 
 	server->start();
 	dockingServer->start();
