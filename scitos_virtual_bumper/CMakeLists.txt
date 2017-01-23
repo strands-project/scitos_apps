@@ -12,8 +12,6 @@ find_package(catkin REQUIRED COMPONENTS
     )
 
 include($ENV{ROS_ROOT}/core/rosbuild/FindPkgConfig.cmake)
-include_directories(${GSL_INCLUDE_DIRS})
-link_directories(${GSL_LIBRARY_DIRS})
 
 #add_service_files(
 #   FILES
@@ -29,9 +27,9 @@ link_directories(${GSL_LIBRARY_DIRS})
 #  actionlib_msgs
 #)
 
-#catkin_package(
-#   INCLUDE_DIRS include
-#)
+catkin_package(
+   INCLUDE_DIRS
+)
 
 ###########
 ## Build ##
