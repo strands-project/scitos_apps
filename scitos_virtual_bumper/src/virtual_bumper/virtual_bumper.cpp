@@ -27,7 +27,7 @@ void reportPosition(bool pushed)
 	pos.pose.position.x = currentPose.pose.position.x;
 	pos.pose.position.y = currentPose.pose.position.y;
 	if (pushed == false) pos.pose.position.z = -1;
-	if (pushed == true) pos.pose.position.z = -1;
+	if (pushed == true)  pos.pose.position.z = +1;
 	pos.pose.orientation = currentPose.pose.orientation; 
 	bumperPose.publish(pos);
 }
@@ -58,6 +58,7 @@ void odomCallback(const nav_msgs::Odometry &msg)
 		scitos_msgs::EnableMotors motors;
 		motors.request.enable = false;
 		enableMotors.call(motors);
+		reportPosition(true);
 	}
 
 	/*am I too long on free run?*/
@@ -66,6 +67,7 @@ void odomCallback(const nav_msgs::Odometry &msg)
 		scitos_msgs::EnableMotors motors;
 		motors.request.enable = true;
 		enableMotors.call(motors);
+		reportPosition(false);
 	}
 	if (stopped && steady) steadyCnt++; else steadyCnt = 0;
 }
