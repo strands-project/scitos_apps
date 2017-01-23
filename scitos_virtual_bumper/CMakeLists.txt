@@ -29,18 +29,18 @@ link_directories(${GSL_LIBRARY_DIRS})
 #  actionlib_msgs
 #)
 
-catkin_package(
-   INCLUDE_DIRS include
-)
+#catkin_package(
+#   INCLUDE_DIRS include
+#)
 
 ###########
 ## Build ##
 ###########
 
-include_directories(
-  include
-  ${catkin_INCLUDE_DIRS}
-)
+#include_directories(
+#  include
+#  ${catkin_INCLUDE_DIRS}
+#)
 
 # Libraries
 # Executables
@@ -58,16 +58,16 @@ install(TARGETS virtual_bumper
     RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
     )
 
- install(DIRECTORY include/${PROJECT_NAME}/
-    DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
-    FILES_MATCHING PATTERN "*.h"
-    PATTERN ".svn" EXCLUDE
-    )
+# install(DIRECTORY include/${PROJECT_NAME}/
+#    DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
+#    FILES_MATCHING PATTERN "*.h"
+#    PATTERN ".svn" EXCLUDE
+#    )
 
 install(DIRECTORY launch
     DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
     )
 
-install(DIRECTORY doc
-    DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
-    )
+#install(DIRECTORY doc
+#    DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
+#    )
