@@ -34,12 +34,12 @@ class virtual_bumper_report(object):
         rospy.loginfo(" ...done")
 
         rospy.loginfo("Creating Message store client")
-#        try:
-#            self.msg_store = MessageStoreProxy(collection='virtual_bumper')
-#            self.msgstore=True
-#        except:
-        self.msgstore=False
-#            rospy.logerr("Message Store not available")
+        try:
+            self.msg_store = MessageStoreProxy(collection='virtual_bumper')
+            self.msgstore=True
+        except:
+            self.msgstore=False
+            rospy.logerr("Message Store not available")
         
         rospy.loginfo("All Done ...")
         rospy.spin()
