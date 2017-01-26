@@ -70,7 +70,12 @@ install(DIRECTORY include/${PROJECT_NAME}/
 install(DIRECTORY launch
     DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
     )
-
+    
+install(PROGRAMS
+   scripts/vb_notifications.py
+   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+ )
+ 
 #install(DIRECTORY doc
 #    DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
 #    )
