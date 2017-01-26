@@ -60,7 +60,7 @@ class virtual_bumper_report(object):
          
         """
         if msg.freeRunByVirtualBumper and msg.freeRunStarted:
-            self.info='A virtual bumper event has been trigered at '+str(rospy.Time.now().secs)
+            self.info='A virtual bumper event has been trigered near '+self.closest_node+' at '+str(rospy.Time.now().secs)
             print self.info
             try:
                 self.triger_image=rospy.wait_for_message(self.camera_topic,sensor_msgs.msg.Image, timeout=1)
