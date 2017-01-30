@@ -1,5 +1,7 @@
 #!/usr/bin/env python
 
+import numpy as np
+import datetime
 import rospy
 
 from std_msgs.msg import String
@@ -60,7 +62,9 @@ class virtual_bumper_report(object):
          
         """
         if msg.freeRunByVirtualBumper and msg.freeRunStarted:
-            self.info='A virtual bumper event has been trigered near '+self.closest_node+' at '+str(rospy.Time.now().secs)
+            date = datetime.datetime.fromtimestamp(rospy.Time.now().secs)
+            self.info='A virtual bumper event has been trigered near '+self.closest_node+' at '+ date.strftime("%H:%M:%S")
+            #self.event_start_node=self.closest_node
             print self.info
             try:
                 self.triger_image=rospy.wait_for_message(self.camera_topic,sensor_msgs.msg.Image, timeout=1)
@@ -82,8 +86,11 @@ class virtual_bumper_report(object):
         """
          Virtual Bumper Report CallBack
          
-        """      
-        self.info=self.info+' and lasted until '+str(rospy.Time.now().secs)
+        """
+        dist = np.power((msg.final.pose.position.x - msg.initial.pose.position.x),2)+np.power((msg.final.pose.position.y - msg.initial.pose.position.y),2)
+        dist = np.sqrt(dist)
+        date = datetime.datetime.fromtimestamp(rospy.Time.now().secs)
+        self.info=self.info+' and ended at '+ date.strftime("%H:%M:%S") + " near "+ self.closest_node + "the total distance was " + str(dist) + " metres"
         print self.info        
         
         self.text_notification_pub.publish(self.info)
