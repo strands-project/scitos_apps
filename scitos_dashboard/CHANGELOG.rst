@@ -2,6 +2,9 @@
 Changelog for package scitos_dashboard
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+
 0.1.1 (2016-11-03)
 ------------------
 
