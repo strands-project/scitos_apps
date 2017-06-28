@@ -19,6 +19,7 @@ find_package(catkin REQUIRED COMPONENTS
     scitos_teleop 
     std_msgs
     tf 
+    cv_bridge
     )
 
 include($ENV{ROS_ROOT}/core/rosbuild/FindPkgConfig.cmake)
