@@ -1,0 +1,4 @@
+geometry_msgs/PoseStamped pose
+bool freeRunStarted
+bool freeRunByVirtualBumper
+bool stopRunByVirtualBumper

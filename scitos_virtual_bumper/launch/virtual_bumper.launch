@@ -1,0 +1,18 @@
+<launch>
+  <arg name="machine" default="localhost" />
+  <arg name="user" default="" />
+  <arg name="camera_topic" default="/head_xtion/rgb/image_color"/>
+
+  <!-- now has an IF checking for the arg "remote" -->
+  <machine name="$(arg machine)" address="$(arg machine)" env-loader="$(optenv ROS_ENV_LOADER )" user="$(arg user)" default="true" />
+
+  <param name="reportTranslationThreshold" value="0.2" />
+  <param name="reportRotationThreshold" value="0.1" />
+  <node pkg="scitos_virtual_bumper" type="virtual_bumper" name="virtual_bumper" output="screen" />
+  
+  <node pkg="scitos_virtual_bumper" type="vb_notifications.py" name="vb_notifications" output="screen">
+    <param name="camera_topic" value="$(arg camera_topic)"/>
+  </node> 
+  
+  
+</launch> 
