@@ -10,7 +10,7 @@
 
   <url type="website">https://github.com/strands-project/scitos_apps</url>
 
-  <author email="n.a.hawes@cs.bham.ac.uk">Nick Hawes</author>
+  <author email="nickh@robots.ox.ac.uk">Nick Hawes</author>
   <author email="cdondrup@lincoln.ac.uk">Christian Dondrup</author>
 
   <buildtool_depend>catkin</buildtool_depend>
