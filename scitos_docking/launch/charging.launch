@@ -3,16 +3,22 @@
   <arg name="user" default="" />
   <arg name="lightEBC" default="" />
   <arg name="positionUpdate" default="false" />
+  <arg name="commonGain" default="0.5" />
+  <arg name="dockTurnGain" default="0.3" />
+  <arg name="ptuSpeed" default="0.5" />
 
   <!-- now has an IF checking for the arg "remote" -->
   <machine name="$(arg machine)" address="$(arg machine)" env-loader="$(optenv ROS_ENV_LOADER )" user="$(arg user)" default="true" />
 
-  <param name="configFile" value="$(env HOME)/.charging.yaml" />
-  <param name="lightEBC" value="$(arg lightEBC)" />
-  <param name="positionUpdate" value="$(arg positionUpdate)" type="bool"/>
-  <!--param name="dockPositionX" value="0.0" /-->
-  <!--param name="dockPositionY" value="0.0" /-->
-  <!--param name="dockPositionPhi" value="3.14" /-->
-	<node pkg="scitos_docking" type="visual_charging" name="visual_charging" output="screen" >
+  <node pkg="scitos_docking" type="visual_charging" name="visual_charging" output="screen" >
+    <param name="configFile" value="$(env HOME)/.charging.yaml" />
+    <param name="lightEBC" value="$(arg lightEBC)" />
+    <param name="positionUpdate" value="$(arg positionUpdate)" type="bool"/>
+    <!--param name="dockPositionX" value="0.0" /-->
+    <!--param name="dockPositionY" value="0.0" /-->
+    <!--param name="dockPositionPhi" value="3.14" /-->
+    <param name="commonGain" value="$(arg commonGain)" />
+    <param name="dockTurnGain" value="$(arg dockTurnGain)" />
+    <param name="ptuSpeed" value="$(arg ptuSpeed)" />
   </node>
 </launch> 
