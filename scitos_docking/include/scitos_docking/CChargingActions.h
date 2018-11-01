@@ -77,6 +77,9 @@ class CChargingActions
 		double dockPositionX;
 		double dockPositionY;
 		double dockPositionPhi;
+		double commonGain;
+		double dockTurnGain;
+		double ptuSpeed;
 		ros::Time injectionTime;
 };
 

@@ -28,6 +28,9 @@ CChargingActions::CChargingActions(ros::NodeHandle *n)
 	nh->param<double>("dockPositionX",dockPositionX,0);
 	nh->param<double>("dockPositionY",dockPositionY,0);
 	nh->param<double>("dockPositionPhi",dockPositionPhi,M_PI);
+	nh->param<double>("commonGain",commonGain,0.5);
+	nh->param<double>("dockTurnGain",dockTurnGain,0.3);
+	nh->param<double>("ptuSpeed",ptuSpeed,0.5);
 }
 
 CChargingActions::~CChargingActions()
@@ -126,7 +129,7 @@ void CChargingActions::movePtu(int pan,int tilt)
 	ptu.name[1] ="pan";
 	ptu.position[0] = (float)tilt/100.0;
 	ptu.position[1] = (float)pan/100.0;
-	ptu.velocity[0] = ptu.velocity[1] = 1.0;
+	ptu.velocity[0] = ptu.velocity[1] = ptuSpeed;
 	cmd_ptu.publish(ptu);
 }
 
@@ -162,7 +165,7 @@ bool CChargingActions::rotateByAngle(float angle)
 		 turnAngle = angle;
 	}
 	base_cmd.linear.x = 0; 
-	base_cmd.angular.z = normalizeAngle(desiredAngle-currentAngle);
+	base_cmd.angular.z = normalizeAngle(desiredAngle-currentAngle)*commonGain;
 	cmd_vel.publish(base_cmd);
 	progress = 100*(1-fabs(normalizeAngle(desiredAngle-currentAngle))/fabs(turnAngle));
 	return fabs(normalizeAngle(desiredAngle-currentAngle)) < 0.05;
@@ -192,7 +195,7 @@ bool CChargingActions::moveByDistance(float distance)
 		 if (speedSign > 0) base_cmd.linear.x = fmax(fmin(base_cmd.linear.x,obstacleDistance-0.35),0);
 		 if (speedSign < 0) base_cmd.linear.x = fmax(fmin(base_cmd.linear.x,obstacleDistance-0.45),0);
 	}
-	base_cmd.linear.x = speedSign*base_cmd.linear.x;
+	base_cmd.linear.x = speedSign*base_cmd.linear.x*dockTurnGain;
 	base_cmd.angular.z = 0; 
 	cmd_vel.publish(base_cmd);
 	progress = 100*travelledDistance/desiredDistance;
@@ -316,6 +319,7 @@ bool CChargingActions::measure(STrackedObject *o1,STrackedObject *o2,int count,b
 			 ROS_ERROR("STATION ID noisy, cannot determine station ID");
 		}
 		o2->id = o1->id = realStation;
+		realStation = 0;
 		o1->x = avgPos1.x/posCount;
 		o1->y = avgPos1.y/posCount;
 		o1->z = avgPos1.z/posCount;
@@ -350,8 +354,10 @@ bool CChargingActions::approach(STrackedObject station,float dist)
 	bool complete = false;
 	float angle = atan2(station.y,station.x); 
 	base_cmd.linear.x = fmin(fabs((station.x-(desired-0.4))*cos(cos(cos(angle)))+0.2),1)*0.4;
-	base_cmd.linear.x = fmin(base_cmd.linear.x,obstacleDistance-0.25);
-	base_cmd.angular.z = atan2(station.y,station.x);
+	base_cmd.linear.x = fmin(base_cmd.linear.x,obstacleDistance-0.25)*commonGain;
+	if (base_cmd.linear.x < 0) base_cmd.linear.x = 0;
+	base_cmd.angular.z = atan2(station.y,station.x)*commonGain;
+	if (base_cmd.linear.x < 0.01 && distance > 1.0)  base_cmd.angular.z = atan2(station.y,station.x)*0.7;
 	ROS_INFO("Approaching %.3f %.3f",station.x,desired);
 	if (station.x < desired){
 		complete = true; 
@@ -368,7 +374,7 @@ bool CChargingActions::adjust(STrackedObject station,float in,float tol)
 	static float init;
 	if (in != 0.0) init = fabs(in);
 	base_cmd.linear.x = 0; 
-	base_cmd.angular.z = atan2(station.y,station.x)*0.5;
+	base_cmd.angular.z = atan2(station.y,station.x)*commonGain;
 	ROS_INFO("Adjusting position: %f %f",station.y,atan2(station.y,station.x));
 	if (fabs(station.y) < tol){
 		base_cmd.angular.z = 0;
@@ -384,8 +390,8 @@ bool CChargingActions::dock(STrackedObject station)
 	bool complete = false;
 	base_cmd.linear.x = (station.x - 5*fabs(station.y)+0.3)*0.2;
 	if (fabs(station.y) > 0.02) base_cmd.linear.x = 0; 
-	base_cmd.angular.z = station.y;
-	base_cmd.angular.z = atan2(station.y,station.x);
+	base_cmd.angular.z = station.y*dockTurnGain;
+	base_cmd.angular.z = atan2(station.y,station.x)*dockTurnGain;
 	if (station.x < 0.025){
 		complete = true;
 		base_cmd.linear.x = base_cmd.angular.z = 0;
