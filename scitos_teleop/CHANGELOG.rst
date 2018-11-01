@@ -2,6 +2,11 @@
 Changelog for package scitos_teleop
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* Updated email to new Oxford address
+* Contributors: Nick Hawes
+
 0.1.2 (2017-06-28)
 ------------------
 

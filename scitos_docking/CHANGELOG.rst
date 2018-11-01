@@ -2,6 +2,11 @@
 Changelog for package scitos_docking
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* TKrajnik modifications: parameters for gains and ptu velocity (`#164 <https://github.com/strands-project/scitos_apps/issues/164>`_)
+* Contributors: francescodelduchetto
+
 0.1.2 (2017-06-28)
 ------------------
 * added missing opencv dependency
