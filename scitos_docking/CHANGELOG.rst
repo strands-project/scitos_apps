@@ -2,8 +2,8 @@
 Changelog for package scitos_docking
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.2.0 (2018-11-01)
+------------------
 * TKrajnik modifications: parameters for gains and ptu velocity (`#164 <https://github.com/strands-project/scitos_apps/issues/164>`_)
 * Contributors: francescodelduchetto
 

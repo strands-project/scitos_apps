@@ -2,8 +2,8 @@
 Changelog for package scitos_virtual_bumper
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.2.0 (2018-11-01)
+------------------
 * adjusted version
 * Merge pull request `#162 <https://github.com/strands-project/scitos_apps/issues/162>`_ from strands-project/marc-hanheide-patch-1
   added missing include_directories
