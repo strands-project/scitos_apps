@@ -17,7 +17,7 @@ void controlCallback(const sensor_msgs::Joy::ConstPtr& msg)
 		t.linear.x += 0.1*l_scale_ * msg->axes[7];
 		t.angular.z = a_scale_ * msg->axes[6];
 	}else{
-		t.linear.x = 0.9*t.linear.x + 0.1*l_scale_ * msg->axes[1];
+		t.linear.x = 0.5*t.linear.x + 0.5*l_scale_ * msg->axes[1];
 		t.angular.z = 0.5*t.angular.z + 0.5*a_scale_ * msg->axes[0];
 	}
 	if (t.linear.x > l_scale_) t.linear.x = l_scale_; 
