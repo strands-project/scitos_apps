@@ -12,8 +12,8 @@ import time
 class PTUServer:
   def __init__(self):
     rospy.init_node('ptu_actionserver')
-    self.pub = rospy.Publisher('/ptu/cmd', JointState)
-    self.state=rospy.Subscriber("/ptu/state", JointState, self.head_state_cb)
+    self.pub = rospy.Publisher('ptu/cmd', JointState)
+    self.state=rospy.Subscriber("ptu/state", JointState, self.head_state_cb)
 
     self.server = actionlib.SimpleActionServer('ptu_pan_tilt', PanTiltAction, self.execute, False)
     self.server.start()
